@@ -44,6 +44,7 @@ def initialize_task(config, env, init_sim=True):
     from omniisaacgymenvs.tasks.quadcopter import QuadcopterTask
     from omniisaacgymenvs.tasks.shadow_hand import ShadowHandTask
     from omniisaacgymenvs.tasks.crazyflie import CrazyflieTask
+    from omniisaacgymenvs.tasks.dbAlpha import dbAlphaLocomotionTask
     
     # Mappings from strings to environments
     task_map = {
@@ -62,6 +63,7 @@ def initialize_task(config, env, init_sim=True):
         "ShadowHand": ShadowHandTask,
         "ShadowHandOpenAI_FF": ShadowHandTask,
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
+        "dbAlpha": dbAlphaLocomotionTask,
     }
 
     cfg = sim_config.config
