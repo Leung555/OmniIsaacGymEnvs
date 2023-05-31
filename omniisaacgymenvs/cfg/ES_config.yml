@@ -1,0 +1,65 @@
+# config file for parameters of dbAlpha_hebb
+
+# CPU
+Device:
+  CPU_NUM: 12 # workstation (used 16, 32 failed), DELL 8
+  TASK_PER_IND: 1
+  
+# Simulation Environments
+ENV:
+  NAME: 'scene_dbAlpha_test_60'
+  HEADLESS: True # workstation (False), DELL (True)
+
+# ES algorithm
+ES_params:
+  POPSIZE: 512 # workstation (500)
+  EPISODE_LENGTH: 200 # workstation (200)
+  REWARD_FUNC:
+    NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
+    ORIENTATION_WEIGHT: 1.0
+    DISTANCE_WEIGHT: 2.0
+  rank_fitness: True
+  antithetic: True
+  learning_rate: 0.1
+  learning_rate_decay: 0.9999
+  sigma_init: 1
+  sigma_decay: 0.999
+  learning_rate_limit: 0.001
+  sigma_limit: 0.01
+
+# Training Params
+Train_params:
+  EPOCH: 501 # workstation (501)
+  EVAL_EVERY: 2
+  SAVE_EVERY: 100 # workstation (100)
+  USE_TRAIN_WEIGHT: False
+
+# Model
+USED_Model: 'hebb' # 'hebb', 'FeedForward'
+Model:
+  FEEDFORWARD:
+    input: 
+      J_pos: 18
+      J_torq: 18
+      Orient: 3 # roll, pitch, yaw
+    output: 
+      J_pos: 18
+    ARCHITECTURE: 
+      name: 'FeedForward' # 'FeedForward'
+      size: [39, 128, 64, 18]
+  HEBB:
+    input: 
+      J_pos: 18
+      J_torq: 18
+      Orient: 3 
+    output: 
+      J_pos: 18
+    ARCHITECTURE: 
+      name: 'hebb' # 'FeedForward'
+      size: [39, 128, 64, 18]
+
+
+# WanDB Data Logging
+Wandb_log:
+  use_WanDB: True # workstation (True)
+  project_name: 'dbAlpha_wandb_log'
