@@ -36,6 +36,7 @@ import yaml
 import copy
 from os import listdir
 import wandb
+import time
 
 from omniisaacgymenvs.utils.hydra_cfg.hydra_utils import *
 from omniisaacgymenvs.utils.hydra_cfg.reformat import omegaconf_to_dict, print_dict
@@ -75,7 +76,8 @@ def parse_hydra_configs(cfg: DictConfig):
     ARCHITECTURE_NAME = cfg.model
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
     # ARCHITECTURE = [102, 256, 128, 18] # for cartpole Env Test
-    ARCHITECTURE = [4, 16, 8, 1] # for cartpole Env Test
+    # ARCHITECTURE = [4, 16, 8, 1] # for cartpole Env Test
+    ARCHITECTURE = [60, 128, 64, 8] # for Ant Env Test
 
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
@@ -88,9 +90,9 @@ def parse_hydra_configs(cfg: DictConfig):
     print('TASK', TASK)
 
     if wandb_activate:
-        wandb.init(project='Cartpole_ES_log',
-                    name=cfg.model+'_'+TASK) 
-            #    config=config_wandb)
+        wandb.init(project='Ant_ES_log',
+                    name=cfg.model+'_'+TASK, 
+                    config=cfg_dict)
     
     # print("POPSIZE: ", POPSIZE)
     # print("EPISODE_LENGTH: ", EPISODE_LENGTH)
@@ -148,7 +150,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # obs_cpu = obs['obs'].cpu().numpy()
     # print("Observation: ", obs)
-    actions = torch.zeros(cfg.num_envs, 1)
+    actions = torch.zeros(cfg.num_envs, ARCHITECTURE[-1])
     total_rewards = torch.zeros(cfg.num_envs)
     # total_rewards = torch.unsqueeze(total_rewards, 0)
     total_rewards = total_rewards.cuda()
@@ -180,12 +182,13 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
-        for i, file_name in enumerate(res[0:1]):
+        for i, file_name in enumerate(res[1:2]):
             print('file_name: ', file_name)
+            time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
             open_es_data = trained_data[0]
-            init_params = open_es_data.best_mu # best_mu
+            init_params = open_es_data.mu # best_mu
             init_net.set_params(init_params)
             # models = [None] * cfg.num_envs
             # for i in range(cfg.num_envs):
@@ -197,7 +200,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 models[i].set_params(solutions[i])
 
             for _ in range(EPISODE_LENGTH):
-                print('step: ', _)
+                # print('step: ', _)
                 ############### CPU Version ###############
                 obs_cpu = obs['obs'].cpu().numpy()
                 # print("Observation: ", obs)

@@ -6,22 +6,22 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 64 # <---------------
+num_envs: 1048 # <---------------
 
 # disables rendering
-headless: False # <---------------
+headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
-test: True # <---------------
+test: False # <---------------
 
 wandb_activate: True # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-# model: 'Feedforward'  # <---------------
-model: 'Hebb'
+model: 'Feedforward'  # <---------------
+# model: 'Hebb'
 
-EPOCHS: 100 # <---------------
+EPOCHS: 300 # <---------------
 EPISODE_LENGTH: 200 # <---------------
-SAVE_EVERY: 50
+SAVE_EVERY: 100
 USE_TRAIN_PARAMS: False # <---------------
 
 # seed - set to -1 to choose random seed
@@ -77,3 +77,19 @@ hydra:
   run:
     dir: .
 
+# ES algorithm
+# ES_params:
+#   POPSIZE: 512 # workstation (500)
+#   EPISODE_LENGTH: 200 # workstation (200)
+#   REWARD_FUNC:
+#     NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
+#     ORIENTATION_WEIGHT: 1.0
+#     DISTANCE_WEIGHT: 2.0
+#   rank_fitness: True
+#   antithetic: True
+#   learning_rate: 0.1
+#   learning_rate_decay: 0.9999
+#   sigma_init: 0.1
+#   sigma_decay: 0.999
+#   learning_rate_limit: 0.001
+#   sigma_limit: 0.01
