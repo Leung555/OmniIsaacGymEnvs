@@ -6,7 +6,23 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 512
+num_envs: 64 # <---------------
+
+# disables rendering
+headless: False # <---------------
+# test - if set, run policy in inference mode (requires setting checkpoint to load)
+test: True # <---------------
+
+wandb_activate: True # <---------------
+
+# Model for learning, 'Feedforward' 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
+
+EPOCHS: 100 # <---------------
+EPISODE_LENGTH: 200 # <---------------
+SAVE_EVERY: 50
+USE_TRAIN_PARAMS: False # <---------------
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -34,20 +50,16 @@ num_threads: 4 # Number of worker threads per scene used by PhysX - for CPU Phys
 solver_type: 1 # 0: pgs, 1: tgs
 
 # RLGames Argumentsconfi
-# test - if set, run policy in inference mode (requires setting checkpoint to load)
-test: False
 # used to set checkpoint path
 checkpoint: ''
 # checkpoint: 'runs/dbAlpha/nn/dbAlpha.pth'
 
-# disables rendering
-headless: True
 # enables native livestream
 enable_livestream: False
 # timeout for MT script
 mt_timeout: 30
 
-wandb_activate: False
+
 wandb_group: ''
 wandb_name: ${train.params.config.name}
 wandb_entity: ''

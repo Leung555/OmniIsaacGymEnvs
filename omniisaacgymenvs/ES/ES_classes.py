@@ -214,6 +214,7 @@ class OpenES:
             reward += l2_decay
 
         idx = np.argsort(reward)[::-1]
+        # print('idx: ', idx)
 
         best_reward = self.reward[idx[0]]
         best_mu = self.solutions[idx[0]]

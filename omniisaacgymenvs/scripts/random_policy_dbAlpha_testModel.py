@@ -35,7 +35,7 @@ from omegaconf import DictConfig
 import yaml
 import copy
 from os import listdir
-import wandb
+import timeit
 
 from omniisaacgymenvs.utils.hydra_cfg.hydra_utils import *
 from omniisaacgymenvs.utils.hydra_cfg.reformat import omegaconf_to_dict, print_dict
@@ -82,16 +82,7 @@ def parse_hydra_configs(cfg: DictConfig):
     EPOCHS = cfg.EPOCHS
     EPISODE_LENGTH = cfg.EPISODE_LENGTH
     SAVE_EVERY = cfg.SAVE_EVERY
-    USE_TRAIN_PARAMS = cfg.USE_TRAIN_PARAMS
-    wandb_activate = cfg.wandb_activate
-    TASK = cfg["task_name"]
-    print('TASK', TASK)
 
-    if wandb_activate:
-        wandb.init(project='Cartpole_ES_log',
-                    name=cfg.model+'_'+TASK) 
-            #    config=config_wandb)
-    
     # print("POPSIZE: ", POPSIZE)
     # print("EPISODE_LENGTH: ", EPISODE_LENGTH)
     # print("REWARD_FUNCTION: ", REWARD_FUNCTION)
@@ -133,18 +124,18 @@ def parse_hydra_configs(cfg: DictConfig):
     enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
 
     # initiate Environment, IsaacGym Simulation
-    env = VecEnvRLGames(headless=headless, sim_device=cfg.device_id, enable_livestream=cfg.enable_livestream, enable_viewport=enable_viewport)
-    # sets seed. if seed is -1 will pick a random one
-    from omni.isaac.core.utils.torch.maths import set_seed
-    cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
-    cfg_dict['seed'] = cfg.seed
-    # initiate Task, Robot
-    task = initialize_task(cfg_dict, env)
+    # env = VecEnvRLGames(headless=headless, sim_device=cfg.device_id, enable_livestream=cfg.enable_livestream, enable_viewport=enable_viewport)
+    # # sets seed. if seed is -1 will pick a random one
+    # from omni.isaac.core.utils.torch.maths import set_seed
+    # cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
+    # cfg_dict['seed'] = cfg.seed
+    # # initiate Task, Robot
+    # task = initialize_task(cfg_dict, env)
 
-    print("Observation space is", env.observation_space)
-    print("Action space is", env.action_space)
+    # print("Observation space is", env.observation_space)
     # print("Action space is", env.action_space)
-    obs = env.reset()
+    # print("Action space is", env.action_space)
+    # obs = env.reset()
 
     # obs_cpu = obs['obs'].cpu().numpy()
     # print("Observation: ", obs)
@@ -164,20 +155,13 @@ def parse_hydra_configs(cfg: DictConfig):
     best_sol_curve = np.zeros(EPOCHS)
     eval_curve = np.zeros(EPOCHS)
 
-
+    TASK = cfg["task_name"]
+    print('TASK', TASK)
     if ARCHITECTURE_NAME == 'Feedforward':
         dir_path = './data/'+TASK+'/model/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
         dir_path = './data/'+TASK+'/model/Hebb/'
     res = listdir(dir_path)
-
-    if USE_TRAIN_PARAMS:
-        for i, file_name in enumerate(res[0:1]):
-            print('file_name: ', file_name)
-            trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-            # print('trained_data: ', trained_data)
-            solver = trained_data[0]
-
     TEST = cfg.test
     if TEST == True:
         for i, file_name in enumerate(res[0:1]):
@@ -185,7 +169,7 @@ def parse_hydra_configs(cfg: DictConfig):
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
             open_es_data = trained_data[0]
-            init_params = open_es_data.best_mu # best_mu
+            init_params = open_es_data.mu
             init_net.set_params(init_params)
             # models = [None] * cfg.num_envs
             # for i in range(cfg.num_envs):
@@ -199,7 +183,7 @@ def parse_hydra_configs(cfg: DictConfig):
             for _ in range(EPISODE_LENGTH):
                 print('step: ', _)
                 ############### CPU Version ###############
-                obs_cpu = obs['obs'].cpu().numpy()
+                # obs_cpu = obs['obs'].cpu().numpy()
                 # print("Observation: ", obs)
                 for i in range(cfg.num_envs):
                     actions[i] = init_net.forward(obs_cpu[i])
@@ -215,17 +199,20 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     actions[i] = init_net.forward(obs['obs'][i])
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
-                obs, reward, done, info = env.step(
-                    actions # torch.rand((1,)+env.action_space.shape, device="cuda:0")
-                )
-
-                total_rewards += reward
+                # obs, reward, done, info = env.step(
+                #     actions # torch.rand((1,)+env.action_space.shape, device="cuda:0")
+                # )
+                # total_rewards += reward
 
             # print("reward is", reward)
-            print('total_rewards: ', total_rewards)
+            # print('total_rewards: ', total_rewards)
 
     else:
+        initial_time = timeit.default_timer()
+        print("initial_time", initial_time)
+        time_per_epoch_array = []
         for epoch in range(EPOCHS):
+            start_time = timeit.default_timer()
             run = 'd'
 
             solutions = solver.ask()
@@ -245,11 +232,11 @@ def parse_hydra_configs(cfg: DictConfig):
             for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
                 ############### CPU Version ###############
-                obs_cpu = obs['obs'].cpu().numpy()
-                # print('obs_cpu', obs_cpu)
+                # obs_cpu = obs['obs'].cpu().numpy()
+                obs = torch.zeros(cfg.num_envs, 4).numpy()
                 # print("Observation: ", obs)
                 for i in range(cfg.num_envs):
-                    actions[i] = models[i].forward(obs_cpu[i])
+                    actions[i] = models[i].forward(obs[i])
                 ###########################################
                 ############### GPU Version ###############
                 # for i in range(cfg.num_envs):
@@ -257,9 +244,9 @@ def parse_hydra_configs(cfg: DictConfig):
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
-                obs, reward, done, info = env.step(
-                    actions
-                )
+                # obs, reward, done, info = env.step(
+                #     actions
+                # )
                 # if env._world.is_playing():
                 #     if env._world.current_time_step_index == 0:
                 #         env._world.reset(soft=True)
@@ -272,18 +259,19 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     env._world.step(render=render)
                 # print('reward: ', reward)
                 # print('total_rewards: ', total_rewards)
-                total_rewards += reward
+                # total_rewards += reward
 
             # print("reward is", reward)
             # print('total_rewards: ', total_rewards)
 
             total_rewards_cpu = total_rewards.cpu().numpy()
+            # total_rewards = torch.zeros(cfg.num_envs).numpy()
             fitlist = list(total_rewards_cpu)
             solver.tell(fitlist)
 
             fit_arr = np.array(fitlist)
 
-            print('epoch', epoch, 'mean', fit_arr.mean(), "best", fit_arr.max(), )
+            # print('epoch', epoch, 'mean', fit_arr.mean(), "best", fit_arr.max(), )
             # with open('log_'+str(run)+'.txt', 'a') as outfile:
             #     outfile.write('epoch: ' + str(epoch)
             #             + ' mean: ' + str(fit_arr.mean())
@@ -294,26 +282,19 @@ def parse_hydra_configs(cfg: DictConfig):
             pop_mean_curve[epoch] = fit_arr.mean()
             best_sol_curve[epoch] = fit_arr.max()
 
-            # WanDB Log data -------------------------------
-            if wandb_activate:
-                wandb.log({"epoch": epoch,
-                            "mean" : np.mean(fitlist),
-                            "best" : np.max(fitlist),
-                            "worst": np.min(fitlist),
-                            "std"  : np.std(fitlist),
-                            })
-            # -----------------------------------------------
-
-            if (epoch + 1) % SAVE_EVERY == 0:
-                print('saving..')
-                pickle.dump((
-                    solver,
-                    copy.deepcopy(init_net),
-                    pop_mean_curve,
-                    best_sol_curve,
-                    ), open(dir_path+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
-            
-    env._simulation_app.close()
+            # if (epoch + 1) % SAVE_EVERY == 0:
+            #     print('saving..')
+            #     pickle.dump((
+            #         solver,
+            #         copy.deepcopy(init_net),
+            #         pop_mean_curve,
+            #         best_sol_curve,
+            #         ), open(dir_path+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
+            stop_time = timeit.default_timer()
+            print("running time per epoch: ", stop_time-start_time)
+            time_per_epoch_array.append(stop_time-start_time)
+        print('average time per epoch: ', np.mean(time_per_epoch_array))
+    # env._simulation_app.close()
 
 
 
