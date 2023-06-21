@@ -13,13 +13,13 @@ def WeightStand(w, eps=1e-5):
 
 
 class FeedForwardNet:
-    def __init__(self, sizes):
+    def __init__(self, sizes, popsize):
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
-        self.weights = [torch.Tensor(sizes[i], sizes[i + 1]).uniform_(-1.0,1.0)
-                            for i in range(len(sizes) - 1)]
-          
+        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-1.0,1.0)
+                            for i in range(len(sizes) - 1)]   
+        print('Weight: ', self.weights)   
 
 
     def forward(self, pre):

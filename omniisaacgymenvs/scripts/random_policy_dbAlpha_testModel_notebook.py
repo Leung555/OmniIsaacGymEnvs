@@ -45,7 +45,7 @@ from omniisaacgymenvs.utils.task_util import initialize_task
 # from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 
 from omniisaacgymenvs.ES.ES_classes import OpenES
-from omniisaacgymenvs.ES.feedforward_neural_net import FeedForwardNet
+from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
 
 # read Config file
@@ -76,9 +76,7 @@ SIGMA_LIMIT         = configs['ES_params']['sigma_limit']
 # Model
 ARCHITECTURE_NAME = cfg['model']
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-ARCHITECTURE = [102, 256, 128, 18] # for cartpole Env Test
-# ARCHITECTURE = [60, 128, 64, 8] # for Ant Env Test
-# ARCHITECTURE = [4, 16, 8, 1] # for cartpole Env Test
+ARCHITECTURE = cfg['ARCHITECTURE']
 
 # Training parameters
 # EPOCHS = configs['Train_params']['EPOCH']
@@ -92,15 +90,22 @@ SAVE_EVERY = cfg['SAVE_EVERY']
 # print("ARCHITECTURE_NAME: ", ARCHITECTURE_NAME)
 # print("ARCHITECTURE_size: ", ARCHITECTURE)
 
-models = [None] * POPSIZE
 if ARCHITECTURE_NAME == 'Feedforward':
-    for i in range(POPSIZE):
-        models[i] = FeedForwardNet(ARCHITECTURE)
-        init_net = FeedForwardNet(ARCHITECTURE)
-elif ARCHITECTURE_NAME == 'Hebb':
-    for i in range(POPSIZE):
-        models[i] = HebbianNet(ARCHITECTURE)
-        init_net = HebbianNet(ARCHITECTURE)
+    models = FeedForwardNet(ARCHITECTURE, POPSIZE)
+    
+# elif ARCHITECTURE_NAME == 'Hebb':
+#     for i in range(POPSIZE):
+#         models = HebbianNet(ARCHITECTURE)
+
+# models = [None] * POPSIZE
+# if ARCHITECTURE_NAME == 'Feedforward':
+#     for i in range(POPSIZE):
+#         models[i] = FeedForwardNet(ARCHITECTURE, POPSIZE)
+#     init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
+# elif ARCHITECTURE_NAME == 'Hebb':
+#     for i in range(POPSIZE):
+#         models[i] = HebbianNet(ARCHITECTURE)
+#     init_net = HebbianNet(ARCHITECTURE)
 
 init_params = models[0].get_params()
 
@@ -181,7 +186,7 @@ if TEST == True:
         #     models[i].set_params(solutions[i])
         solutions = open_es_data.ask()
         
-        for i in range(cfg.num_envs):
+        for i in range(POPSIZE):
             models[i].set_params(solutions[i])
 
         for _ in range(EPISODE_LENGTH):
@@ -189,13 +194,13 @@ if TEST == True:
             ############### CPU Version ###############
             # obs_cpu = obs['obs'].cpu().numpy()
             # print("Observation: ", obs)
-            for i in range(cfg.num_envs):
-                actions[i] = init_net.forward(obs_cpu[i])
+            # for i in range(POPSIZE):
+            #     actions[i] = init_net.forward(obs_cpu[i])
             ###########################################
             ############### CPU Version Multiple models ###############
-            # obs_cpu = obs['obs'].cpu().numpy()
-            # for i in range(cfg.num_envs):
-            #     actions[i] = models[i].forward(obs_cpu[i])
+            obs_cpu = obs['obs'].cpu().numpy()
+            for i in range(cfg.num_envs):
+                actions[i] = models[i].forward(obs_cpu[i])
             ##########################################################
 
             ############### GPU Version ###############
@@ -228,8 +233,8 @@ else:
         solutions = solver.ask()
         print("solutions: ", solutions.shape)
 
-        for i in range(POPSIZE):
-            models[i].set_params(solutions[i])
+        # for i in range(POPSIZE):
+        #     models[i].set_params(solutions[i])
 
         total_rewards = torch.zeros(POPSIZE)
         total_rewards = total_rewards.cuda()
@@ -249,8 +254,8 @@ else:
             # with concurrent.futures.ProcessPoolExecutor(cpus) as executor:
             #     actions = executor.map(worker_action_fn, obs, models)
 
-            for i in range(POPSIZE):
-                actions[i] = models[i].forward(obs[i])
+            # for i in range(POPSIZE):
+            #     actions[i] = models[i].forward(obs[i])
                 # print("action: ", actions)
             ###########################################
             ############### GPU Version ###############

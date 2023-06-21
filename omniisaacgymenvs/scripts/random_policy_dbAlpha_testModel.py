@@ -74,8 +74,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # Model
     ARCHITECTURE_NAME = cfg.model
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-    # ARCHITECTURE = [102, 256, 128, 18] # for cartpole Env Test
-    ARCHITECTURE = [4, 16, 8, 1] # for cartpole Env Test
+    ARCHITECTURE = cfg['ARCHITECTURE']
 
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
