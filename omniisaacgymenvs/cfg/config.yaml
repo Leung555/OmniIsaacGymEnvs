@@ -1,28 +1,34 @@
 
 # Task name - used to pick the class to load
+# task_name: Ant
 task_name: ${task.name}
 # experiment name. defaults to name of training config
 experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 1048 # <---------------
+num_envs: 4 # <---------------
 
 # disables rendering
-headless: True # <---------------
+headless: False # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
-test: False # <---------------
+test: True # <---------------
 
-wandb_activate: True # <---------------
+wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 
 EPOCHS: 300 # <---------------
-EPISODE_LENGTH: 200 # <---------------
+EPISODE_LENGTH: 500 # <---------------
 SAVE_EVERY: 100
 USE_TRAIN_PARAMS: False # <---------------
+
+# ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
+# ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
+# ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
+ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -78,18 +84,18 @@ hydra:
     dir: .
 
 # ES algorithm
-# ES_params:
-#   POPSIZE: 512 # workstation (500)
-#   EPISODE_LENGTH: 200 # workstation (200)
-#   REWARD_FUNC:
-#     NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
-#     ORIENTATION_WEIGHT: 1.0
-#     DISTANCE_WEIGHT: 2.0
-#   rank_fitness: True
-#   antithetic: True
-#   learning_rate: 0.1
-#   learning_rate_decay: 0.9999
-#   sigma_init: 0.1
-#   sigma_decay: 0.999
-#   learning_rate_limit: 0.001
-#   sigma_limit: 0.01
+ES_params:
+  POPSIZE: 1024 # workstation (500)
+  EPISODE_LENGTH: 200 # workstation (200)
+  REWARD_FUNC:
+    NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
+    ORIENTATION_WEIGHT: 1.0
+    DISTANCE_WEIGHT: 2.0
+  rank_fitness: True
+  antithetic: True
+  learning_rate: 0.1
+  learning_rate_decay: 0.9999
+  sigma_init: 1
+  sigma_decay: 0.999
+  learning_rate_limit: 0.001
+  sigma_limit: 0.01

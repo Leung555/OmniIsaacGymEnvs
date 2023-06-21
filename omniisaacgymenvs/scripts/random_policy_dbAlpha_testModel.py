@@ -41,7 +41,7 @@ from omniisaacgymenvs.utils.hydra_cfg.hydra_utils import *
 from omniisaacgymenvs.utils.hydra_cfg.reformat import omegaconf_to_dict, print_dict
 
 from omniisaacgymenvs.utils.task_util import initialize_task
-from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
+# from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 
 from omniisaacgymenvs.ES.ES_classes import OpenES
 from omniisaacgymenvs.ES.feedforward_neural_net import FeedForwardNet
@@ -216,7 +216,8 @@ def parse_hydra_configs(cfg: DictConfig):
             run = 'd'
 
             solutions = solver.ask()
-            
+            print("solutions: ", solutions.shape)
+
             for i in range(cfg.num_envs):
                 models[i].set_params(solutions[i])
 

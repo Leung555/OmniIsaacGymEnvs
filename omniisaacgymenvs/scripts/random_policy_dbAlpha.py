@@ -75,9 +75,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # Model
     ARCHITECTURE_NAME = cfg.model
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-    # ARCHITECTURE = [102, 256, 128, 18] # for cartpole Env Test
-    # ARCHITECTURE = [4, 16, 8, 1] # for cartpole Env Test
-    ARCHITECTURE = [60, 128, 64, 8] # for Ant Env Test
+    ARCHITECTURE = cfg.ARCHITECTURE
 
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
@@ -90,7 +88,7 @@ def parse_hydra_configs(cfg: DictConfig):
     print('TASK', TASK)
 
     if wandb_activate:
-        wandb.init(project='Ant_ES_log',
+        wandb.init(project='dbAlpha_ES_log',
                     name=cfg.model+'_'+TASK, 
                     config=cfg_dict)
     
@@ -174,7 +172,7 @@ def parse_hydra_configs(cfg: DictConfig):
     res = listdir(dir_path)
 
     if USE_TRAIN_PARAMS:
-        for i, file_name in enumerate(res[0:1]):
+        for i, file_name in enumerate(res[1:2]):
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
@@ -182,22 +180,26 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
-        for i, file_name in enumerate(res[1:2]):
+        for i, file_name in enumerate(res[0:1]):
             print('file_name: ', file_name)
             time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
             open_es_data = trained_data[0]
-            init_params = open_es_data.mu # best_mu
+            init_params = open_es_data.best_mu # best_mu
             init_net.set_params(init_params)
             # models = [None] * cfg.num_envs
             # for i in range(cfg.num_envs):
             #     models[i] = FeedForwardNet(ARCHITECTURE)
             #     models[i].set_params(solutions[i])
             solutions = open_es_data.ask()
+            # obs = env.reset()
             
             for i in range(cfg.num_envs):
                 models[i].set_params(solutions[i])
+
+            total_rewards = torch.zeros(cfg.num_envs)
+            total_rewards = total_rewards.cuda()
 
             for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
