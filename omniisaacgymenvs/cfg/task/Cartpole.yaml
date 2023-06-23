@@ -52,7 +52,7 @@ sim:
     gpu_max_rigid_patch_count: 81920
     gpu_found_lost_pairs_capacity: 1024
     gpu_found_lost_aggregate_pairs_capacity: 262144
-    gpu_total_aggregate_pairs_capacity: 1024
+    gpu_total_aggregate_pairs_capacity: 1542 # 1024 original
     gpu_max_soft_body_contacts: 1048576
     gpu_max_particle_contacts: 1048576
     gpu_heap_capacity: 67108864

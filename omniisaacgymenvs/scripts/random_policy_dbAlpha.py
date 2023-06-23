@@ -37,6 +37,7 @@ import copy
 from os import listdir
 import wandb
 import time
+import timeit
 
 from omniisaacgymenvs.utils.hydra_cfg.hydra_utils import *
 from omniisaacgymenvs.utils.hydra_cfg.reformat import omegaconf_to_dict, print_dict
@@ -45,7 +46,7 @@ from omniisaacgymenvs.utils.task_util import initialize_task
 from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 
 from omniisaacgymenvs.ES.ES_classes import OpenES
-from omniisaacgymenvs.ES.feedforward_neural_net import FeedForwardNet
+from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
 
 # read Config file
@@ -98,17 +99,10 @@ def parse_hydra_configs(cfg: DictConfig):
     # print("ARCHITECTURE_NAME: ", ARCHITECTURE_NAME)
     # print("ARCHITECTURE_size: ", ARCHITECTURE)
 
-    models = [None] * cfg.num_envs
     if ARCHITECTURE_NAME == 'Feedforward':
-        for i in range(cfg.num_envs):
-            models[i] = FeedForwardNet(ARCHITECTURE)
-            init_net = FeedForwardNet(ARCHITECTURE)
-    elif ARCHITECTURE_NAME == 'Hebb':
-        for i in range(cfg.num_envs):
-            models[i] = HebbianNet(ARCHITECTURE)
-            init_net = HebbianNet(ARCHITECTURE)
-
-    init_params = models[0].get_params()
+        models = FeedForwardNet(ARCHITECTURE, POPSIZE)
+        init_net = FeedForwardNet(ARCHITECTURE, 1) # popsize = 1
+    init_params = models.get_params_a_model()
     
     print('trainable parameters: ', len(init_params))
 
@@ -187,7 +181,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # print('trained_data: ', trained_data)
             open_es_data = trained_data[0]
             init_params = open_es_data.best_mu # best_mu
-            init_net.set_params(init_params)
+            init_net.set_params(init_params) # TODO
             # models = [None] * cfg.num_envs
             # for i in range(cfg.num_envs):
             #     models[i] = FeedForwardNet(ARCHITECTURE)
@@ -204,10 +198,11 @@ def parse_hydra_configs(cfg: DictConfig):
             for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
                 ############### CPU Version ###############
+                # TODO
                 obs_cpu = obs['obs'].cpu().numpy()
                 # print("Observation: ", obs)
                 for i in range(cfg.num_envs):
-                    actions[i] = init_net.forward(obs_cpu[i])
+                    actions[i] = init_net.forward(obs_cpu[i]) # TODO
                 ###########################################
                 ############### CPU Version Multiple models ###############
                 # obs_cpu = obs['obs'].cpu().numpy()
@@ -230,18 +225,25 @@ def parse_hydra_configs(cfg: DictConfig):
             print('total_rewards: ', total_rewards)
 
     else:
+        initial_time = timeit.default_timer()
+        print("initial_time", initial_time)
+        time_per_epoch_array = []
+
         for epoch in range(EPOCHS):
+            # print('Epoch: ', epoch)
+            start_time = timeit.default_timer()
             run = 'd'
 
+            # retrieve solution from ES 
             solutions = solver.ask()
             
-            for i in range(cfg.num_envs):
-                models[i].set_params(solutions[i])
+            # set models parameters 
+            models.set_params(solutions)
 
             total_rewards = torch.zeros(cfg.num_envs)
             total_rewards = total_rewards.cuda()
 
-            # obs = env.reset()
+            obs = env.reset()
             # obs = obs['obs'].cpu().numpy()
             
             # for i in range(cfg.num_envs):
@@ -250,15 +252,15 @@ def parse_hydra_configs(cfg: DictConfig):
             for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
                 ############### CPU Version ###############
-                obs_cpu = obs['obs'].cpu().numpy()
-                # print('obs_cpu', obs_cpu)
-                # print("Observation: ", obs)
-                for i in range(cfg.num_envs):
-                    actions[i] = models[i].forward(obs_cpu[i])
+                # obs_cpu = obs['obs'].cpu().numpy()
+                # # print('obs_cpu', obs_cpu)
+                # # print("Observation: ", obs)
+                # for i in range(cfg.num_envs):
+                #     actions[i] = models[i].forward(obs_cpu[i])
                 ###########################################
                 ############### GPU Version ###############
-                # for i in range(cfg.num_envs):
-                #     actions[i] = models[i].forward(obs['obs'][i])
+                # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).cuda()
+                actions = models.forward(obs['obs'])
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)

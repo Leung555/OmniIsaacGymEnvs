@@ -90,26 +90,34 @@ SAVE_EVERY = cfg['SAVE_EVERY']
 # print("ARCHITECTURE_NAME: ", ARCHITECTURE_NAME)
 # print("ARCHITECTURE_size: ", ARCHITECTURE)
 
+# GPU
 if ARCHITECTURE_NAME == 'Feedforward':
     models = FeedForwardNet(ARCHITECTURE, POPSIZE)
-    
-# elif ARCHITECTURE_NAME == 'Hebb':
-#     for i in range(POPSIZE):
-#         models = HebbianNet(ARCHITECTURE)
+    # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
+elif ARCHITECTURE_NAME == 'Hebb':
+    models = HebbianNet(ARCHITECTURE, POPSIZE)
 
+# CPU
 # models = [None] * POPSIZE
 # if ARCHITECTURE_NAME == 'Feedforward':
 #     for i in range(POPSIZE):
-#         models[i] = FeedForwardNet(ARCHITECTURE, POPSIZE)
-#     init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
+#         models[i] = FeedForwardNet(ARCHITECTURE)
+#     init_net = FeedForwardNet(ARCHITECTURE)
 # elif ARCHITECTURE_NAME == 'Hebb':
 #     for i in range(POPSIZE):
 #         models[i] = HebbianNet(ARCHITECTURE)
 #     init_net = HebbianNet(ARCHITECTURE)
 
-init_params = models[0].get_params()
-
+# GPU version test 
+init_params = models.get_params_a_model()
+print('init_params', init_params)
 print('trainable parameters: ', len(init_params))
+
+# CPU version test
+# init_params = models[i].get_params()
+# print('init_params', init_params)
+# print('trainable parameters: ', len(init_params))
+
 
 # with open('log_'+str(run)+'.txt', 'a') as outfile:
 #     outfile.write('trainable parameters: ' + str(len(init_params)))
@@ -221,23 +229,30 @@ else:
     print("initial_time", initial_time)
     time_per_epoch_array = []
 
-    cpus = 8
-    def worker_action_fn(obs, model):
-        ''' calculate action from observation '''
-        return model.forward(obs)
+    # cpus = 8
+    # def worker_action_fn(obs, model):
+    #     ''' calculate action from observation '''
+    #     return model.forward(obs)
+    # obs = torch.eye(POPSIZE, ARCHITECTURE[0]).cuda()
 
     for epoch in range(EPOCHS):
+        print('Epoch: ', epoch)
         start_time = timeit.default_timer()
         run = 'd'
 
         solutions = solver.ask()
         print("solutions: ", solutions.shape)
 
+        # GPU
+        models.set_params(solutions)
+        # CPU
         # for i in range(POPSIZE):
         #     models[i].set_params(solutions[i])
 
         total_rewards = torch.zeros(POPSIZE)
         total_rewards = total_rewards.cuda()
+        
+        # print('obs: ', obs)
 
         # obs = env.reset()
         # obs = obs['obs'].cpu().numpy()
@@ -249,7 +264,7 @@ else:
             # print('step: ', _)
             ############### CPU Version ###############
             # obs_cpu = obs['obs'].cpu().numpy()
-            obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).numpy()
+            # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).numpy()
             # print("Observation: ", obs)
             # with concurrent.futures.ProcessPoolExecutor(cpus) as executor:
             #     actions = executor.map(worker_action_fn, obs, models)
@@ -259,9 +274,9 @@ else:
                 # print("action: ", actions)
             ###########################################
             ############### GPU Version ###############
-            # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).cuda()
-            # for i in range(POPSIZE):
-            #     actions[i] = models[i].forward(obs[i])
+            obs = torch.eye(POPSIZE, ARCHITECTURE[0]).cuda()
+            # obs = torch.Tensor([[1,0], [1,0]]).cuda()
+            actions = models.forward(obs)
             ###########################################
             # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
             # print("Action_3: ", actions)

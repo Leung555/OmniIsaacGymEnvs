@@ -10,23 +10,23 @@ experiment: ''
 num_envs: 2 # <---------------
 
 # disables rendering
-headless: False # <---------------
+headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 
-EPOCHS: 5 # <---------------
-EPISODE_LENGTH: 500 # <---------------
+EPOCHS: 1 # <---------------
+EPISODE_LENGTH: 1 # <---------------
 SAVE_EVERY: 100
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-ARCHITECTURE: [4, 2, 2, 1] # for cartpole Env Test
+ARCHITECTURE: [3, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
@@ -86,14 +86,14 @@ hydra:
 # ES algorithm
 ES_params:
   POPSIZE: 1024 # workstation (500)
-  EPISODE_LENGTH: 200 # workstation (200)
+  EPISODE_LENGTH: 400 # workstation (200)
   REWARD_FUNC:
     NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
     ORIENTATION_WEIGHT: 1.0
     DISTANCE_WEIGHT: 2.0
   rank_fitness: True
   antithetic: True
-  learning_rate: 0.1
+  learning_rate: 1.0
   learning_rate_decay: 0.9999
   sigma_init: 1
   sigma_decay: 0.999
