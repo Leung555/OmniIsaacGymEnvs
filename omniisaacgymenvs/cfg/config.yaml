@@ -20,13 +20,13 @@ wandb_activate: False # <---------------
 # model: 'Feedforward'  # <---------------
 model: 'Hebb'
 
-EPOCHS: 1 # <---------------
-EPISODE_LENGTH: 1 # <---------------
+EPOCHS: 5 # <---------------
+EPISODE_LENGTH: 100 # <---------------
 SAVE_EVERY: 100
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-ARCHITECTURE: [3, 1] # for cartpole Env Test
+ARCHITECTURE: [5, 5] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
