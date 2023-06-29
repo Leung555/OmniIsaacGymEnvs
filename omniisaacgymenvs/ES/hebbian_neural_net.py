@@ -79,9 +79,9 @@ class HebbianNet:
         # j = post.unsqueeze(2).repeat(1,1,weights.shape[1]).transpose(1,2)
         j = post.unsqueeze(2).expand(-1,-1, weights.shape[1]).transpose(1,2)
         ij = i * j
-        print('j: ', j)
-        print()
-        print('ij: ', ij)
+        # print('j: ', j)
+        # print()
+        # print('ij: ', ij)
 
 
         weights = weights + lr * (A*ij + B*i + C*j + D)

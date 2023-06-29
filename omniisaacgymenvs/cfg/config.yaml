@@ -20,8 +20,8 @@ wandb_activate: False # <---------------
 # model: 'Feedforward'  # <---------------
 model: 'Hebb'
 
-EPOCHS: 1 # <---------------
-EPISODE_LENGTH: 1 # <---------------
+EPOCHS: 5 # <---------------
+EPISODE_LENGTH: 100 # <---------------
 SAVE_EVERY: 100
 USE_TRAIN_PARAMS: False # <---------------
 
