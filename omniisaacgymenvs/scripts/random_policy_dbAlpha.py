@@ -86,7 +86,7 @@ def parse_hydra_configs(cfg: DictConfig):
     USE_TRAIN_PARAMS = cfg.USE_TRAIN_PARAMS
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
-    print('TASK', TASK)
+
 
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
@@ -101,10 +101,12 @@ def parse_hydra_configs(cfg: DictConfig):
 
     if ARCHITECTURE_NAME == 'Feedforward':
         models = FeedForwardNet(ARCHITECTURE, POPSIZE)
-        init_net = FeedForwardNet(ARCHITECTURE, 1) # popsize = 1
+        # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
+    elif ARCHITECTURE_NAME == 'Hebb':
+        models = HebbianNet(ARCHITECTURE, POPSIZE)
     init_params = models.get_params_a_model()
     
-    print('trainable parameters: ', len(init_params))
+
 
     # with open('log_'+str(run)+'.txt', 'a') as outfile:
     #     outfile.write('trainable parameters: ' + str(len(init_params)))
@@ -135,6 +137,11 @@ def parse_hydra_configs(cfg: DictConfig):
     # initiate Task, Robot
     task = initialize_task(cfg_dict, env)
 
+    print('TASK', TASK)
+    print('model: ', ARCHITECTURE_NAME)
+    print('model size: ', ARCHITECTURE)
+    print('trainable parameters: ', len(init_params))
+    print('len_init_params', len(init_params))
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
     # print("Action space is", env.action_space)

@@ -9,7 +9,9 @@ class RBFNet:
         """
         # cpg params
         self.omega = 0.01*np.pi
-        self.o1, self.o2 = 0.01, 0.18
+        self.alpha = 1.01
+        self.o1 = torch.Tensor.repeat(torch.Tensor([]))
+        self.o2 = 0.18
         # Rbf network
         input_range = (-1, 1)
         self.num_basis = num_basis
@@ -23,11 +25,11 @@ class RBFNet:
           
 
 
-    def forward(self, pre):
+    def forward(self):
 
         with torch.no_grad():
-            self.o1 = tanh(1.01*( self.o1*cos(self.omega) + self.o2*sin(self.omega)))
-            self.o2 = tanh(1.01*(-self.o1*sin(self.omega) + self.o2*cos(self.omega)))
+            self.o1 = tanh(self.alpha*( self.o1*cos(self.omega) + self.o2*sin(self.omega)))
+            self.o2 = tanh(self.alpha*(-self.o1*sin(self.omega) + self.o2*cos(self.omega)))
             cpg_out = [[self.o1], [self.o2]]
             # print('o1', o1)
             post = np.sum(self.weights*np.exp(self.variance*(cpg_out - self.centers) ** 2), axis=1)
@@ -39,20 +41,21 @@ class RBFNet:
 
         return p.cpu().flatten().numpy()
 
+    def get_params_a_model(self):
+        p = torch.cat([ params.flatten() for params in self.weights[0]] )
 
+        return p.cpu().flatten().numpy()
+    
     def set_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
 
-        m = 0
         # print('---- set_params ---------------------------------')
         # print('self.test: ', self.weights[0])
         # print('----------------------------------------------')
-        for i, w in enumerate(self.weights):
-            # print('w: ', w)
-            a, b = w.shape
-            self.weights[i] = flat_params[m:m + a * b].reshape(a, b)
-            # self.weights[i] = self.weights[i].cuda()
-            m += a * b 
+        # print('w: ', w)
+        pop, a, b = self.weights.shape
+        self.weights = flat_params.reshape(self.popsize, a, b)
+        # self.weights[i] = self.weights[i].cuda()
         # print('---- set_params ouput ---------------------------------')
         # print('self.test: ', self.weights[0])
         # print('----------------------------------------------')

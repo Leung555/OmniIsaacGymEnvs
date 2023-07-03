@@ -3,11 +3,17 @@ import torch
 
 
 def WeightStand(w, eps=1e-5):
+    # print('---WeightStand---')
+    # print('w: ', w)
+    mean = torch.mean(input=w, dim=[1,2], keepdim=True)
+    # print('mean: ', mean)
+    var = torch.var(input=w, dim=[1,2], keepdim=True)
+    # print('var: ', var)
+    # print('w - mean: ', w - mean)
+    # print('torch.sqrt(var + eps): ', torch.sqrt(var + eps))
 
-    mean = torch.mean(input=w, dim=[0,1], keepdim=True)
-    var = torch.var(input=w, dim=[0,1], keepdim=True)
-
-    w = (w - mean) / torch.sqrt(var + eps)
+    w = (w - mean) / torch.sqrt(var)
+    # print('w: ', w)
 
     return w
 
@@ -40,20 +46,26 @@ class HebbianNet:
             """
             
             for i, W in enumerate(self.weights):
+                # print('pre: ', pre)
+                # print()
+                # print('weights: ', W)
+                # print('weights shape: ', W.shape)
+                # print('torch.ones(weights.shape): ', torch.ones(W.shape))
+                # print()
                 # pre = torch.Tensor([[1., 0], 
                 #                     [1., 0]]).cuda()
                 # W = torch.ones(weights.shape).cuda()
                 post =  torch.einsum('ij, ijk -> ik', pre, W.float())
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())
-
+                # print(post)
                 self.weights[i] = self.hebbian_update(i, W, pre, post, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
                 pre = post
 
         return post.detach()
 
 
-    def hebbian_update(self, hid_num ,weights, pre,post, A, B, C, D, lr):
+    def hebbian_update(self, hid_num ,weights, pre, post, A, B, C, D, lr):
 
         # print('\n------- Hebbian_Update --------------')
         # print('hidden layer: ', hid_num+1)
@@ -83,9 +95,12 @@ class HebbianNet:
         # print()
         # print('ij: ', ij)
 
+        # print('weights: ', weights)
 
         weights = weights + lr * (A*ij + B*i + C*j + D)
+        # print('weights update: ', weights)
         weights = WeightStand(weights)
+        # print('weights stand: ', weights)
         # print('------------- Hebb-------------------\n')
 
         return weights
@@ -111,6 +126,7 @@ class HebbianNet:
 
     def set_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params)
 
         m = 0
         for i, hebb_A in enumerate(self.A):
@@ -138,6 +154,13 @@ class HebbianNet:
             self.lr[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
             m += a * b 
 
+        # for i, w in enumerate(self.weights):
+        #     # print('w: ', w)
+        #     pop, a, b = w.shape
+        #     # print('pop, a, b', pop, a, b)
+        #     self.weights[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+        #     # self.weights[i] = self.weights[i].cuda()
+        #     m += a * b 
 
     def get_weights(self):
         return [w for w in self.weights]

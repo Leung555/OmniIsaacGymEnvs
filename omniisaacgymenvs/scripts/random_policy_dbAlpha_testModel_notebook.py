@@ -48,7 +48,7 @@ from omniisaacgymenvs.ES.ES_classes import OpenES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
-# from omniisaacgymenvs.ES.hebbian_rbf_neural_net import HebbianRBFNet
+from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 
 # read Config file
 
@@ -79,6 +79,7 @@ SIGMA_LIMIT         = configs['ES_params']['sigma_limit']
 ARCHITECTURE_NAME = cfg['model']
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 ARCHITECTURE = cfg['ARCHITECTURE']
+RBF_ARCHITECTURE = cfg['ARCHITECTURE']
 
 # Training parameters
 # EPOCHS = configs['Train_params']['EPOCH']
@@ -98,6 +99,8 @@ if ARCHITECTURE_NAME == 'Feedforward':
     # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
 elif ARCHITECTURE_NAME == 'Hebb':
     models = HebbianNet(ARCHITECTURE, POPSIZE)
+elif ARCHITECTURE_NAME == 'rbf':
+    models = RBFNet(RBF_ARCHITECTURE, POPSIZE)
 
 # CPU
 # models = [None] * POPSIZE
@@ -112,7 +115,10 @@ elif ARCHITECTURE_NAME == 'Hebb':
 
 # GPU version test 
 init_params = models.get_params_a_model()
-print('init_params', init_params)
+# init_params = models.get_params()
+# print('init_params', init_params)
+print('model: ', ARCHITECTURE_NAME)
+print('model size: ', ARCHITECTURE)
 print('trainable parameters: ', len(init_params))
 
 # CPU version test
@@ -180,6 +186,8 @@ if ARCHITECTURE_NAME == 'Feedforward':
     dir_path = 'data/'+TASK+'/model/FF/'
 elif ARCHITECTURE_NAME == 'Hebb':
     dir_path = 'data/'+TASK+'/model/Hebb/'
+elif ARCHITECTURE_NAME == 'rbf':
+    dir_path = 'data/'+TASK+'/model/rbf/'
 res = listdir(dir_path)
 TEST = cfg['test']
 if TEST == True:
@@ -195,6 +203,7 @@ if TEST == True:
         #     models[i] = FeedForwardNet(ARCHITECTURE)
         #     models[i].set_params(solutions[i])
         solutions = open_es_data.ask()
+        print('solutions.shape: ', solutions.shape)
         
         for i in range(POPSIZE):
             models[i].set_params(solutions[i])

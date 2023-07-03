@@ -1,13 +1,13 @@
 
 # Task name - used to pick the class to load
-task_name: Cartpole # Ant, dbAlpha, Cartpole
-# task_name: ${task.name}
+# task_name: Cartpole # Ant, dbAlpha, Cartpole
+task_name: ${task.name}
 # experiment name. defaults to name of training config
 experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 2 # <---------------
+num_envs: 1024 # <---------------
 
 # disables rendering
 headless: True # <---------------
@@ -22,15 +22,18 @@ wandb_activate: False # <---------------
 model: 'rbf'
 # model: 'HEbb_rbf'
 
-EPOCHS: 5 # <---------------
-EPISODE_LENGTH: 100 # <---------------
-SAVE_EVERY: 100
+EPOCHS: 300 # <---------------
+EPISODE_LENGTH: 300 # <---------------
+SAVE_EVERY: 999
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-ARCHITECTURE: [5, 5] # for cartpole Env Test
+# ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
-# ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
+ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
+
+# Test RBF network
+RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output]
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -95,9 +98,9 @@ ES_params:
     DISTANCE_WEIGHT: 2.0
   rank_fitness: True
   antithetic: True
-  learning_rate: 1.0
+  learning_rate: 0.1
   learning_rate_decay: 0.9999
-  sigma_init: 1
+  sigma_init: 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

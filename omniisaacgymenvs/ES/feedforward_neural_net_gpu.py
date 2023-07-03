@@ -4,8 +4,8 @@ import torch
 
 def WeightStand(w, eps=1e-5):
 
-    mean = torch.mean(input=w, dim=[0,1], keepdim=True)
-    var = torch.var(input=w, dim=[0,1], keepdim=True)
+    mean = torch.mean(input=w, dim=[1,2], keepdim=True)
+    var = torch.var(input=w, dim=[1,2], keepdim=True)
 
     w = (w - mean) / torch.sqrt(var + eps)
 
@@ -64,6 +64,7 @@ class FeedForwardNet:
 
     def set_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params)
 
         m = 0
         # print('---- set_params ---------------------------------')

@@ -11,7 +11,7 @@ def WeightStand(w, eps=1e-5):
     return w
 
 
-class HebbianRBFNet:
+class RBFHebbianNet:
     def __init__(self, num_output, num_basis=10):
         """
         sizes: [input_size, hid_1, ..., output_size]
@@ -32,7 +32,7 @@ class HebbianRBFNet:
           
 
 
-    def forward(self, pre):
+    def forward(self):
 
         with torch.no_grad():
             pre = torch.from_numpy(pre)
