@@ -34,7 +34,7 @@ class RBFNet:
             self.O = torch.tanh(self.alpha*torch.matmul(self.O, self.W))
             post = torch.sum(self.weights*torch.exp(-self.variance*(self.O - 
                 self.centers.expand(self.POPSIZE*2,self.num_basis).transpose(0,1).
-                reshape(self.num_basis, self.POPSIZE,2)) ** 2), dim=0)
+                reshape(self.num_basis, self.POPSIZE,2)) ** 2), dim=[0,2])
         return post.detach()
 
     def get_params(self):

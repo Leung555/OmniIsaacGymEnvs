@@ -289,6 +289,7 @@ else:
             # print(obs)
             # obs = torch.Tensor([[1,0], [1,0]]).cuda()
             actions = models.forward(obs)
+            print('actions: ', actions)
             ###########################################
             # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
             # print("Action_3: ", actions)
