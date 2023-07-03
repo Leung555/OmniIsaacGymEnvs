@@ -17,15 +17,15 @@ class RBFHebbianNet:
         sizes: [input_size, hid_1, ..., output_size]
         """
         # cpg params
-        self.omega = 0.01*np.pi
-        self.o1, self.o2 = 0.01, 0.01
-        # Rbf network
-        input_range = (-1, 1)
-        self.num_basis = num_basis
-        self.num_output = num_output
-        self.centers = np.linspace(input_range[0], input_range[1], num=num_basis)
-        self.variance = 1/0.04
-        self.weights = np.random.randn(num_output, num_basis, )
+        # self.omega = 0.01*np.pi
+        # self.o1, self.o2 = 0.01, 0.01
+        # # Rbf network
+        # input_range = (-1, 1)
+        # self.num_basis = num_basis
+        # self.num_output = num_output
+        # self.centers = np.linspace(input_range[0], input_range[1], num=num_basis)
+        # self.variance = 1/0.04
+        # self.weights = np.random.randn(num_output, num_basis, )
 
         # self.weights = [torch.Tensor(sizes[i], sizes[i + 1]).uniform_(-1.0,1.0)
         #                     for i in range(len(sizes) - 1)]

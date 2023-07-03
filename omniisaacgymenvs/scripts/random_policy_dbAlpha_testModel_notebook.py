@@ -100,7 +100,7 @@ if ARCHITECTURE_NAME == 'Feedforward':
 elif ARCHITECTURE_NAME == 'Hebb':
     models = HebbianNet(ARCHITECTURE, POPSIZE)
 elif ARCHITECTURE_NAME == 'rbf':
-    models = RBFNet(RBF_ARCHITECTURE, POPSIZE)
+    models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
 
 # CPU
 # models = [None] * POPSIZE
@@ -286,6 +286,7 @@ else:
             ###########################################
             ############### GPU Version ###############
             obs = torch.eye(POPSIZE, ARCHITECTURE[0]).cuda()
+            # print(obs)
             # obs = torch.Tensor([[1,0], [1,0]]).cuda()
             actions = models.forward(obs)
             ###########################################

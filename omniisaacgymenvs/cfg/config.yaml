@@ -1,13 +1,13 @@
 
 # Task name - used to pick the class to load
-# task_name: Cartpole # Ant, dbAlpha, Cartpole
-task_name: ${task.name}
+task_name: Cartpole # Ant, dbAlpha, Cartpole
+# task_name: ${task.name}
 # experiment name. defaults to name of training config
 experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 1024 # <---------------
+num_envs: 2 # <---------------
 
 # disables rendering
 headless: True # <---------------
@@ -22,15 +22,15 @@ wandb_activate: False # <---------------
 model: 'rbf'
 # model: 'HEbb_rbf'
 
-EPOCHS: 300 # <---------------
+EPOCHS: 5 # <---------------
 EPISODE_LENGTH: 300 # <---------------
 SAVE_EVERY: 999
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
-# ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
+ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
-ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
 # Test RBF network
 RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output]

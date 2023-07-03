@@ -3,38 +3,39 @@ import torch
 from math import cos, sin, tanh
 
 class RBFNet:
-    def __init__(self, num_output, num_basis=10):
+    def __init__(self, POPSIZE, num_output, num_basis=10):
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
+        self.POPSIZE = POPSIZE
         # cpg params
         self.omega = 0.01*np.pi
         self.alpha = 1.01
-        self.o1 = torch.Tensor.repeat(torch.Tensor([]))
-        self.o2 = 0.18
+        # self.o1 = torch.Tensor.repeat(torch.Tensor([0.00]), POPSIZE).unsqueeze(1)
+        # self.o2 = torch.Tensor.repeat(torch.Tensor([0.18]), POPSIZE).unsqueeze(1)
+        self.a = torch.Tensor([[0.01, 0.18]])
+        print(self.a)
+        self.O = self.a.expand(POPSIZE, 2).cuda()
         # Rbf network
-        input_range = (-1, 1)
-        self.num_basis = num_basis
-        self.num_output = num_output
-        self.centers = np.linspace(input_range[0], input_range[1], num=num_basis)
+        self.input_range = (-1, 1)
+        self.num_basis = 10
+        self.num_output = 1
+        self.centers = torch.linspace(self.input_range[0], 
+                                      self.input_range[1], self.num_basis).cuda()
         self.variance = 1/0.04
-        self.weights = np.random.randn(num_output, num_basis, )
-        self.rbf_array = []
-        # self.weights = [torch.Tensor(sizes[i], sizes[i + 1]).uniform_(-1.0,1.0)
-        #                     for i in range(len(sizes) - 1)]
-          
+        self.weights = torch.randn(self.num_basis, self.POPSIZE, self.num_output,).cuda()
+        self.W = torch.Tensor([[ cos(self.omega) ,  -sin(self.omega)], 
+                                [ sin(self.omega) ,  cos(self.omega)]]).cuda()
 
 
-    def forward(self):
+    def forward(self, pre):
 
         with torch.no_grad():
-            self.o1 = tanh(self.alpha*( self.o1*cos(self.omega) + self.o2*sin(self.omega)))
-            self.o2 = tanh(self.alpha*(-self.o1*sin(self.omega) + self.o2*cos(self.omega)))
-            cpg_out = [[self.o1], [self.o2]]
-            # print('o1', o1)
-            post = np.sum(self.weights*np.exp(self.variance*(cpg_out - self.centers) ** 2), axis=1)
-
-        return post #post.detach()
+            self.O = torch.tanh(self.alpha*torch.matmul(self.O, self.W))
+            post = torch.sum(self.weights*torch.exp(-self.variance*(self.O - 
+                self.centers.expand(self.POPSIZE*2,self.num_basis).transpose(0,1).
+                reshape(self.num_basis, self.POPSIZE,2)) ** 2), dim=0)
+        return post.detach()
 
     def get_params(self):
         p = torch.cat([ params.flatten() for params in self.weights] )
@@ -42,7 +43,7 @@ class RBFNet:
         return p.cpu().flatten().numpy()
 
     def get_params_a_model(self):
-        p = torch.cat([ params.flatten() for params in self.weights[0]] )
+        p = torch.cat([ params.flatten() for params in self.weights[:, 0]] )
 
         return p.cpu().flatten().numpy()
     
@@ -53,8 +54,8 @@ class RBFNet:
         # print('self.test: ', self.weights[0])
         # print('----------------------------------------------')
         # print('w: ', w)
-        pop, a, b = self.weights.shape
-        self.weights = flat_params.reshape(self.popsize, a, b)
+        basis, popsize, num_out = self.weights.shape
+        self.weights = flat_params.reshape(basis, popsize, num_out).cuda()
         # self.weights[i] = self.weights[i].cuda()
         # print('---- set_params ouput ---------------------------------')
         # print('self.test: ', self.weights[0])
@@ -62,4 +63,4 @@ class RBFNet:
 
 
     def get_weights(self):
-        return [w for w in self.weights]
+        return self.weights
