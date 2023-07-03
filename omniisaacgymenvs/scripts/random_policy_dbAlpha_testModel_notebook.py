@@ -47,6 +47,8 @@ from omniisaacgymenvs.utils.task_util import initialize_task
 from omniisaacgymenvs.ES.ES_classes import OpenES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
+from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
+# from omniisaacgymenvs.ES.hebbian_rbf_neural_net import HebbianRBFNet
 
 # read Config file
 

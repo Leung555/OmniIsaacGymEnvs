@@ -18,7 +18,9 @@ wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
-model: 'Hebb'
+# model: 'Hebb'
+model: 'rbf'
+# model: 'HEbb_rbf'
 
 EPOCHS: 5 # <---------------
 EPISODE_LENGTH: 100 # <---------------
