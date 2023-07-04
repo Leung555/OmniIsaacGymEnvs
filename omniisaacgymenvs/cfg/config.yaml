@@ -7,24 +7,24 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 2 # <---------------
+num_envs: 1024 # <---------------
 
 # disables rendering
-headless: True # <---------------
+headless: False # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: False # <---------------
+wandb_activate: True # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
-# model: 'Hebb'
-model: 'rbf'
+model: 'Hebb'
+# model: 'rbf'
 # model: 'HEbb_rbf'
 
-EPOCHS: 5 # <---------------
+EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <---------------
-SAVE_EVERY: 999
+SAVE_EVERY: 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -33,7 +33,8 @@ ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
 # Test RBF network
-RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output]
+# RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
+RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] Ant 1 output
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -100,7 +101,7 @@ ES_params:
   antithetic: True
   learning_rate: 0.1
   learning_rate_decay: 0.9999
-  sigma_init: 0.1
+  sigma_init: 1.0
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

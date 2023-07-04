@@ -48,6 +48,8 @@ from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 from omniisaacgymenvs.ES.ES_classes import OpenES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
+from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
+from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 
 # read Config file
 @hydra.main(config_name="config", config_path="../cfg")
@@ -77,6 +79,7 @@ def parse_hydra_configs(cfg: DictConfig):
     ARCHITECTURE_NAME = cfg.model
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
     ARCHITECTURE = cfg.ARCHITECTURE
+    RBF_ARCHITECTURE = cfg.RBF_ARCHITECTURE
 
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
@@ -89,7 +92,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     if wandb_activate:
-        wandb.init(project='dbAlpha_ES_log',
+        wandb.init(project='Cartpole_ES_log',
                     name=cfg.model+'_'+TASK, 
                     config=cfg_dict)
     
@@ -104,8 +107,9 @@ def parse_hydra_configs(cfg: DictConfig):
         # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'Hebb':
         models = HebbianNet(ARCHITECTURE, POPSIZE)
+    elif ARCHITECTURE_NAME == 'rbf':
+        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
     init_params = models.get_params_a_model()
-    
 
 
     # with open('log_'+str(run)+'.txt', 'a') as outfile:
@@ -141,7 +145,6 @@ def parse_hydra_configs(cfg: DictConfig):
     print('model: ', ARCHITECTURE_NAME)
     print('model size: ', ARCHITECTURE)
     print('trainable parameters: ', len(init_params))
-    print('len_init_params', len(init_params))
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
     # print("Action space is", env.action_space)
@@ -170,8 +173,9 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
         dir_path = './data/'+TASK+'/model/Hebb/'
+    elif ARCHITECTURE_NAME == 'rbf':
+        dir_path = 'data/'+TASK+'/model/rbf/'
     res = listdir(dir_path)
-
     if USE_TRAIN_PARAMS:
         for i, file_name in enumerate(res[1:2]):
             print('file_name: ', file_name)
@@ -181,14 +185,15 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
-        for i, file_name in enumerate(res[0:1]):
+        for i, file_name in enumerate(res[1:2]):
             print('file_name: ', file_name)
             time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
             open_es_data = trained_data[0]
             init_params = open_es_data.best_mu # best_mu
-            init_net.set_params(init_params) # TODO
+            # print('init_params: ', init_params)
+            # models.set_params_single_model(init_params)            
             # models = [None] * cfg.num_envs
             # for i in range(cfg.num_envs):
             #     models[i] = FeedForwardNet(ARCHITECTURE)
@@ -196,8 +201,7 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = open_es_data.ask()
             # obs = env.reset()
             
-            for i in range(cfg.num_envs):
-                models[i].set_params(solutions[i])
+            models.set_params_single_model(init_params)
 
             total_rewards = torch.zeros(cfg.num_envs)
             total_rewards = total_rewards.cuda()
@@ -206,10 +210,14 @@ def parse_hydra_configs(cfg: DictConfig):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO
-                obs_cpu = obs['obs'].cpu().numpy()
-                # print("Observation: ", obs)
-                for i in range(cfg.num_envs):
-                    actions[i] = init_net.forward(obs_cpu[i]) # TODO
+                actions = models.forward(obs['obs'])
+                # print('actions: ', actions)
+                ###########################################
+                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                # print("Action_3: ", actions)
+                obs, reward, done, info = env.step(
+                    actions
+                )
                 ###########################################
                 ############### CPU Version Multiple models ###############
                 # obs_cpu = obs['obs'].cpu().numpy()
@@ -222,9 +230,6 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     actions[i] = init_net.forward(obs['obs'][i])
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
-                obs, reward, done, info = env.step(
-                    actions # torch.rand((1,)+env.action_space.shape, device="cuda:0")
-                )
 
                 total_rewards += reward
 
@@ -268,6 +273,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 ############### GPU Version ###############
                 # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).cuda()
                 actions = models.forward(obs['obs'])
+                # print('actions: ', actions)
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
@@ -322,7 +328,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 print('saving..')
                 pickle.dump((
                     solver,
-                    copy.deepcopy(init_net),
+                    copy.deepcopy(models),
                     pop_mean_curve,
                     best_sol_curve,
                     ), open(dir_path+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))

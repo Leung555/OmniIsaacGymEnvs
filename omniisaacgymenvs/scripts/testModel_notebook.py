@@ -79,7 +79,6 @@ SIGMA_LIMIT         = configs['ES_params']['sigma_limit']
 ARCHITECTURE_NAME = cfg['model']
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 ARCHITECTURE = cfg['ARCHITECTURE']
-RBF_ARCHITECTURE = cfg['ARCHITECTURE']
 
 # Training parameters
 # EPOCHS = configs['Train_params']['EPOCH']
@@ -94,13 +93,16 @@ SAVE_EVERY = cfg['SAVE_EVERY']
 # print("ARCHITECTURE_size: ", ARCHITECTURE)
 
 # GPU
+print('model: ', ARCHITECTURE_NAME)
 if ARCHITECTURE_NAME == 'Feedforward':
     models = FeedForwardNet(ARCHITECTURE, POPSIZE)
     # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
 elif ARCHITECTURE_NAME == 'Hebb':
     models = HebbianNet(ARCHITECTURE, POPSIZE)
 elif ARCHITECTURE_NAME == 'rbf':
+    RBF_ARCHITECTURE = cfg['RBF_ARCHITECTURE']
     models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
+    print('model: ', RBF_ARCHITECTURE)
 
 # CPU
 # models = [None] * POPSIZE
@@ -197,7 +199,8 @@ if TEST == True:
         # print('trained_data: ', trained_data)
         open_es_data = trained_data[0]
         init_params = open_es_data.mu
-        init_net.set_params(init_params)
+        # print('init_params: ', init_params)
+        models.set_params_single_model(init_params)
         # models = [None] * cfg.num_envs
         # for i in range(cfg.num_envs):
         #     models[i] = FeedForwardNet(ARCHITECTURE)
@@ -205,9 +208,6 @@ if TEST == True:
         solutions = open_es_data.ask()
         print('solutions.shape: ', solutions.shape)
         
-        for i in range(POPSIZE):
-            models[i].set_params(solutions[i])
-
         for _ in range(EPISODE_LENGTH):
             print('step: ', _)
             ############### CPU Version ###############
@@ -217,9 +217,10 @@ if TEST == True:
             #     actions[i] = init_net.forward(obs_cpu[i])
             ###########################################
             ############### CPU Version Multiple models ###############
-            obs_cpu = obs['obs'].cpu().numpy()
-            for i in range(cfg.num_envs):
-                actions[i] = models[i].forward(obs_cpu[i])
+            obs = torch.eye(POPSIZE, ARCHITECTURE[0]).cuda()
+            # print(obs)
+            # obs = torch.Tensor([[1,0], [1,0]]).cuda()
+            actions = models.forward(obs)
             ##########################################################
 
             ############### GPU Version ###############
@@ -289,7 +290,7 @@ else:
             # print(obs)
             # obs = torch.Tensor([[1,0], [1,0]]).cuda()
             actions = models.forward(obs)
-            print('actions: ', actions)
+            # print('actions: ', actions)
             ###########################################
             # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
             # print("Action_3: ", actions)

@@ -83,6 +83,22 @@ class FeedForwardNet:
         # print('self.weights_already set: ', self.weights)
         # print('----------------------------------------------')
 
+    def set_params_single_model(self, flat_params):
+        flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params)
+
+        m = 0
+        for i, w in enumerate(self.weights):
+            # print('w: ', w)
+            pop, a, b = w.shape
+            # print('pop, a, b', pop, a, b)
+            # print('self.weights[i]: ', self.weights[i].shape)
+            # print('flat_params: ', flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).shape)
+            self.weights[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            # self.weights[i] = self.weights[i].cuda()
+            m += a * b 
+
+
 
     def get_weights(self):
         return [w for w in self.weights]
