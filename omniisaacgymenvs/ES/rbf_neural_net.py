@@ -13,17 +13,16 @@ class RBFNet:
         self.alpha = 1.01
         # self.o1 = torch.Tensor.repeat(torch.Tensor([0.00]), POPSIZE).unsqueeze(1)
         # self.o2 = torch.Tensor.repeat(torch.Tensor([0.18]), POPSIZE).unsqueeze(1)
-        self.a = torch.Tensor([[0.01, 0.18]])
-        print(self.a)
-        self.O = self.a.expand(POPSIZE, 2).cuda()
+
+        self.O = torch.Tensor([[0.01, 0.18]]).expand(POPSIZE, 2)
         # Rbf network
         self.input_range = (-1, 1)
         self.num_basis = 10
         self.num_output = 1
         self.centers = torch.linspace(self.input_range[0], 
-                                      self.input_range[1], self.num_basis).cuda()
+                                      self.input_range[1], num_basis).cuda()
         self.variance = 1/0.04
-        self.weights = torch.randn(self.num_basis, self.POPSIZE, self.num_output,).cuda()
+        self.weights = torch.randn(self.POPSIZE, self.num_basis, self.num_output,).cuda()
         self.W = torch.Tensor([[ cos(self.omega) ,  -sin(self.omega)], 
                                 [ sin(self.omega) ,  cos(self.omega)]]).cuda()
 
@@ -32,9 +31,9 @@ class RBFNet:
 
         with torch.no_grad():
             self.O = torch.tanh(self.alpha*torch.matmul(self.O, self.W))
-            post = torch.sum(self.weights*torch.exp(-self.variance*(self.O - 
-                self.centers.expand(self.POPSIZE*2,self.num_basis).transpose(0,1).
-                reshape(self.num_basis, self.POPSIZE,2)) ** 2), dim=[0,2]).unsqueeze(1)
+            a = torch.exp(-self.variance*torch.sum((self.O.reshape(self.POPSIZE, 2, 1).
+                    expand(self.POPSIZE,2,self.num_basis) - self.centers) ** 2, dim=1))
+            post = torch.matmul(a, self.weights)[:, 0]
         return post.detach()
 
     def get_params(self):
