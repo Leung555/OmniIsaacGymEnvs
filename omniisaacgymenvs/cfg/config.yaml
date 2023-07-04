@@ -1,25 +1,25 @@
 
 # Task name - used to pick the class to load
-task_name: Cartpole # Ant, dbAlpha, Cartpole
+task_name: Ant # Ant, dbAlpha, Cartpole
 # task_name: ${task.name}
 # experiment name. defaults to name of training config
 experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 1024 # <---------------
+num_envs: 4 # <---------------
 
 # disables rendering
-headless: False # <---------------
+headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: True # <---------------
+wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
-model: 'Hebb'
-# model: 'rbf'
+# model: 'Hebb'
+model: 'rbf'
 # model: 'HEbb_rbf'
 
 EPOCHS: 500 # <---------------
@@ -35,6 +35,7 @@ ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] Ant 1 output
+# RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 
 # seed - set to -1 to choose random seed
 seed: 42
