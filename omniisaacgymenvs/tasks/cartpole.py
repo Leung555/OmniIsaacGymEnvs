@@ -78,14 +78,17 @@ class CartpoleTask(RLTask):
         self._sim_config.apply_articulation_settings("Cartpole", get_prim_at_path(cartpole.prim_path), self._sim_config.parse_actor_config("Cartpole"))
 
     def get_observations(self) -> dict:
+        # each data type observation -> dimension = (num_envs, num_observation)
         dof_pos = self._cartpoles.get_joint_positions(clone=False)
         dof_vel = self._cartpoles.get_joint_velocities(clone=False)
 
+        # extracted vector of obsevation or feature
         cart_pos = dof_pos[:, self._cart_dof_idx]
         cart_vel = dof_vel[:, self._cart_dof_idx]
         pole_pos = dof_pos[:, self._pole_dof_idx]
         pole_vel = dof_vel[:, self._pole_dof_idx]
 
+        # self observation dimension: (num_envs, all observation spaces or features)
         self.obs_buf[:, 0] = cart_pos
         self.obs_buf[:, 1] = cart_vel
         self.obs_buf[:, 2] = pole_pos
@@ -96,31 +99,42 @@ class CartpoleTask(RLTask):
                 "obs_buf": self.obs_buf
             }
         }
+        print('observations: ', observations)
         return observations
 
     def pre_physics_step(self, actions) -> None:
         if not self._env._world.is_playing():
             return
-
+        
+        # reset environment according to the index
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
         if len(reset_env_ids) > 0:
             self.reset_idx(reset_env_ids)
+        # print('reset_env_ids: ', reset_env_ids)
 
+        # move actions data to GPU
         actions = actions.to(self._device)
+        # print('actions: ', actions)
 
+        # initialize force array dimension = (nm_envs, num_DOF_robot)
         forces = torch.zeros((self._cartpoles.count, self._cartpoles.num_dof), dtype=torch.float32, device=self._device)
+        # print('forces: ', forces)
         forces[:, self._cart_dof_idx] = self._max_push_effort * actions[:, 0]
+        # print('forces: ', forces)
 
         indices = torch.arange(self._cartpoles.count, dtype=torch.int32, device=self._device)
         self._cartpoles.set_joint_efforts(forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
+        # print('env_ids: ', env_ids)
 
         # randomize DOF positions
         dof_pos = torch.zeros((num_resets, self._cartpoles.num_dof), device=self._device)
         dof_pos[:, self._cart_dof_idx] = 1.0 * (1.0 - 2.0 * torch.rand(num_resets, device=self._device))
         dof_pos[:, self._pole_dof_idx] = 0.125 * math.pi * (1.0 - 2.0 * torch.rand(num_resets, device=self._device))
+        # print('self._cart_dof_idx: ', self._cart_dof_idx)
+        # print('self._pole_dof_idx: ', self._pole_dof_idx)
 
         # randomize DOF velocities
         dof_vel = torch.zeros((num_resets, self._cartpoles.num_dof), device=self._device)

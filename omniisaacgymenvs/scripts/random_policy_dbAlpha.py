@@ -92,7 +92,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     if wandb_activate:
-        wandb.init(project='Cartpole_ES_log',
+        wandb.init(project='dbAlpha_ES_log',
                     name=cfg.model+'_'+TASK, 
                     config=cfg_dict)
     
