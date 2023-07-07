@@ -126,7 +126,7 @@ class dbLocomotionTask(RLTask):
         num_resets = len(env_ids)
 
         # randomize DOF positions and velocities
-        print('self._robots.num_dof: ', self._robots.num_dof)
+        # print('self._robots.num_dof: ', self._robots.num_dof)
         dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._robots.num_dof), device=self._device)
         dof_pos[:] = tensor_clamp(
             self.initial_dof_pos[env_ids] + dof_pos, self.dof_limits_lower, self.dof_limits_upper
@@ -359,7 +359,7 @@ def calculate_metrics(
     motor_effort_ratio
 ):
     # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, Tensor, float, Tensor) -> Tensor
-
+    # print(obs_buf[:, 11].shape)
     heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight
     heading_reward = torch.where(
         obs_buf[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf[:, 11] / 0.8
@@ -376,7 +376,9 @@ def calculate_metrics(
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
-
+    # print('progress_reward: ', progress_reward.shape)
+    # print('up_reward: ', up_reward.shape)
+    # print('heading_reward: ', heading_reward.shape)
     total_reward = (
         progress_reward
         + alive_reward

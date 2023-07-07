@@ -93,7 +93,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
-                    name=cfg.model+'_'+TASK, 
+                    name=cfg.model+'_'+TASK+'rew_v2', 
                     config=cfg_dict)
     
     # print("POPSIZE: ", POPSIZE)
@@ -152,7 +152,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # obs_cpu = obs['obs'].cpu().numpy()
     # print("Observation: ", obs)
-    actions = torch.zeros(cfg.num_envs, ARCHITECTURE[-1])
+    actions = torch.ones(cfg.num_envs, ARCHITECTURE[-1])
     total_rewards = torch.zeros(cfg.num_envs)
     # total_rewards = torch.unsqueeze(total_rewards, 0)
     total_rewards = total_rewards.cuda()

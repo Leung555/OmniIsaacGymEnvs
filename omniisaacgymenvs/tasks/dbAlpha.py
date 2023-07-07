@@ -56,7 +56,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 102
+        self._num_observations = 39
         self._num_actions = 18
         self._sim_gear_ratio = 1
         self._dbAlpha_positions = torch.tensor([0, 0, 0.0])
@@ -67,13 +67,15 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
     def set_up_scene(self, scene) -> None:
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
-        self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False)
+        self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False, enable_dof_force_sensors=True)
+        # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
         return
 
     def get_dbAlpha(self):
         dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha_base", name="dbAlpha_base", translation=self._dbAlpha_positions)
         self._sim_config.apply_articulation_settings("dbAlpha_base", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
+        # self._sim_config.enable_actor_dof_force_sensors(get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
 
     def get_robot(self):
         return self._dbAlphas
