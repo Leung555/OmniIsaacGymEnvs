@@ -162,5 +162,46 @@ class HebbianNet:
         #     # self.weights[i] = self.weights[i].cuda()
         #     m += a * b 
 
+    def set_params_single_model(self, flat_params):
+        flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params)
+
+        # m = 0
+        # for i, w in enumerate(self.weights):
+        #     # print('w: ', w)
+        #     pop, a, b = w.shape
+        #     # print('pop, a, b', pop, a, b)
+        #     # print('self.weights[i]: ', self.weights[i].shape)
+        #     # print('flat_params: ', flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).shape)
+        #     self.weights[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+        #     # self.weights[i] = self.weights[i].cuda()
+        #     m += a * b 
+                
+        m = 0
+        for i, hebb_A in enumerate(self.A):
+            pop, a, b = hebb_A.shape
+            self.A[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            m += a * b 
+
+        for i, hebb_B in enumerate(self.B):
+            pop, a, b = hebb_B.shape
+            self.B[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            m += a * b 
+
+        for i, hebb_C in enumerate(self.C):
+            pop, a, b = hebb_C.shape
+            self.C[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            m += a * b 
+
+        for i, hebb_D in enumerate(self.D):
+            pop, a, b = hebb_D.shape
+            self.D[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            m += a * b 
+
+        for i, hebb_lr in enumerate(self.lr):
+            pop, a, b = hebb_lr.shape
+            self.lr[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            m += a * b 
+
     def get_weights(self):
         return [w for w in self.weights]

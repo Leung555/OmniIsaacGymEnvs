@@ -58,6 +58,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         self._task_cfg = sim_config.task_config
         self._num_observations = 102
         self._num_actions = 18
+        self._sim_gear_ratio = 1
         self._dbAlpha_positions = torch.tensor([0, 0, 0.0])
 
         dbLocomotionTask.__init__(self, name=name, env=env)
@@ -78,7 +79,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         return self._dbAlphas
 
     def post_reset(self):
-        self.joint_gears = torch.tensor(np.repeat(15, self._num_actions), dtype=torch.float32, device=self._device)
+        self.joint_gears = torch.tensor(np.repeat(self._sim_gear_ratio, self._num_actions), dtype=torch.float32, device=self._device)
         dof_limits = self._dbAlphas.get_dof_limits()
         self.dof_limits_lower = dof_limits[0, :, 0].to(self._device)
         self.dof_limits_upper = dof_limits[0, :, 1].to(self._device)

@@ -88,17 +88,12 @@ class dbLocomotionTask(RLTask):
         dof_vel = self._robots.get_joint_velocities(clone=False)
 
         # force sensors attached to the feet
-        # sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
+        sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
 
-        # self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
-        #     torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
-        #     self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
-        #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
-        # )
         self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
             self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
-            self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
+            sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         )
         observations = {
             self._robots.name: {
@@ -223,15 +218,13 @@ def get_observations(
     dof_limits_lower,
     dof_limits_upper,
     dof_vel_scale,
+    sensor_force_torques,
     num_envs,
     contact_force_scale,
     actions,
     angular_velocity_scale
 ):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, 
-    # Tensor, Tensor, Tensor, float, Tensor, Tensor, 
-    # Tensor, Tensor, Tensor, float, int, float, Tensor, float) 
-    # -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
+    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
 
     to_target = targets - torso_position
     to_target[:, 2] = 0.0
@@ -250,24 +243,6 @@ def get_observations(
     dof_pos_scaled = unscale(dof_pos, dof_limits_lower, dof_limits_upper)
 
     # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
-    # obs = torch.cat(
-    #     (
-    #         torso_position[:, 2].view(-1, 1),
-    #         vel_loc,
-    #         angvel_loc * angular_velocity_scale,
-    #         normalize_angle(yaw).unsqueeze(-1),
-    #         normalize_angle(roll).unsqueeze(-1),
-    #         normalize_angle(angle_to_target).unsqueeze(-1),
-    #         up_proj.unsqueeze(-1),
-    #         heading_proj.unsqueeze(-1),
-    #         dof_pos_scaled,
-    #         dof_vel * dof_vel_scale,
-    #         sensor_force_torques.reshape(num_envs, -1) * contact_force_scale,
-    #         actions,
-    #     ),
-    #     dim=-1,
-    # )
-
     obs = torch.cat(
         (
             torso_position[:, 2].view(-1, 1),
@@ -401,16 +376,6 @@ def calculate_metrics(
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
-
-    # total_reward = (
-    #     progress_reward
-    #     + alive_reward
-    #     + up_reward
-    #     + heading_reward
-    #     - actions_cost_scale * actions_cost
-    #     - energy_cost_scale * electricity_cost
-    #     - dof_at_limit_cost
-    # )
 
     total_reward = (
         progress_reward

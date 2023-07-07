@@ -54,10 +54,13 @@ class VecEnvRLGames(VecEnvBase):
         self.state_space = self._task.state_space
 
     def step(self, actions):
+        # print('randomize_actions: ', self._task.randomize_actions) # normally, set to False in RL_task dev on Base Task to Locomotion_Task
+        # print('actions: ', actions)
         if self._task.randomize_actions:
             actions = self._task._dr_randomizer.apply_actions_randomization(actions=actions, reset_buf=self._task.reset_buf)
 
         actions = torch.clamp(actions, -self._task.clip_actions, self._task.clip_actions).to(self._task.device).clone()
+        # print('clamp_actions: ', actions)
 
         self._task.pre_physics_step(actions)
         
@@ -67,12 +70,16 @@ class VecEnvRLGames(VecEnvBase):
 
         self._obs, self._rew, self._resets, self._extras = self._task.post_physics_step()
 
+        # print('randomize_observations: ', self._task.randomize_observations)
+        # print('observations: ', self._obs)
         if self._task.randomize_observations:
             self._obs = self._task._dr_randomizer.apply_observations_randomization(
                 observations=self._obs.to(device=self._task.rl_device), reset_buf=self._task.reset_buf)
+        # print('random_observations: ', self._obs)
 
         self._states = self._task.get_states()
         self._process_data()
+        # print('self._states: ', self._states)
         
         obs_dict = {"obs": self._obs, "states": self._states}
 

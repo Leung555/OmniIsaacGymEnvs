@@ -185,7 +185,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
-        for i, file_name in enumerate(res[1:2]):
+        for i, file_name in enumerate(res[0:1]):
             print('file_name: ', file_name)
             time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
@@ -198,7 +198,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # for i in range(cfg.num_envs):
             #     models[i] = FeedForwardNet(ARCHITECTURE)
             #     models[i].set_params(solutions[i])
-            solutions = open_es_data.ask()
+            # solutions = open_es_data.ask()
             # obs = env.reset()
             
             models.set_params_single_model(init_params)
@@ -206,7 +206,9 @@ def parse_hydra_configs(cfg: DictConfig):
             total_rewards = torch.zeros(cfg.num_envs)
             total_rewards = total_rewards.cuda()
 
-            for _ in range(EPISODE_LENGTH):
+            obs = env.reset()
+
+            for _ in range(EPISODE_LENGTH*2):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO

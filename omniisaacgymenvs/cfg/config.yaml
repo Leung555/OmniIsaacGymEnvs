@@ -7,23 +7,23 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 1024 # <---------------
+num_envs: 2 # <---------------
 
 # disables rendering
 headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: True # <---------------
+wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
+# model: 'Feedforward'  # <---------------
 # model: 'Hebb'
-# model: 'rbf'
+model: 'rbf'
 # model: 'HEbb_rbf'
 
-EPOCHS: 500 # <---------------
-EPISODE_LENGTH: 300 # <---------------
+EPOCHS: 1 # <---------------
+EPISODE_LENGTH: 1 # <---------------
 SAVE_EVERY: 250
 USE_TRAIN_PARAMS: False # <---------------
 
@@ -34,8 +34,8 @@ ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
-RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
-# RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+# RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
+RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 
 # seed - set to -1 to choose random seed
 seed: 42

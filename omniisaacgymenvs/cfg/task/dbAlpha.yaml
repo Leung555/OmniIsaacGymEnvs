@@ -8,12 +8,13 @@ env:
 #  numEnvs: ${...num_envs}
   numEnvs: ${resolve_default:4096,${...num_envs}}
   envSpacing: 5
-  episodeLength: 1000
+  episodeLength: ${resolve_default:1000,${...EPISODE_LENGTH}} # origi 1000
   enableDebugVis: False
 
   clipActions: 1.0
 
   powerScale: 0.5
+  position_output_Scale: 0.5
   controlFrequencyInv: 2 # 60 Hz
 
   # reward parameters
