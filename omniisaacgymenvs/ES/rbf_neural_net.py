@@ -23,14 +23,15 @@ class RBFNet:
                                       self.input_range[1], num_basis).cuda()
         self.variance = 1/0.04
         # self.weights = torch.randn(self.POPSIZE, self.num_basis, self.num_output,).cuda()
-        x = np.linspace(0, 2*np.pi, 20)
-        y1 = np.sin(x)
-        x = np.linspace(np.pi/2, 3*(np.pi)-np.pi/2, 20)
-        y2 = np.sin(x)
+        x1 = np.linspace(0, 2*np.pi, self.num_basis)
+        y1 = np.sin(x1) * 0.5
+        x2 = np.linspace(np.pi/2, 3*(np.pi)-np.pi/2, self.num_basis)
+        y2 = np.sin(x2) + 1.4
+        print('y2: ', y2)
         ze = np.zeros_like(y1)
-        self.weights = torch.Tensor([ y1, ze,  ze, ze, ze,  ze, 
-                                     -y2, ze, ze, ze, ze, ze,
-                                      y2, ze, ze, ze, ze, ze]).T.repeat(self.POPSIZE, 1, 1).cuda()
+        self.weights = torch.Tensor([  y1,-y1, y1, -y1, y1,-y1, 
+                                      -y1,-y1, y1,  y1, y1,-y1,
+                                       y1, y1,-y1, -y1,-y1, y1]).T.repeat(self.POPSIZE, 1, 1).cuda()
 
         # print(self.weights)
         self.W = torch.Tensor([[ cos(self.omega) ,  -sin(self.omega)], 

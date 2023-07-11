@@ -7,19 +7,19 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 32 # <---------------
+num_envs: 1024 # <---------------
 
 # disables rendering
 headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: False # <---------------
+wandb_activate: True # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-# model: 'Feedforward'  # <---------------
+model: 'Feedforward'  # <---------------
 # model: 'Hebb'
-model: 'rbf'
+# model: 'rbf'
 # model: 'HEbb_rbf'
 
 EPOCHS: 500 # <---------------
@@ -101,7 +101,7 @@ ES_params:
     DISTANCE_WEIGHT: 2.0
   rank_fitness: True
   antithetic: True
-  learning_rate: 0.1
+  learning_rate: 0.5
   learning_rate_decay: 0.9999 # 0.9999
   sigma_init: 1.0
   sigma_decay: 0.999

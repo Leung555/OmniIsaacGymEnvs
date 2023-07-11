@@ -68,7 +68,8 @@ class dbLocomotionTask(RLTask):
         self.alive_reward_scale = self._task_cfg["env"]["alive_reward_scale"]
         self.joint_damp = 100000.0
         self.joint_stiffness = 10000000.0
-
+        self.velocity = [0,0,0]
+        self.ang_velocity = [0,0,0]
         
         RLTask.__init__(self, name, env)
         return
@@ -85,7 +86,9 @@ class dbLocomotionTask(RLTask):
         torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
         velocities = self._robots.get_velocities(clone=False)
         velocity = velocities[:, 0:3]
+        self.velocity = velocity
         ang_velocity = velocities[:, 3:6]
+        self.ang_velocity = ang_velocity
         # self._robots.get_applied_action()
         dof_pos = self._robots.get_joint_positions(clone=False)
         dof_vel = self._robots.get_joint_velocities(clone=False)
@@ -144,7 +147,7 @@ class dbLocomotionTask(RLTask):
 
         # applies joint target position
         self.joint_target_pos = self.actions
-        print(self.actions[0])
+        # print(self.actions[0])
         self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
@@ -216,7 +219,7 @@ class dbLocomotionTask(RLTask):
             self.obs_buf, self.actions, self.up_weight, self.heading_weight, self.potentials, self.prev_potentials,
             self.actions_cost_scale, self.energy_cost_scale, self.termination_height,
             self.death_cost, self._robots.num_dof, self.alive_reward_scale, self.motor_effort_ratio, 
-            self.heading_proj, self.up_proj
+            self.heading_proj, self.up_proj, self.velocity, self.ang_velocity
         )
 
     def is_done(self) -> None:
@@ -409,9 +412,11 @@ def calculate_metrics(
     alive_reward_scale,
     motor_effort_ratio,
     heading_proj, 
-    up_proj
+    up_proj,
+    velocity, 
+    ang_velocity
 ):
-    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor) -> Tensor
+    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
 
     # heading_proj = heading_proj.unsqueeze(-1)
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
@@ -434,11 +439,13 @@ def calculate_metrics(
     # print('progress_reward: ', progress_reward)
     # print('up_reward: ', up_reward)
     # print('heading_reward: ', heading_reward)
+    # print('velocity: ', velocity)
+    # print('ang_velocity: ', ang_velocity)
 
     total_reward = (
-        progress_reward
-        + up_reward
-        + heading_reward   
+        velocity[:, 0]
+        # + up_reward
+        # + heading_reward   
     )   
 
     # total_reward = (

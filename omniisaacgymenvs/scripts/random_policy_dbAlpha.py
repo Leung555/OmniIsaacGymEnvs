@@ -93,7 +93,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
-                    name=cfg.model+'_'+TASK+'_rew_phu_wider_hu', 
+                    name=cfg.model+'_'+TASK+'_rew_velx_only', 
                     config=cfg_dict)
     
     # print("POPSIZE: ", POPSIZE)
@@ -197,9 +197,9 @@ def parse_hydra_configs(cfg: DictConfig):
             
             # Load Data script
             # time.sleep(2)
-            # trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-            # open_es_data = trained_data[0]
-            # init_params = open_es_data.best_mu # best_mu   
+            trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+            open_es_data = trained_data[0]
+            init_params = open_es_data.best_mu # best_mu   
                  
             # print('trained_data: ', trained_data)
             # print('init_params: ', init_params)
