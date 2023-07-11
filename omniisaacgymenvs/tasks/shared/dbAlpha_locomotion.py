@@ -90,15 +90,17 @@ class dbLocomotionTask(RLTask):
         dof_pos = self._robots.get_joint_positions(clone=False)
         dof_vel = self._robots.get_joint_velocities(clone=False)
         dof_target = self._robots.get_applied_actions(clone=False)
+        dof_names = self._robots.dof_names
         # print('dof_target pos: ', dof_target.joint_positions)
         # print('dof_target vel: ', dof_target.joint_velocities)
         # print('dof_target effort: ', dof_target.joint_efforts)
         # dof_effort = self._robots.get_applied_joint_efforts(clone=False)
-        dof_effort = 0.000001 * (self.joint_stiffness * (dof_target.joint_positions - dof_pos) + self.joint_damp * (dof_target.joint_velocities - dof_vel))
+        dof_effort = 0.00001 * (self.joint_stiffness * (dof_target.joint_positions - dof_pos) + self.joint_damp * (dof_target.joint_velocities - dof_vel))
         # print('dof_pos: ', dof_pos)
         # print('dof_vel: ', dof_vel)
         # print('dof_vel: ', dof_vel)
         # print('dof_effort: ', dof_effort)
+        # print('dof_names: ', dof_names)
         
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
@@ -130,17 +132,20 @@ class dbLocomotionTask(RLTask):
             self.reset_idx(reset_env_ids)
 
         self.actions = actions.clone().to(self._device)
-        forces = self.actions * self.joint_gears * self.power_scale
-        target_positions = self.actions * self.power_scale
+        # forces = self.actions * self.joint_gears * self.power_scale
+        # target_positions = self.actions
+        # print('actions: ', actions)
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
+        # print('self._robots.count: ', self._robots.count)
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
 
         # applies joint target position
-        self.joint_target_pos = target_positions
-        self._robots.set_joint_position_targets(target_positions, indices=indices)
+        self.joint_target_pos = self.actions
+        print(self.actions[0])
+        self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -411,12 +416,13 @@ def calculate_metrics(
     # heading_proj = heading_proj.unsqueeze(-1)
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
     heading_reward = torch.where(
-        heading_proj > 0.8, heading_weight_tensor, heading_weight * heading_proj / 0.8
+        heading_proj > 0.7, heading_weight_tensor, heading_weight * heading_proj / 0.8
+        # heading_proj > 0.8, heading_weight_tensor, -0.5
     )
 
     # aligning up axis of robot and environment
-    up_reward = torch.zeros_like(heading_reward)
-    up_reward = torch.where(up_proj > 0.93, up_reward + up_weight, up_reward)
+    up_reward = torch.ones_like(heading_reward)
+    up_reward = torch.where(up_proj > 0.7, up_reward, up_weight + up_proj / 0.8)
 
     # energy penalty for movement
     # actions_cost = torch.sum(actions ** 2, dim=-1)
@@ -425,9 +431,9 @@ def calculate_metrics(
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
-    # print('progress_reward: ', progress_reward.shape)
-    # print('up_reward: ', up_reward.shape)
-    # print('heading_reward: ', heading_reward.shape)
+    # print('progress_reward: ', progress_reward)
+    # print('up_reward: ', up_reward)
+    # print('heading_reward: ', heading_reward)
 
     total_reward = (
         progress_reward

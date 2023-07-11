@@ -9,7 +9,7 @@ class RBFNet:
         """
         self.POPSIZE = POPSIZE
         # cpg params
-        self.omega = 0.01*np.pi
+        self.omega = 0.04*np.pi
         self.alpha = 1.01
         # self.o1 = torch.Tensor.repeat(torch.Tensor([0.00]), POPSIZE).unsqueeze(1)
         # self.o2 = torch.Tensor.repeat(torch.Tensor([0.18]), POPSIZE).unsqueeze(1)
@@ -22,11 +22,22 @@ class RBFNet:
         self.centers = torch.linspace(self.input_range[0], 
                                       self.input_range[1], num_basis).cuda()
         self.variance = 1/0.04
-        self.weights = torch.randn(self.POPSIZE, self.num_basis, self.num_output,).cuda()
+        # self.weights = torch.randn(self.POPSIZE, self.num_basis, self.num_output,).cuda()
+        x = np.linspace(0, 2*np.pi, 20)
+        y1 = np.sin(x)
+        x = np.linspace(np.pi/2, 3*(np.pi)-np.pi/2, 20)
+        y2 = np.sin(x)
+        ze = np.zeros_like(y1)
+        self.weights = torch.Tensor([ y1, ze,  ze, ze, ze,  ze, 
+                                     -y2, ze, ze, ze, ze, ze,
+                                      y2, ze, ze, ze, ze, ze]).T.repeat(self.POPSIZE, 1, 1).cuda()
+
         # print(self.weights)
         self.W = torch.Tensor([[ cos(self.omega) ,  -sin(self.omega)], 
                                 [ sin(self.omega) ,  cos(self.omega)]]).cuda()
-
+        
+        self.motor_enocode = 'indirect'
+        self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
 
     def forward(self, pre):
 
@@ -35,6 +46,8 @@ class RBFNet:
             post = torch.matmul(torch.exp(-self.variance*torch.sum((self.O.reshape(self.POPSIZE, 2, 1).
                     expand(self.POPSIZE,2,self.num_basis) - self.centers) ** 2, dim=1)).double(), self.weights.double())[:, 0]
             # post = torch.matmul(a.double(), self.weights.double())[:, 0]
+            #post = post.reshape(self.POPSIZE, 3, 3).repeat(1,1,2).reshape(self.POPSIZE, 18) # indirect encoded
+            post = torch.index_select(post, 1, self.indices)
         return post.float().detach()
 
     def get_params(self):

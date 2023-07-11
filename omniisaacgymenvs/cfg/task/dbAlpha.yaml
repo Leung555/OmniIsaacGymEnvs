@@ -18,8 +18,8 @@ env:
   controlFrequencyInv: 2 # 60 Hz
 
   # reward parameters
-  headingWeight: 0.5
-  upWeight: 0.1
+  headingWeight: 0.2 # 0.5 original
+  upWeight: 0.2 # 0.1
 
   # cost parameters
   actionsCost: 0.005
