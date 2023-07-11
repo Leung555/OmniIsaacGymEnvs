@@ -68,7 +68,7 @@ def parse_hydra_configs(cfg: DictConfig):
     res = listdir(dir_path)
     res.sort()
     TEST = cfg.test
-    for i, file_name in enumerate(res):
+    for i, file_name in enumerate(sorted(res)):
         print('file_name: ', file_name)
 
     print("Last File: ", res[-1])

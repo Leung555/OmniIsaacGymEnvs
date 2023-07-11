@@ -45,7 +45,7 @@ from omniisaacgymenvs.utils.hydra_cfg.reformat import omegaconf_to_dict, print_d
 from omniisaacgymenvs.utils.task_util import initialize_task
 from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 
-from omniisaacgymenvs.ES.ES_classes import OpenES
+from omniisaacgymenvs.ES.ES_classes import OpenES, CMAES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
@@ -93,7 +93,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
-                    name=cfg.model+'_'+TASK+'rew_v2', 
+                    name=cfg.model+'_'+TASK+'_rew_phu_wider_hu', 
                     config=cfg_dict)
     
     # print("POPSIZE: ", POPSIZE)
@@ -126,6 +126,13 @@ def parse_hydra_configs(cfg: DictConfig):
                     learning_rate_limit=LEARNING_RATE_LIMIT,
                     sigma_limit=SIGMA_LIMIT)
     solver.set_mu(init_params)
+
+    # print(np.array([POPSIZE]).ndim)
+    # solver = CMAES(len(init_params),  # number of model parameters
+    #                sigma_init=0.1,  # initial standard deviation
+    #                popsize=POPSIZE,  # population size
+    #                weight_decay=0.0)  # weight decay coefficient
+    # solver.set_mu(init_params)
 
     # simulation GUI config
     headless = cfg.headless
@@ -177,7 +184,7 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = 'data/'+TASK+'/model/rbf/'
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
-        for i, file_name in enumerate(res[1:2]):
+        for i, file_name in enumerate(res[0:4]):
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             # print('trained_data: ', trained_data)
@@ -185,13 +192,16 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
-        for i, file_name in enumerate(res[0:1]):
+        for i, file_name in enumerate(sorted(res)):
             print('file_name: ', file_name)
-            time.sleep(2)
-            trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+            
+            # Load Data script
+            # time.sleep(2)
+            # trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+            # open_es_data = trained_data[0]
+            # init_params = open_es_data.best_mu # best_mu   
+                 
             # print('trained_data: ', trained_data)
-            open_es_data = trained_data[0]
-            init_params = open_es_data.best_mu # best_mu
             # print('init_params: ', init_params)
             # models.set_params_single_model(init_params)            
             # models = [None] * cfg.num_envs
@@ -208,7 +218,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
             obs = env.reset()
 
-            for _ in range(EPISODE_LENGTH*2):
+            for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO
@@ -333,7 +343,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     copy.deepcopy(models),
                     pop_mean_curve,
                     best_sol_curve,
-                    ), open(dir_path+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
+                    ), open(dir_path+cfg.model+'_'+TASK+'rew_phu'+'_'+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
             
     env._simulation_app.close()
 

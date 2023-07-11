@@ -56,9 +56,12 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
+        # self._num_observations = 21
+        # self._num_actions = 18
+        # Leg test
         self._num_observations = 39
         self._num_actions = 18
-        self._sim_gear_ratio = 1
+        self._sim_gear_ratio = 15
         self._dbAlpha_positions = torch.tensor([0, 0, 0.0])
 
         dbLocomotionTask.__init__(self, name=name, env=env)
@@ -68,13 +71,17 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
         self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False, enable_dof_force_sensors=True)
+        # self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha", name="robot_view", reset_xform_properties=False, enable_dof_force_sensors=True)
         # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
+        print('dof_names: ', self._dbAlphas.dof_names)
         return
 
     def get_dbAlpha(self):
         dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha_base", name="dbAlpha_base", translation=self._dbAlpha_positions)
         self._sim_config.apply_articulation_settings("dbAlpha_base", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
+        # dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha", name="cartpole", translation=self._dbAlpha_positions)
+        # self._sim_config.apply_articulation_settings("dbAlpha", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("cartpole"))
         # self._sim_config.enable_actor_dof_force_sensors(get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
 
     def get_robot(self):
@@ -96,4 +103,4 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 @torch.jit.script
 def get_dof_at_limit_cost(obs_buf, num_dof):
     # type: (Tensor, int) -> Tensor
-    return torch.sum(obs_buf[:, 12:12+num_dof] > 0.99, dim=-1)
+    return torch.sum(obs_buf[:, 0:0+num_dof] > 0.99, dim=-1)

@@ -42,6 +42,7 @@ class DbAlpha(Robot):
         self,
         prim_path: str,
         name: Optional[str] = "dbAlpha",
+        # name: Optional[str] = "cartpole",
         usd_path: Optional[str] = None,
         translation: Optional[np.ndarray] = None,
         orientation: Optional[np.ndarray] = None,
@@ -54,6 +55,7 @@ class DbAlpha(Robot):
             assets_root_path = get_assets_root_path()
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/Leg2.usd"
             self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split.usd"
