@@ -98,7 +98,7 @@ class dbLocomotionTask(RLTask):
         # print('dof_target vel: ', dof_target.joint_velocities)
         # print('dof_target effort: ', dof_target.joint_efforts)
         # dof_effort = self._robots.get_applied_joint_efforts(clone=False)
-        dof_effort = 0.00001 * (self.joint_stiffness * (dof_target.joint_positions - dof_pos) + self.joint_damp * (dof_target.joint_velocities - dof_vel))
+        dof_effort = 0.0000001 * (self.joint_stiffness * (dof_target.joint_positions - dof_pos) + self.joint_damp * (dof_target.joint_velocities - dof_vel))
         # print('dof_pos: ', dof_pos)
         # print('dof_vel: ', dof_vel)
         # print('dof_vel: ', dof_vel)
@@ -107,7 +107,8 @@ class dbLocomotionTask(RLTask):
         
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
-
+        # print('sensor_force_torques: ', sensor_force_torques)
+        # print('sensor_force_torques: ', sensor_force_torques.shape)
         # self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
         #     torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
         #     self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
@@ -147,7 +148,7 @@ class dbLocomotionTask(RLTask):
 
         # applies joint target position
         self.joint_target_pos = self.actions
-        # print(self.actions[0])
+        # print(actions)
         self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
@@ -265,6 +266,10 @@ def get_observations(
     to_target = targets - torso_position
     to_target[:, 2] = 0.0
 
+    forces = sensor_force_torques[:, :, 0:3]
+    # print('forces.shape: ', forces.shape)
+    forces_tot = torch.norm(forces, p=2, dim=2)
+
     prev_potentials = potentials.clone()
     potentials = -torch.norm(to_target, p=2, dim=-1) / dt
 
@@ -285,11 +290,15 @@ def get_observations(
     # print('up_vec: ', up_vec.shape)
     # print('up_proj: ', up_proj.shape)
     # print('up_proj.unsqueeze(-1): ', up_proj.unsqueeze(-1).shape)
+    # print('forces_tot: ', forces_tot)
+    # print('forces_tot: ', forces_tot.shape)
+    # print('dof_pos_scaled: ', dof_pos_scaled.shape)
 
     obs = torch.cat(
         (
             dof_pos_scaled,
-            dof_effort,
+            # forces_tot, # 27
+            dof_effort, # 39
             normalize_angle(roll).unsqueeze(-1),
             normalize_angle(pitch).unsqueeze(-1),
             normalize_angle(yaw).unsqueeze(-1),
@@ -421,13 +430,13 @@ def calculate_metrics(
     # heading_proj = heading_proj.unsqueeze(-1)
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
     heading_reward = torch.where(
-        heading_proj > 0.7, heading_weight_tensor, heading_weight * heading_proj / 0.8
+        heading_proj > 0.7, heading_weight_tensor, 0
         # heading_proj > 0.8, heading_weight_tensor, -0.5
     )
 
     # aligning up axis of robot and environment
-    up_reward = torch.ones_like(heading_reward)
-    up_reward = torch.where(up_proj > 0.7, up_reward, up_weight + up_proj / 0.8)
+    up_reward = torch.ones_like(heading_reward) * up_weight
+    up_reward = torch.where(up_proj > 0.7, up_reward, 0)
 
     # energy penalty for movement
     # actions_cost = torch.sum(actions ** 2, dim=-1)
@@ -443,9 +452,13 @@ def calculate_metrics(
     # print('ang_velocity: ', ang_velocity)
 
     total_reward = (
-        velocity[:, 0]
-        # + up_reward
-        # + heading_reward   
+        progress_reward
+        # velocity[:, 0]
+        # - torch.abs(ang_velocity[:, 0])
+        # - torch.abs(ang_velocity[:, 1])
+        # - torch.abs(ang_velocity[:, 2])
+        + up_reward
+        + heading_reward   
     )   
 
     # total_reward = (

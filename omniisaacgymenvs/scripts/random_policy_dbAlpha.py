@@ -90,10 +90,10 @@ def parse_hydra_configs(cfg: DictConfig):
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
 
-
+    exp_name = cfg.model+'_'+TASK+'_rew_phuwide'
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
-                    name=cfg.model+'_'+TASK+'_rew_velx_only', 
+                    name=exp_name, 
                     config=cfg_dict)
     
     # print("POPSIZE: ", POPSIZE)
@@ -285,7 +285,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 ############### GPU Version ###############
                 # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).cuda()
                 actions = models.forward(obs['obs'])
-                # print('actions: ', actions)
+                # print('actions: ', actions[0, 0:6])
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
@@ -343,7 +343,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     copy.deepcopy(models),
                     pop_mean_curve,
                     best_sol_curve,
-                    ), open(dir_path+cfg.model+'_'+TASK+'rew_phu'+'_'+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
+                    ), open(dir_path+exp_name+'_'+str(run)+'_' + str(len(init_params)) + str(epoch) + '_' + str(pop_mean_curve[epoch]) + '.pickle', 'wb'))
             
     env._simulation_app.close()
 
