@@ -14,7 +14,7 @@ class RBFNet:
         # self.o1 = torch.Tensor.repeat(torch.Tensor([0.00]), POPSIZE).unsqueeze(1)
         # self.o2 = torch.Tensor.repeat(torch.Tensor([0.18]), POPSIZE).unsqueeze(1)
 
-        self.O = torch.Tensor([[0.01, 0.18]]).expand(POPSIZE, 2).cuda()
+        self.O = torch.Tensor([[0.0, 0.18]]).expand(POPSIZE, 2).cuda()
         # Rbf network
         self.input_range = (-1, 1)
         self.num_basis = num_basis
