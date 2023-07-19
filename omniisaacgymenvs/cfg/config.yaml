@@ -24,19 +24,20 @@ model: 'Feedforward'  # <---------------
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <---------------
-SAVE_EVERY: 250
+SAVE_EVERY: 166
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 # ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO
-ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
+ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
 # RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
-RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+RBF_ARCHITECTURE: [10, 18] # [num_kernel, num_output] dbAlpha 1 output
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -95,15 +96,11 @@ hydra:
 ES_params:
   POPSIZE: 1024 # workstation (500)
   EPISODE_LENGTH: 400 # workstation (200)
-  REWARD_FUNC:
-    NAME: 'abs_x_D_Pen_Orient' # 'abs_y_D_Pen_Orient
-    ORIENTATION_WEIGHT: 1.0
-    DISTANCE_WEIGHT: 2.0
   rank_fitness: True
   antithetic: True
   learning_rate: 0.1
-  learning_rate_decay: 0.9999 # 0.9999
-  sigma_init: 1.0
+  learning_rate_decay: 0.999 # 0.9999
+  sigma_init: 0.5
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

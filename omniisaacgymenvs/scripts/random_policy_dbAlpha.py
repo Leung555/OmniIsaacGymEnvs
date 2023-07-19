@@ -59,21 +59,20 @@ def parse_hydra_configs(cfg: DictConfig):
     # print_dict(cfg_dict)
 
     # open config files for reading prams
-    with open('cfg/ES_config.yml', 'r') as file:
-        configs = yaml.safe_load(file)
+    #with open('cfg/ES_config.yml', 'r') as file:
+    #    configs = yaml.safe_load(file)
 
     # ES parameters configuration
     POPSIZE             = cfg.num_envs # configs['ES_params']['POPSIZE']
-    EPISODE_LENGTH      = configs['ES_params']['EPISODE_LENGTH']
-    REWARD_FUNCTION     = configs['ES_params']['REWARD_FUNC']
-    RANK_FITNESS        = configs['ES_params']['rank_fitness']
-    ANTITHETIC          = configs['ES_params']['antithetic']
-    LEARNING_RATE       = configs['ES_params']['learning_rate']
-    LEARNING_RATE_DECAY = configs['ES_params']['learning_rate_decay']
-    SIGMA_INIT          = configs['ES_params']['sigma_init']
-    SIGMA_DECAY         = configs['ES_params']['sigma_decay']
-    LEARNING_RATE_LIMIT = configs['ES_params']['learning_rate_limit']
-    SIGMA_LIMIT         = configs['ES_params']['sigma_limit']
+    # EPISODE_LENGTH      = cfg.ES_params.EPISODE_LENGTH
+    RANK_FITNESS        = cfg.ES_params.rank_fitness
+    ANTITHETIC          = cfg.ES_params.antithetic
+    LEARNING_RATE       = cfg.ES_params.learning_rate
+    LEARNING_RATE_DECAY = cfg.ES_params.learning_rate_decay
+    SIGMA_INIT          = cfg.ES_params.sigma_init
+    SIGMA_DECAY         = cfg.ES_params.sigma_decay
+    LEARNING_RATE_LIMIT = cfg.ES_params.learning_rate_limit
+    SIGMA_LIMIT         = cfg.ES_params.sigma_limit
 
     # Model
     ARCHITECTURE_NAME = cfg.model
@@ -90,7 +89,7 @@ def parse_hydra_configs(cfg: DictConfig):
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
 
-    exp_name = cfg.model+'_'+TASK+'_rew_phuwide'
+    exp_name = cfg.model+'_'+TASK+'_rew_puhh_FF'
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
                     name=exp_name, 
@@ -128,10 +127,10 @@ def parse_hydra_configs(cfg: DictConfig):
     solver.set_mu(init_params)
 
     # print(np.array([POPSIZE]).ndim)
-    # solver = CMAES(len(init_params),  # number of model parameters
-    #                sigma_init=0.1,  # initial standard deviation
+    # solver = CMAES(init_params,  # number of model parameters
+    #                sigma_init=0.4,  # initial standard deviation
     #                popsize=POPSIZE,  # population size
-    #                weight_decay=0.0)  # weight decay coefficient
+    #                weight_decay=0.995)  # weight decay coefficient
     # solver.set_mu(init_params)
 
     # simulation GUI config
@@ -184,11 +183,13 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = 'data/'+TASK+'/model/rbf/'
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
-        for i, file_name in enumerate(res[0:4]):
+        for i, file_name in enumerate(res[0:1]):
             print('file_name: ', file_name)
+            file_name = 'rbf_dbAlpha_rew_phuh_semi_rbf_d_180497_211.72412109375.pickle'
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-            # print('trained_data: ', trained_data)
-            solver = trained_data[0]
+            open_es_data = trained_data[0]
+            init_params = open_es_data.best_param() # best_mu   
+            solver.set_mu(init_params)
 
     TEST = cfg.test
     if TEST == True:
@@ -199,7 +200,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
-            init_params = open_es_data.best_mu # best_mu   
+            # init_params = open_es_data.best_mu # best_mu   
+            init_params = open_es_data.best_param() # best_mu   
                  
             # print('trained_data: ', trained_data)
             # print('init_params: ', init_params)
