@@ -1,4 +1,3 @@
-
 # Task name - used to pick the class to load
 task_name: dbAlpha # Ant, dbAlpha, Cartpole
 # task_name: ${task.name}
@@ -14,7 +13,7 @@ headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: True # <---------------
+wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------

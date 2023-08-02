@@ -36,12 +36,13 @@ from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, un
 
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
-from omni.isaac.sensor import _sensor
+# import omni.isaac.sensor
 
 import numpy as np
 import torch
 import math
 
+from omni.isaac.core.prims import RigidPrimView
 
 class dbLocomotionTask(RLTask):
     def __init__(
@@ -50,7 +51,9 @@ class dbLocomotionTask(RLTask):
         env,
         offset=None
     ) -> None:
-
+        # print("self._task_cfg[env][numEnvs]", self._task_cfg["env"]["numEnvs"])
+        # print("_env_spacing", self._task_cfg["env"]["envSpacing"])
+        # print("_max_episode_length", self._task_cfg["env"]["episodeLength"])
         self._num_envs = self._task_cfg["env"]["numEnvs"]
         self._env_spacing = self._task_cfg["env"]["envSpacing"]
         self._max_episode_length = self._task_cfg["env"]["episodeLength"]
@@ -71,12 +74,14 @@ class dbLocomotionTask(RLTask):
         self.joint_stiffness = 10000000.0
         self.velocity = [0,0,0]
         self.ang_velocity = [0,0,0]
+        self._track_contact_forces = True
+        self._prepare_contact_sensors = False
         
         # Acquire the contact sensor interface
-        self.contact_sensor_interface = _sensor.acquire_contact_sensor_interface()
+        # self.contact_sensor_interface = _sensor.acquire_contact_sensor_interface()
 
         # Define the sensor path
-        self.contact_sensor_path = "/World/envs/env_0/dbAlpha_base/Tips0/Contact_Sensor_0"
+        # self.contact_sensor_path = "/World/envs/env_0/dbAlpha_base/Tips0/Contact_Sensor_0"
 
         RLTask.__init__(self, name, env)
         return
@@ -124,7 +129,8 @@ class dbLocomotionTask(RLTask):
         #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         # )
         
-
+        leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 1.
+        
         # Run the simulation (make sure to start the simulation before trying to get sensor readings)
 
         # Get sensor readings
