@@ -123,7 +123,7 @@ class RBFNet:
     
     def pre_compute_cpg(self):
         # Run for one period
-        phi   = 0.01*np.pi # SO(2) Frequency
+        phi   = 0.03*np.pi # SO(2) Frequency
         alpha = 1.01         # SO(2) Alpha term
         w11   = alpha*cos(phi)
         w12   = alpha*sin(phi)

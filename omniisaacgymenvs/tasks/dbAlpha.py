@@ -61,7 +61,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # Leg test
         self._num_observations = 27
         self._num_actions = 18
-        self._sim_gear_ratio = 15
+        self._sim_gear_ratio = 1
         self._dbAlpha_positions = torch.tensor([0, 0, -0.06])
 
         dbLocomotionTask.__init__(self, name=name, env=env)

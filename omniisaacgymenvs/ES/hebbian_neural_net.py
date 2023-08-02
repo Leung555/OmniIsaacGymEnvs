@@ -23,7 +23,7 @@ class HebbianNet:
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
-        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-1.0,1.0).cuda()
+        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.5, 0.5).cuda()
                             for i in range(len(sizes) - 1)]
         self.architecture = sizes
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
@@ -55,7 +55,7 @@ class HebbianNet:
                 # pre = torch.Tensor([[1., 0], 
                 #                     [1., 0]]).cuda()
                 # W = torch.ones(weights.shape).cuda()
-                post =  torch.einsum('ij, ijk -> ik', pre, W.float())
+                post =  torch.einsum('ij, ijk -> ik', pre, W.float()) * 0.5
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())
                 # print(post)

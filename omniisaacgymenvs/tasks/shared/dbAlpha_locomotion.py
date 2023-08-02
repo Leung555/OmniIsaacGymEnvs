@@ -36,6 +36,7 @@ from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, un
 
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
+from omni.isaac.sensor import _sensor
 
 import numpy as np
 import torch
@@ -71,6 +72,12 @@ class dbLocomotionTask(RLTask):
         self.velocity = [0,0,0]
         self.ang_velocity = [0,0,0]
         
+        # Acquire the contact sensor interface
+        self.contact_sensor_interface = _sensor.acquire_contact_sensor_interface()
+
+        # Define the sensor path
+        self.contact_sensor_path = "/World/envs/env_0/dbAlpha_base/Tips0/Contact_Sensor_0"
+
         RLTask.__init__(self, name, env)
         return
 
@@ -106,7 +113,7 @@ class dbLocomotionTask(RLTask):
         # print('dof_vel: ', dof_vel)
         # print('dof_effort: ', dof_effort)
         # print('dof_names: ', dof_names)
-        
+
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
         # print('sensor_force_torques: ', sensor_force_torques)
@@ -116,6 +123,16 @@ class dbLocomotionTask(RLTask):
         #     self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
         #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         # )
+        
+
+        # Run the simulation (make sure to start the simulation before trying to get sensor readings)
+
+        # Get sensor readings
+        # sensor_data = self.contact_sensor_interface.get_sensor_readings(self.contact_sensor_path)
+
+        # Print sensor data
+        # print("Sensor Data:", sensor_data)
+
         self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.vel_loc, self.ang_loc, self.up_proj, self.heading_proj = get_observations(
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
             self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,

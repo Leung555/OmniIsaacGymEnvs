@@ -89,7 +89,7 @@ def parse_hydra_configs(cfg: DictConfig):
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
 
-    exp_name = cfg.model+'_'+TASK+'_rew_puhh_FF'
+    exp_name = cfg.model+'_'+TASK+'_rew_puhh_gr_1_RBF_phi0.3_num_envs_8'
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
                     name=exp_name, 
@@ -185,10 +185,11 @@ def parse_hydra_configs(cfg: DictConfig):
     if USE_TRAIN_PARAMS:
         for i, file_name in enumerate(res[0:1]):
             print('file_name: ', file_name)
-            file_name = 'rbf_dbAlpha_rew_phuh_semi_rbf_d_180497_211.72412109375.pickle'
+            file_name = 'Hebb_dbAlpha_rew_puhh_FF_gr_1_d_21760497_175.30068969726562.pickle'
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
             init_params = open_es_data.best_param() # best_mu   
+            solver = open_es_data
             solver.set_mu(init_params)
 
     TEST = cfg.test
