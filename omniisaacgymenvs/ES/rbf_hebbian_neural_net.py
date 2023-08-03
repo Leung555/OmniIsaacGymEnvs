@@ -2,7 +2,14 @@ import numpy as np
 import torch
 from math import cos, sin, tanh
 
-class RBFNet:
+def WeightStand(w, eps=1e-5):
+    mean = torch.mean(input=w, dim=[1,2], keepdim=True)
+    var = torch.var(input=w, dim=[1,2], keepdim=True)
+    w = (w - mean) / torch.sqrt(var)
+
+    return w
+
+class RBFHebbianNet:
     def __init__(self, POPSIZE, num_output, num_basis=10):
         """
         sizes: [input_size, hid_1, ..., output_size]
@@ -47,7 +54,9 @@ class RBFNet:
 
         # print(self.weights)
         self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
-        
+        self.architecture = [27, 64, 180]
+        self.FFweights = [torch.Tensor(POPSIZE, self.architecture[i], self.architecture[i + 1]).uniform_(-0.5, 0.5).cuda()
+                            for i in range(len(self.architecture) - 1)]
         self.motor_encode = 'semi-indirect' # 'direct', 'indirect'
         if self.motor_encode == 'semi-indirect':
             phase_2 = int(self.period//2)
@@ -55,6 +64,13 @@ class RBFNet:
             # self.weights = torch.zeros(POPSIZE, num_basis, 9).cuda()
             self.weights = torch.Tensor(POPSIZE, num_basis, 9).uniform_(-0.2, 0.2).cuda()
             self.indices = torch.tensor([3, 6, 12, 15, 4, 7, 13, 16, 0, 9, 5, 8, 14, 17, 1, 10, 2, 11]).cuda()
+
+            self.A = [torch.normal(0,.1, (POPSIZE, self.architecture[i], self.architecture[i + 1])) for i in range(len(self.architecture) - 1)]
+            self.B = [torch.normal(0,.1, (POPSIZE, self.architecture[i], self.architecture[i + 1])) for i in range(len(self.architecture) - 1)]
+            self.C = [torch.normal(0,.1, (POPSIZE, self.architecture[i], self.architecture[i + 1])) for i in range(len(self.architecture) - 1)]
+            self.D = [torch.normal(0,.1, (POPSIZE, self.architecture[i], self.architecture[i + 1])) for i in range(len(self.architecture) - 1)]
+            self.lr = [torch.normal(0,.1, (POPSIZE, self.architecture[i], self.architecture[i + 1])) for i in range(len(self.architecture) - 1)]
+
 
     def forward(self, pre):
 
@@ -64,8 +80,8 @@ class RBFNet:
             p2 = self.KENNE[int(self.phase[1])]
             # out_p1 = torch.matmul(p1, self.weights)
             # out_p2 = torch.matmul(p2, self.weights)
-            out_p1 = torch.tanh(torch.matmul(p1, self.weights)) * 0.5
-            out_p2 = torch.tanh(torch.matmul(p2, self.weights)) * 0.5
+            out_p1 = torch.tanh(torch.matmul(p1.float(), self.weights)) * 0.5
+            out_p2 = torch.tanh(torch.matmul(p2.float(), self.weights)) * 0.5
             outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
             outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
             post = torch.concat([outL, outR], dim=1)
@@ -74,7 +90,13 @@ class RBFNet:
             self.phase = self.phase + 1
             self.phase = torch.where(self.phase > self.period, 0, self.phase) 
             ####################################################
-            
+
+            for i, W in enumerate(self.FFweights):
+                out_FF =  torch.einsum('ij, ijk -> ik', pre, W.float()) * 0.5
+                # self.weights[i] = self.hebbian_update(i, W, pre, post, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
+                pre = out_FF
+
+            self.weights = out_FF.reshape(self.POPSIZE, self.num_basis, 9)
             # Direct encoding ##################################
             # post = torch.matmul(self.KENNE[self.phase], self.weights)
             # post = torch.index_select(post, 1, self.indices)
@@ -87,36 +109,53 @@ class RBFNet:
 
         return post.float().detach()
 
+    def hebbian_update(self, hid_num ,weights, pre, post, A, B, C, D, lr):
+        i = self.one_array[hid_num] * pre.unsqueeze(2)
+        j = post.unsqueeze(2).expand(-1,-1, weights.shape[1]).transpose(1,2)
+        ij = i * j
+        weights = weights + lr * (A*ij + B*i + C*j + D)
+        # print('weights update: ', weights)
+        weights = WeightStand(weights)
+        return weights
+    
+
     def get_params(self):
-        p = torch.cat([ params.flatten() for params in self.weights] )
+        p = torch.cat([ params.flatten() for params in self.FFweights] )
 
         return p.cpu().flatten().numpy()
 
     def get_params_a_model(self):
-        p = torch.cat([ params.flatten() for params in self.weights[0]] )
+        p = torch.cat([ params[0].flatten() for params in self.FFweights] )
 
         return p.cpu().flatten().numpy()
     
     def set_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params)
 
+        m = 0
         # print('---- set_params ---------------------------------')
-        # print('self.test: ', self.weights[0])
+        # print('flat_params: ', flat_params.shape)
+        # print('flat_params_slice: ', flat_params[0:4])
+        # print('self.weights[0]: ', self.weights[0])
         # print('----------------------------------------------')
-        # print('w: ', w)
-        popsize, basis, num_out = self.weights.shape
-        self.weights = flat_params.reshape(popsize, basis, num_out).cuda()
-        # self.weights[i] = self.weights[i].cuda()
+        for i, w in enumerate(self.FFweights):
+            # print('w: ', w)
+            pop, a, b = w.shape
+            # print('pop, a, b', pop, a, b)
+            self.FFweights[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+            # self.weights[i] = self.weights[i].cuda()
+            m += a * b 
         # print('---- set_params ouput ---------------------------------')
-        # print('self.test: ', self.weights[0])
+        # print('self.weights_already set: ', self.weights)
         # print('----------------------------------------------')
 
     def set_params_single_model(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
         # print('flat_params: ', flat_params)
 
-        popsize, basis, num_out = self.weights.shape
-        self.weights = flat_params.repeat(popsize, 1, 1).reshape(popsize, basis, num_out).cuda()
+        POPSIZE, basis, num_out = self.weights.shape
+        self.weights = flat_params.repeat(POPSIZE, 1, 1).reshape(POPSIZE, basis, num_out).cuda()
             
     def get_weights(self):
         return self.weights

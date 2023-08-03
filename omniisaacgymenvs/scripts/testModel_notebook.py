@@ -56,7 +56,7 @@ from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 # print_dict(cfg_dict)
 
 # open config files for reading prams
-with open('cfg/ES_config.yml', 'r') as file:
+with open('cfg/ES_config_.yml', 'r') as file:
     configs = yaml.safe_load(file)
 
 with open('cfg/config.yaml', 'r') as file:
@@ -102,6 +102,9 @@ elif ARCHITECTURE_NAME == 'Hebb':
 elif ARCHITECTURE_NAME == 'rbf':
     RBF_ARCHITECTURE = cfg['RBF_ARCHITECTURE']
     models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
+elif ARCHITECTURE_NAME == 'Hebb_rbf':
+    RBF_ARCHITECTURE = cfg['RBF_ARCHITECTURE']
+    models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
     print('model: ', RBF_ARCHITECTURE)
 
 # CPU
@@ -190,6 +193,9 @@ elif ARCHITECTURE_NAME == 'Hebb':
     dir_path = 'data/'+TASK+'/model/Hebb/'
 elif ARCHITECTURE_NAME == 'rbf':
     dir_path = 'data/'+TASK+'/model/rbf/'
+elif ARCHITECTURE_NAME == 'Hebb_rbf':
+    dir_path = 'data/'+TASK+'/model/Hebb_rbf/'
+
 res = listdir(dir_path)
 TEST = cfg['test']
 if TEST == True:
@@ -256,7 +262,7 @@ else:
         print("solutions: ", solutions.shape)
 
         # GPU
-        models.set_params(solutions)
+        # models.set_params(solutions)
         # CPU
         # for i in range(POPSIZE):
         #     models[i].set_params(solutions[i])

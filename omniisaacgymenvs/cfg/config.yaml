@@ -6,24 +6,24 @@ experiment: ''
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
-num_envs: 8 # <---------------
+num_envs: 1024 # <---------------
 
 # disables rendering
 headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: False # <---------------
+wandb_activate: True # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
 # model: 'Hebb'
-model: 'rbf'
-# model: 'HEbb_rbf'
+# model: 'rbf'
+model: 'Hebb_rbf'
 
 EPOCHS: 500 # <---------------
-EPISODE_LENGTH: 100 # <--------------- default: 300
-SAVE_EVERY: 166
+EPISODE_LENGTH: 300 # <--------------- default: 300
+SAVE_EVERY: 166 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -31,7 +31,9 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO
 # ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
-ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+ARCHITECTURE: [27, 64, 180] # for dbAlpha Env Test
+
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output

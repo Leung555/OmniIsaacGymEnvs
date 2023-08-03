@@ -89,7 +89,7 @@ def parse_hydra_configs(cfg: DictConfig):
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
 
-    exp_name = cfg.model+'_'+TASK+'_rew_puhh_gr_1_RBF_phi0.3_num_envs_8'
+    exp_name = cfg.model+'_'+TASK+'_rew_puhh_HebbRbf'
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
                     name=exp_name, 
@@ -108,6 +108,8 @@ def parse_hydra_configs(cfg: DictConfig):
         models = HebbianNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
+    elif ARCHITECTURE_NAME == 'Hebb_rbf':
+        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
     init_params = models.get_params_a_model()
 
 
@@ -181,6 +183,8 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rbf/'
+    elif ARCHITECTURE_NAME == 'Hebb_rbf':
+        dir_path = 'data/'+TASK+'/model/Hebb_rbf/'
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
         for i, file_name in enumerate(res[0:1]):
