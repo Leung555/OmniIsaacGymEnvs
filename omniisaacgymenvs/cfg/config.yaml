@@ -13,7 +13,7 @@ headless: True # <---------------
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False # <---------------
 
-wandb_activate: True # <---------------
+wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
@@ -23,7 +23,7 @@ model: 'Hebb_rbf'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 166 # --166, 250
+SAVE_EVERY: 250 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -31,8 +31,8 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO
 # ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
-# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
-ARCHITECTURE: [27, 64, 180] # for dbAlpha Env Test
+ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 64, 180] # for dbAlpha Env Test
 
 
 # Test RBF network
@@ -101,7 +101,7 @@ ES_params:
   antithetic: True
   learning_rate: 0.1
   learning_rate_decay: 0.999 # 0.9999
-  sigma_init: 0.5
+  sigma_init: 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

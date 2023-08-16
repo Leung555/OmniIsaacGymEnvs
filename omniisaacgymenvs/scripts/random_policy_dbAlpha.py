@@ -89,7 +89,7 @@ def parse_hydra_configs(cfg: DictConfig):
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
 
-    exp_name = cfg.model+'_'+TASK+'_rew_puhh_HebbRbf'
+    exp_name = cfg.model+'_'+TASK+'_rew_puhh_simpleHebbRBF_env128'
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_log',
                     name=exp_name, 

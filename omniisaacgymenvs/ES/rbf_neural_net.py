@@ -64,8 +64,8 @@ class RBFNet:
             p2 = self.KENNE[int(self.phase[1])]
             # out_p1 = torch.matmul(p1, self.weights)
             # out_p2 = torch.matmul(p2, self.weights)
-            out_p1 = torch.tanh(torch.matmul(p1, self.weights)) * 0.5
-            out_p2 = torch.tanh(torch.matmul(p2, self.weights)) * 0.5
+            out_p1 = torch.tanh(torch.matmul(p1, self.weights))
+            out_p2 = torch.tanh(torch.matmul(p2, self.weights))
             outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
             outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
             post = torch.concat([outL, outR], dim=1)

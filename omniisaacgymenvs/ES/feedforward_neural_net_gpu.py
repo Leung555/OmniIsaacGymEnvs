@@ -17,7 +17,7 @@ class FeedForwardNet:
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
-        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.5, 0.5).cuda()
+        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.1, 0.1).cuda()
                             for i in range(len(sizes) - 1)]
         self.architecture = sizes 
         # print('Weight: ', self.weights)   
@@ -38,7 +38,7 @@ class FeedForwardNet:
                 # W = W.cuda()
                 # print('pre: ', i, pre)
                 # print('W: ', i, W)
-                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float())) * 0.5
+                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()))
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())
 

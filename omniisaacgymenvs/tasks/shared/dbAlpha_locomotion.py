@@ -74,8 +74,8 @@ class dbLocomotionTask(RLTask):
         self.joint_stiffness = 10000000.0
         self.velocity = [0,0,0]
         self.ang_velocity = [0,0,0]
-        self._track_contact_forces = True
-        self._prepare_contact_sensors = False
+        # self._track_contact_forces = True
+        # self._prepare_contact_sensors = False
         
         # Acquire the contact sensor interface
         # self.contact_sensor_interface = _sensor.acquire_contact_sensor_interface()
@@ -129,7 +129,8 @@ class dbLocomotionTask(RLTask):
         #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         # )
         
-        leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 1.
+        # leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 5, 3), dim=-1) > 0.
+        # print("leg_contact:", leg_contact)
         
         # Run the simulation (make sure to start the simulation before trying to get sensor readings)
 
@@ -509,7 +510,7 @@ def calculate_metrics(
         + up_reward *2
         + heading_reward  *2
         + height_reward *2
-        + actions_cost *2
+        # + actions_cost *2
     )   
 
     # total_reward = (
