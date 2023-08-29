@@ -129,7 +129,9 @@ class dbLocomotionTask(RLTask):
         #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         # )
         
-        # leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 5, 3), dim=-1) > 0.
+        # Reading contact force sensor at the robot tips
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
+        self.leg_contact_bool = self.leg_contact > 0.
         # print("leg_contact:", leg_contact)
         
         # Run the simulation (make sure to start the simulation before trying to get sensor readings)
@@ -144,7 +146,7 @@ class dbLocomotionTask(RLTask):
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
             self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
             sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale, 
-            dof_effort
+            dof_effort, self.leg_contact_bool
         )
         observations = {
             self._robots.name: {
@@ -247,7 +249,7 @@ class dbLocomotionTask(RLTask):
             self.actions_cost_scale, self.energy_cost_scale, self.termination_height,
             self.death_cost, self._robots.num_dof, self.alive_reward_scale, self.motor_effort_ratio, 
             self.heading_proj, self.up_proj, self.velocity, self.ang_velocity, self.torso_position,
-            self.vel_loc, self.ang_loc
+            self.vel_loc, self.ang_loc, self.leg_contact
         )
 
     def is_done(self) -> None:
@@ -286,9 +288,10 @@ def get_observations(
     contact_force_scale,
     actions,
     angular_velocity_scale,
-    dof_effort
+    dof_effort,
+    leg_contact
 ):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]
+    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, Tensor, Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]
 
     to_target = targets - torso_position
     to_target[:, 2] = 0.0
@@ -330,7 +333,7 @@ def get_observations(
     obs = torch.cat(
         (
             dof_pos,
-            forces_tot, # 27
+            leg_contact, # 27
             # dof_effort, # 39
             normalize_angle(roll).unsqueeze(-1),
             normalize_angle(pitch).unsqueeze(-1),
@@ -459,9 +462,10 @@ def calculate_metrics(
     ang_velocity,
     torso_position,
     vel_loc,
-    angvel_loc
+    angvel_loc,
+    leg_contact
 ):
-    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
+    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
 
     # heading_proj = heading_proj.unsqueeze(-1)
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
@@ -486,6 +490,16 @@ def calculate_metrics(
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
 
+    # Leg gait reward
+    # gait_reward = torch.ones_like(potentials)
+    # a = torch.where(leg_contact > 0.0, 1, 0)
+    # c1 = a[:, 0] + a[:, 2] + a[:, 4]
+    # c2 = a[:, 1] + a[:, 3] + a[:, 5]
+    # o1 = torch.where(c1 < 1 , 1, 0)
+    # o2 = torch.where(c2 < 1 , 1, 0)
+    # o3 = torch.where(c1 > 2 , 1, 0)
+    # o4 = torch.where(c2 > 2 , 1, 0)
+    # gait_reward = o1 + o2 + o3 + o4 - 2 
 
     # print('progress_reward: ', progress_reward)
     # print('heading_reward: ', heading_reward)
@@ -510,6 +524,7 @@ def calculate_metrics(
         + up_reward *2
         + heading_reward  *2
         + height_reward *2
+        #+ gait_reward *2 
         # + actions_cost *2
     )   
 

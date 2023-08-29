@@ -36,8 +36,8 @@ class FeedForwardNet:
             # c = 0
             for i, W in enumerate(self.weights):
                 # W = W.cuda()
-                # print('pre: ', i, pre)
-                # print('W: ', i, W)
+                # print('pre: ', i, pre.shape)
+                # print('W: ', i, W.shape)
                 post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()))
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())

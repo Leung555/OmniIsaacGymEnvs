@@ -1,8 +1,11 @@
 # Task name - used to pick the class to load
-task_name: dbAlpha # Ant, dbAlpha, Cartpole
-# task_name: ${task.name}
+# task_name: Cartpole # Ant, dbAlpha, Cartpole
+task_name: ${task.name}
 # experiment name. defaults to name of training config
-experiment: ''
+experiment: '_test_New_Contact_sens'
+rewards_type: 'Vx_'
+# experiment: 'PPO_gaitreward'
+# experiment: 'dbAlpha_PPO_tanh_sm'
 
 # if set to positive integer, overrides the default number of environments
 # num_envs: '' # for default setup
@@ -16,14 +19,18 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-# model: 'Feedforward'  # <---------------
+model: 'Feedforward'  # <---------------
 # model: 'Hebb'
 # model: 'rbf'
-model: 'Hebb_rbf'
+# model: 'Hebb_rbf'
+# 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
+# 'hyper_RBFFF', 'parallel_FF', 'parallel_Hebb'
+RBFHebb_model_type: 'hyper_RBFHebb'
+
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 250 # --166, 250
+SAVE_EVERY: 100 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -77,9 +84,9 @@ mt_timeout: 30
 
 
 wandb_group: ''
-wandb_name: ${train.params.config.name}
+wandb_name: 'PPO_4096' # ${train.params.config.name}
 wandb_entity: ''
-wandb_project: 'omniisaacgymenvs'
+wandb_project: 'dbAlpha_ES_log' # 'omniisaacgymenvs'
 
 # set default task and default training config based on task
 defaults:
@@ -101,7 +108,7 @@ ES_params:
   antithetic: True
   learning_rate: 0.1
   learning_rate_decay: 0.999 # 0.9999
-  sigma_init: 0.1
+  sigma_init: 0.07 # 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

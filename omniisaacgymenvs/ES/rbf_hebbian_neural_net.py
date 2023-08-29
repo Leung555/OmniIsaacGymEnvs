@@ -10,12 +10,12 @@ def WeightStand(w, eps=1e-5):
     return w
 
 class RBFHebbianNet:
-    def __init__(self, POPSIZE, num_output, num_basis=10):
+    def __init__(self, POPSIZE, num_output, num_basis=10, mode='simple_RBF_hebb'):
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
         # 'FF_hyper _network', 'simple_RBF_hebb', 'hyper_RBFHebb', 'hyper_RBFFF', 'parallel_FF', 'parallel_Hebb'
-        self.mode = 'hyper_RBFFF' 
+        self.mode = mode
         self.POPSIZE = POPSIZE
         # cpg params
         # self.omega = 0.03*np.pi
@@ -56,7 +56,7 @@ class RBFHebbianNet:
 
         # print(self.RBFweights)
         self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
-        self.hyper_architecture = [27, 32, 180]
+        self.hyper_architecture = [27, 64, 180]
         self.architecture = [27, 64, 32, 18]
 
         self.motor_encode = 'semi-indirect' # 'direct', 'indirect'
@@ -90,11 +90,11 @@ class RBFHebbianNet:
                 self.architecture = sizes
                 self.one_array = [torch.ones(POPSIZE, sizes[i], sizes[i + 1]).cuda()
                                     for i in range(len(sizes) - 1)]
-                self.A =  [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-                self.B =  [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-                self.C =  [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-                self.D =  [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-                self.lr = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+                self.A =  [torch.normal(0,.1, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+                self.B =  [torch.normal(0,.1, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+                self.C =  [torch.normal(0,.1, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+                self.D =  [torch.normal(0,.1, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+                self.lr = [torch.normal(0,.1, (POPSIZE, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
 
             # if self.mode == 'parallel_Hebb':
             #     sizes = self.architecture
@@ -132,7 +132,7 @@ class RBFHebbianNet:
             # print(post.shape)
             
             self.phase = self.phase + 1
-            self.phase = torch.where(self.phase > self.period, 0, self.phase) 
+            self.phase = torch.where(self.phase > self.period, 0, self.phase)
             ####################################################
 
             if self.mode == 'simple_RBF_hebb':
@@ -209,6 +209,7 @@ class RBFHebbianNet:
         ij = i * j
 
         weights = weights + lr * (A*ij + B*i + C*j + D)
+        # weights = weights + lr * (C*j + D)
 
         weights = WeightStand(weights)
 
@@ -228,7 +229,15 @@ class RBFHebbianNet:
                     +[ params.flatten() for params in self.lr]
                     )
         if self.mode == 'hyper_RBFHebb':
-            p = torch.cat([ params.flatten() for params in self.A]  
+            # p = torch.cat([ params.flatten() for params in self.A]  
+            #         +[ params.flatten() for params in self.B] 
+            #         +[ params.flatten() for params in self.C]
+            #         +[ params.flatten() for params in self.D]
+            #         +[ params.flatten() for params in self.lr]
+            #         )
+
+            p = torch.cat(
+                    [ params.flatten() for params in self.A]  
                     +[ params.flatten() for params in self.B] 
                     +[ params.flatten() for params in self.C]
                     +[ params.flatten() for params in self.D]
@@ -257,7 +266,8 @@ class RBFHebbianNet:
                 )
         # print('p.shape', p.shape)  
         if self.mode == 'hyper_RBFHebb':
-            p = torch.cat([ params[0].flatten() for params in self.A]  
+            p = torch.cat(
+                    [ params[0].flatten() for params in self.A]  
                     +[ params[0].flatten() for params in self.B] 
                     +[ params[0].flatten() for params in self.C]
                     +[ params[0].flatten() for params in self.D]
@@ -312,7 +322,7 @@ class RBFHebbianNet:
                 pop, a, b = hebb_B.shape
                 self.B[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
                 m += a * b 
-
+#
             for i, hebb_C in enumerate(self.C):
                 pop, a, b = hebb_C.shape
                 self.C[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
@@ -373,12 +383,12 @@ class RBFHebbianNet:
                 pop, a, b = hebb_A.shape
                 self.A[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
                 m += a * b 
-
+                
             for i, hebb_B in enumerate(self.B):
                 pop, a, b = hebb_B.shape
                 self.B[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
                 m += a * b 
-
+#
             for i, hebb_C in enumerate(self.C):
                 pop, a, b = hebb_C.shape
                 self.C[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
