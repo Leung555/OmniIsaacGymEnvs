@@ -54,9 +54,11 @@ class RBFNet:
             self.phase = torch.Tensor([0, phase_2])
             # self.weights = torch.zeros(POPSIZE, num_basis, 9).cuda()
             self.weights = torch.Tensor(POPSIZE, num_basis, 9).uniform_(-0.2, 0.2).cuda()
-            self.indices = torch.tensor([3, 6, 12, 15, 4, 7, 13, 16, 0, 9, 5, 8, 14, 17, 1, 10, 2, 11]).cuda()
+            self.indices = torch.tensor([0, 3, 6, 9, 12, 15, 1, 4, 7, 10, 13, 16, 2, 5, 8, 11, 14, 17]).cuda() # new setup with contact sensor
+            # self.indices = torch.tensor([3, 6, 12, 15, 4, 7, 13, 16, 0, 9, 5, 8, 14, 17, 1, 10, 2, 11]).cuda()
 
     def forward(self, pre):
+        # print('pre: ', pre)
 
         with torch.no_grad():
             # Indirect encoding ##################################
