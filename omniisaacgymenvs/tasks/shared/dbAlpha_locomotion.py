@@ -36,11 +36,13 @@ from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, un
 
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
+# import omni.isaac.sensor
 
 import numpy as np
 import torch
 import math
 
+from omni.isaac.core.prims import RigidPrimView
 
 class dbLocomotionTask(RLTask):
     def __init__(
@@ -49,7 +51,9 @@ class dbLocomotionTask(RLTask):
         env,
         offset=None
     ) -> None:
-
+        # print("self._task_cfg[env][numEnvs]", self._task_cfg["env"]["numEnvs"])
+        # print("_env_spacing", self._task_cfg["env"]["envSpacing"])
+        # print("_max_episode_length", self._task_cfg["env"]["episodeLength"])
         self._num_envs = self._task_cfg["env"]["numEnvs"]
         self._env_spacing = self._task_cfg["env"]["envSpacing"]
         self._max_episode_length = self._task_cfg["env"]["episodeLength"]
@@ -70,7 +74,15 @@ class dbLocomotionTask(RLTask):
         self.joint_stiffness = 10000000.0
         self.velocity = [0,0,0]
         self.ang_velocity = [0,0,0]
+        # self._track_contact_forces = True
+        # self._prepare_contact_sensors = False
         
+        # Acquire the contact sensor interface
+        # self.contact_sensor_interface = _sensor.acquire_contact_sensor_interface()
+
+        # Define the sensor path
+        # self.contact_sensor_path = "/World/envs/env_0/dbAlpha_base/Tips0/Contact_Sensor_0"
+
         RLTask.__init__(self, name, env)
         return
 
@@ -84,6 +96,8 @@ class dbLocomotionTask(RLTask):
 
     def get_observations(self) -> dict:
         torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
+        self.torso_position = torso_position
+        # print('self.torso_position: ', self.torso_position)
         velocities = self._robots.get_velocities(clone=False)
         velocity = velocities[:, 0:3]
         self.velocity = velocity
@@ -104,7 +118,7 @@ class dbLocomotionTask(RLTask):
         # print('dof_vel: ', dof_vel)
         # print('dof_effort: ', dof_effort)
         # print('dof_names: ', dof_names)
-        
+
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
         # print('sensor_force_torques: ', sensor_force_torques)
@@ -114,11 +128,25 @@ class dbLocomotionTask(RLTask):
         #     self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
         #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
         # )
-        self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:], self.up_proj, self.heading_proj = get_observations(
+        
+        # Reading contact force sensor at the robot tips
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
+        self.leg_contact_bool = self.leg_contact > 0.
+        # print("leg_contact:", leg_contact)
+        
+        # Run the simulation (make sure to start the simulation before trying to get sensor readings)
+
+        # Get sensor readings
+        # sensor_data = self.contact_sensor_interface.get_sensor_readings(self.contact_sensor_path)
+
+        # Print sensor data
+        # print("Sensor Data:", sensor_data)
+
+        self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.vel_loc, self.ang_loc, self.up_proj, self.heading_proj = get_observations(
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
             self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
             sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale, 
-            dof_effort
+            dof_effort, self.leg_contact_bool
         )
         observations = {
             self._robots.name: {
@@ -220,7 +248,8 @@ class dbLocomotionTask(RLTask):
             self.obs_buf, self.actions, self.up_weight, self.heading_weight, self.potentials, self.prev_potentials,
             self.actions_cost_scale, self.energy_cost_scale, self.termination_height,
             self.death_cost, self._robots.num_dof, self.alive_reward_scale, self.motor_effort_ratio, 
-            self.heading_proj, self.up_proj, self.velocity, self.ang_velocity
+            self.heading_proj, self.up_proj, self.velocity, self.ang_velocity, self.torso_position,
+            self.vel_loc, self.ang_loc, self.leg_contact
         )
 
     def is_done(self) -> None:
@@ -259,9 +288,10 @@ def get_observations(
     contact_force_scale,
     actions,
     angular_velocity_scale,
-    dof_effort
+    dof_effort,
+    leg_contact
 ):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]
+    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, Tensor, Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]
 
     to_target = targets - torso_position
     to_target[:, 2] = 0.0
@@ -269,6 +299,8 @@ def get_observations(
     forces = sensor_force_torques[:, :, 0:3]
     # print('forces.shape: ', forces.shape)
     forces_tot = torch.norm(forces, p=2, dim=2)
+    # print('forces_tot: ', forces_tot)
+    # print('forces_tot: ', torch.where(forces_tot > 0.02, 1, 0))
 
     prev_potentials = potentials.clone()
     potentials = -torch.norm(to_target, p=2, dim=-1) / dt
@@ -293,12 +325,16 @@ def get_observations(
     # print('forces_tot: ', forces_tot)
     # print('forces_tot: ', forces_tot.shape)
     # print('dof_pos_scaled: ', dof_pos_scaled.shape)
+    # print('dof_pos: ', dof_pos)
+    # print('normalize_angle(roll).unsqueeze(-1): ', normalize_angle(roll))
+    # print('normalize_angle(pitch).unsqueeze(-1): ', normalize_angle(pitch))
+    # print('normalize_angle(yaw).unsqueeze(-1): ', normalize_angle(yaw))
 
     obs = torch.cat(
         (
-            dof_pos_scaled,
-            # forces_tot, # 27
-            dof_effort, # 39
+            dof_pos,
+            leg_contact, # 27
+            # dof_effort, # 39
             normalize_angle(roll).unsqueeze(-1),
             normalize_angle(pitch).unsqueeze(-1),
             normalize_angle(yaw).unsqueeze(-1),
@@ -325,7 +361,7 @@ def get_observations(
     #     dim=-1,
     # )
 
-    return obs, potentials, prev_potentials, up_vec, heading_vec, up_proj, heading_proj
+    return obs, potentials, prev_potentials, vel_loc, angvel_loc, up_proj, heading_proj
 
 
 # Original version of calculate_metrics ###################
@@ -423,42 +459,73 @@ def calculate_metrics(
     heading_proj, 
     up_proj,
     velocity, 
-    ang_velocity
+    ang_velocity,
+    torso_position,
+    vel_loc,
+    angvel_loc,
+    leg_contact
 ):
-    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
+    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, float, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
 
     # heading_proj = heading_proj.unsqueeze(-1)
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
     heading_reward = torch.where(
-        heading_proj > 0.7, heading_weight_tensor, 0
+        heading_proj > 0.9, 0, -heading_weight_tensor
         # heading_proj > 0.8, heading_weight_tensor, -0.5
     )
 
     # aligning up axis of robot and environment
     up_reward = torch.ones_like(heading_reward) * up_weight
-    up_reward = torch.where(up_proj > 0.7, up_reward, 0)
+    up_reward = torch.where(up_proj > 0.93, 0, -up_reward)
+
+    height_reward = torch.ones_like(heading_reward) * 0.2
+    height_reward = torch.where(abs(torso_position[:, 2] + 0.1) < 0.02 , 0, -height_reward)
 
     # energy penalty for movement
-    # actions_cost = torch.sum(actions ** 2, dim=-1)
+    actions_cost = torch.mean(torch.abs(actions), dim=-1)
+    actions_cost = torch.where(actions_cost < 0.52, 0, -0.2)
     # electricity_cost = torch.sum(torch.abs(actions * obs_buf[:, 12+num_dof:12+num_dof*2])* motor_effort_ratio.unsqueeze(0), dim=-1)
 
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
+
+    # Leg gait reward
+    # gait_reward = torch.ones_like(potentials)
+    # a = torch.where(leg_contact > 0.0, 1, 0)
+    # c1 = a[:, 0] + a[:, 2] + a[:, 4]
+    # c2 = a[:, 1] + a[:, 3] + a[:, 5]
+    # o1 = torch.where(c1 < 1 , 1, 0)
+    # o2 = torch.where(c2 < 1 , 1, 0)
+    # o3 = torch.where(c1 > 2 , 1, 0)
+    # o4 = torch.where(c2 > 2 , 1, 0)
+    # gait_reward = o1 + o2 + o3 + o4 - 2 
+
     # print('progress_reward: ', progress_reward)
-    # print('up_reward: ', up_reward)
     # print('heading_reward: ', heading_reward)
+    # print('up_reward: ', up_reward)
+    # print('height_reward: ', height_reward)
+    # print('torso_position[:, 2]: ', torso_position[:, 2])
     # print('velocity: ', velocity)
     # print('ang_velocity: ', ang_velocity)
+    # print('vel_loc: ', vel_loc)
+    # print('angvel_loc: ', angvel_loc)
+    # print('actions_cost: ', actions_cost[0:5])
 
     total_reward = (
-        progress_reward
-        # velocity[:, 0]
-        # - torch.abs(ang_velocity[:, 0])
-        # - torch.abs(ang_velocity[:, 1])
-        # - torch.abs(ang_velocity[:, 2])
-        + up_reward
-        + heading_reward   
+        progress_reward*4
+        # vel_loc[:, 0] * 16.0
+        # - abs(angvel_loc[:, 0])
+        # - abs(angvel_loc[:, 1])
+        # - abs(angvel_loc[:, 2])
+        # torch.abs(ang_velocity[:, 0])
+        # - torch.abs(velocity[:, 1])
+        # - torch.abs(velocity[:, 2])
+        + up_reward *2
+        + heading_reward  *2
+        + height_reward *2
+        #+ gait_reward *2 
+        # + actions_cost *2
     )   
 
     # total_reward = (

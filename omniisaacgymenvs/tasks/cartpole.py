@@ -99,7 +99,7 @@ class CartpoleTask(RLTask):
                 "obs_buf": self.obs_buf
             }
         }
-        print('observations: ', observations)
+        # print('observations: ', observations)
         return observations
 
     def pre_physics_step(self, actions) -> None:

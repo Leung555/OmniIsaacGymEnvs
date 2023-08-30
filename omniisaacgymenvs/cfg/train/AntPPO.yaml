@@ -10,11 +10,11 @@ params:
   network:
     name: actor_critic
     separate: False
+
     space:
       continuous:
         mu_activation: None
         sigma_activation: None
-
         mu_init:
           name: default
         sigma_init:

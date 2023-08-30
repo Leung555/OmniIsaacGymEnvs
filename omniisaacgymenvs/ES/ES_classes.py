@@ -94,7 +94,7 @@ class CMAES:
 
     def __init__(self, coeffs,  # number of model parameters
                  sigma_init=0.10,  # initial standard deviation
-                 popsize=[255],  # population size
+                 popsize=255,  # population size
                  weight_decay=0.0):  # weight decay coefficient
         self.coeffs = coeffs
         # self.num_params = num_params

@@ -23,18 +23,29 @@ class HebbianNet:
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
-        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-1.0,1.0).cuda()
+        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.0, 0.0).cuda()
                             for i in range(len(sizes) - 1)]
         self.architecture = sizes
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
                             for i in range(len(sizes) - 1)]
         # print('self.one_array', self.one_array)
-        self.A = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.B = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.C = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.D = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.lr = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        
+        self.A = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.B = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.C = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.D = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.lr = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+
+        # self.A = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
+        #                     for i in range(len(sizes) - 1)]
+        # self.B = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
+        #                     for i in range(len(sizes) - 1)]
+        # self.C = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
+        #                     for i in range(len(sizes) - 1)]
+        # self.D = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
+        #                     for i in range(len(sizes) - 1)]
+        # self.lr = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
+        #                     for i in range(len(sizes) - 1)]
+
 
 
     def forward(self, pre):

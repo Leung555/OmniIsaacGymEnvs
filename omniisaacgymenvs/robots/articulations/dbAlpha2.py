@@ -30,9 +30,15 @@
 from typing import Optional
 import numpy as np
 import torch
+from omni.isaac.core.prims import RigidPrimView
 from omni.isaac.core.robots.robot import Robot
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.stage import add_reference_to_stage
+
+import numpy as np
+import torch
+
+from pxr import PhysxSchema
 
 import carb
 
@@ -42,19 +48,20 @@ class DbAlpha(Robot):
         self,
         prim_path: str,
         name: Optional[str] = "dbAlpha",
-        # name: Optional[str] = "cartpole",
         usd_path: Optional[str] = None,
         translation: Optional[np.ndarray] = None,
         orientation: Optional[np.ndarray] = None,
     ) -> None:
-
+        """[summary]
+        """
+        
         self._usd_path = usd_path
         self._name = name
 
         if self._usd_path is None:
             assets_root_path = get_assets_root_path()
             if assets_root_path is None:
-                carb.log_error("Could not find Isaac Sim assets folder")
+                carb.log_error("Could not find nucleus server with /Isaac folder")
             self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable2.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable4.usd"
@@ -65,7 +72,6 @@ class DbAlpha(Robot):
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test2.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/archive/example.usd"
-
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -75,3 +81,32 @@ class DbAlpha(Robot):
             orientation=orientation,
             articulation_controller=None,
         )
+
+        self._dof_names = ["BC0", "BC1", "BC2", "BC3", "BC4", "BC5",
+                           "CF0", "CF1", "CF2", "CF3", "CF4", "CF5",
+                           "FT0", "FT1", "FT2", "FT3", "FT4", "FT5",
+                           ]
+
+    @property
+    def dof_names(self):
+        return self._dof_names
+
+    def set_dbAlpha_properties(self, stage, prim):
+        for link_prim in prim.GetChildren():
+            if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
+                rb = PhysxSchema.PhysxRigidBodyAPI.Get(stage, link_prim.GetPrimPath())
+                rb.GetDisableGravityAttr().Set(False)
+                rb.GetRetainAccelerationsAttr().Set(False)
+                rb.GetLinearDampingAttr().Set(0.0)
+                rb.GetMaxLinearVelocityAttr().Set(1000.0)
+                rb.GetAngularDampingAttr().Set(0.0)
+                rb.GetMaxAngularVelocityAttr().Set(64/np.pi*180)
+
+    def prepare_contacts(self, stage, prim):
+        for link_prim in prim.GetChildren():
+            if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
+                if "Tips" in str(link_prim.GetPrimPath()):
+                    rb = PhysxSchema.PhysxRigidBodyAPI.Get(stage, link_prim.GetPrimPath())
+                    rb.CreateSleepThresholdAttr().Set(0)
+                    cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
+                    cr_api.CreateThresholdAttr().Set(0)

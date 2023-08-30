@@ -59,24 +59,24 @@ def parse_hydra_configs(cfg: DictConfig):
     # print_dict(cfg_dict)
 
     # open config files for reading prams
-    with open('cfg/ES_config.yml', 'r') as file:
-        configs = yaml.safe_load(file)
+    #with open('cfg/ES_config.yml', 'r') as file:
+    #    configs = yaml.safe_load(file)
 
     # ES parameters configuration
     POPSIZE             = cfg.num_envs # configs['ES_params']['POPSIZE']
-    EPISODE_LENGTH      = configs['ES_params']['EPISODE_LENGTH']
-    REWARD_FUNCTION     = configs['ES_params']['REWARD_FUNC']
-    RANK_FITNESS        = configs['ES_params']['rank_fitness']
-    ANTITHETIC          = configs['ES_params']['antithetic']
-    LEARNING_RATE       = configs['ES_params']['learning_rate']
-    LEARNING_RATE_DECAY = configs['ES_params']['learning_rate_decay']
-    SIGMA_INIT          = configs['ES_params']['sigma_init']
-    SIGMA_DECAY         = configs['ES_params']['sigma_decay']
-    LEARNING_RATE_LIMIT = configs['ES_params']['learning_rate_limit']
-    SIGMA_LIMIT         = configs['ES_params']['sigma_limit']
+    # EPISODE_LENGTH      = cfg.ES_params.EPISODE_LENGTH
+    RANK_FITNESS        = cfg.ES_params.rank_fitness
+    ANTITHETIC          = cfg.ES_params.antithetic
+    LEARNING_RATE       = cfg.ES_params.learning_rate
+    LEARNING_RATE_DECAY = cfg.ES_params.learning_rate_decay
+    SIGMA_INIT          = cfg.ES_params.sigma_init
+    SIGMA_DECAY         = cfg.ES_params.sigma_decay
+    LEARNING_RATE_LIMIT = cfg.ES_params.learning_rate_limit
+    SIGMA_LIMIT         = cfg.ES_params.sigma_limit
 
     # Model
     ARCHITECTURE_NAME = cfg.model
+    ARCHITECTURE_TYPE = cfg.RBFHebb_model_type
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
     ARCHITECTURE = cfg.ARCHITECTURE
     RBF_ARCHITECTURE = cfg.RBF_ARCHITECTURE
@@ -89,10 +89,12 @@ def parse_hydra_configs(cfg: DictConfig):
     USE_TRAIN_PARAMS = cfg.USE_TRAIN_PARAMS
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
+    experiment = cfg.experiment
+    rew = cfg.rewards_type
 
-    exp_name = cfg.model+'_'+TASK+'_rew_phuwide'
+    exp_name = cfg.model+'_'+TASK
     if wandb_activate:
-        wandb.init(project='dbAlpha_ES_log',
+        wandb.init(project='dbAlpha_ES_New_log',
                     name=exp_name, 
                     config=cfg_dict)
     
@@ -109,6 +111,8 @@ def parse_hydra_configs(cfg: DictConfig):
         models = HebbianNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
+    elif ARCHITECTURE_NAME == 'Hebb_rbf':
+        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
     init_params = models.get_params_a_model()
 
 
@@ -128,10 +132,10 @@ def parse_hydra_configs(cfg: DictConfig):
     solver.set_mu(init_params)
 
     # print(np.array([POPSIZE]).ndim)
-    # solver = CMAES(len(init_params),  # number of model parameters
-    #                sigma_init=0.1,  # initial standard deviation
+    # solver = CMAES(init_params,  # number of model parameters
+    #                sigma_init=0.4,  # initial standard deviation
     #                popsize=POPSIZE,  # population size
-    #                weight_decay=0.0)  # weight decay coefficient
+    #                weight_decay=0.995)  # weight decay coefficient
     # solver.set_mu(init_params)
 
     # simulation GUI config
@@ -149,13 +153,14 @@ def parse_hydra_configs(cfg: DictConfig):
     task = initialize_task(cfg_dict, env)
 
     print('TASK', TASK)
+    print('exp_name', exp_name)
     print('model: ', ARCHITECTURE_NAME)
     print('model size: ', ARCHITECTURE)
     print('trainable parameters: ', len(init_params))
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
     # print("Action space is", env.action_space)
-    obs = env.reset()
+    # obs = env.reset()
 
     # obs_cpu = obs['obs'].cpu().numpy()
     # print("Observation: ", obs)
@@ -182,25 +187,33 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rbf/'
+    elif ARCHITECTURE_NAME == 'Hebb_rbf':
+        dir_path = 'data/'+TASK+'/model/Hebb_rbf/'
+    # res = listdir(dir_path+'test_hebb_params/')
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
-        for i, file_name in enumerate(res[0:4]):
+        for i, file_name in enumerate(res[0:1]):
+            file_name = 'Hebb_rbf_dbAlpha_rew_puhh_RBFHebb_new_ContactSensor_d_66240499_221.92141723632812.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-            # print('trained_data: ', trained_data)
-            solver = trained_data[0]
+            open_es_data = trained_data[0]
+            init_params = open_es_data.best_param() # best_mu   
+            solver = open_es_data
+            solver.set_mu(init_params)
 
     TEST = cfg.test
     if TEST == True:
         for i, file_name in enumerate(sorted(res)):
+            # file_name = 'Hebb_rbf_dbAlpha_rew_puhh_RBFHebb_new_ContactSensor_d_66240499_221.92141723632812.pickle'
             print('file_name: ', file_name)
-            
+
             # Load Data script
             # time.sleep(2)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
-            init_params = open_es_data.best_mu # best_mu   
-                 
+            # init_params = open_es_data.best_mu # best_mu   
+            init_params = open_es_data.best_param() # best_mu   
+                
             # print('trained_data: ', trained_data)
             # print('init_params: ', init_params)
             # models.set_params_single_model(init_params)            
@@ -209,7 +222,7 @@ def parse_hydra_configs(cfg: DictConfig):
             #     models[i] = FeedForwardNet(ARCHITECTURE)
             #     models[i].set_params(solutions[i])
             # solutions = open_es_data.ask()
-            # obs = env.reset()
+            obs = env.reset()
             
             models.set_params_single_model(init_params)
 
@@ -222,10 +235,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO
-                actions = models.forward(obs['obs'])
+                # actions = models.forward(obs['obs'])
                 # print('actions: ', actions)
                 ###########################################
-                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
                 obs, reward, done, info = env.step(
                     actions
@@ -350,38 +363,38 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
 
-# -------------------------------------------------------------------------------
-# --------- Original code with random policy --------------------------------------
-# -------------------------------------------------------------------------------
-    # # simulation GUI config
-    # headless = cfg.headless
-    # render = not headless
-    # enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
+    # -------------------------------------------------------------------------------
+    # --------- Original code with random policy --------------------------------------
+    # -------------------------------------------------------------------------------
+        # # simulation GUI config
+        # headless = cfg.headless
+        # render = not headless
+        # enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
 
-    # # initiate Environment, IsaacGym Simulation
-    # env = VecEnvRLGames(headless=headless, sim_device=cfg.device_id, enable_livestream=cfg.enable_livestream, enable_viewport=enable_viewport)
-    # # sets seed. if seed is -1 will pick a random one
-    # from omni.isaac.core.utils.torch.maths import set_seed
-    # cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
-    # cfg_dict['seed'] = cfg.seed
-    # # initiate Task, Robot
-    # task = initialize_task(cfg_dict, env)
+        # # initiate Environment, IsaacGym Simulation
+        # env = VecEnvRLGames(headless=headless, sim_device=cfg.device_id, enable_livestream=cfg.enable_livestream, enable_viewport=enable_viewport)
+        # # sets seed. if seed is -1 will pick a random one
+        # from omni.isaac.core.utils.torch.maths import set_seed
+        # cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
+        # cfg_dict['seed'] = cfg.seed
+        # # initiate Task, Robot
+        # task = initialize_task(cfg_dict, env)
 
-    # # Simulation Loop
-    # while env._simulation_app.is_running():
-    #     if env._world.is_playing():
-    #         if env._world.current_time_step_index == 0:
-    #             env._world.reset(soft=True)
-    #         actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
-    #         env._task.pre_physics_step(actions)
-    #         env._world.step(render=render)
-    #         env.sim_frame_count += 1
-    #         env._task.post_physics_step()
-    #     else:
-    #         env._world.step(render=render)
+        # # Simulation Loop
+        # while env._simulation_app.is_running():
+        #     if env._world.is_playing():
+        #         if env._world.current_time_step_index == 0:
+        #             env._world.reset(soft=True)
+        #         actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+        #         env._task.pre_physics_step(actions)
+        #         env._world.step(render=render)
+        #         env.sim_frame_count += 1
+        #         env._task.post_physics_step()
+        #     else:
+        #         env._world.step(render=render)
 
-    # env._simulation_app.close()
-# -------------------------------------------------------------------------------
+        # env._simulation_app.close()
+    # -------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     parse_hydra_configs()

@@ -43,6 +43,8 @@ import numpy as np
 import torch
 import math
 
+from omni.isaac.core.prims import RigidPrimView
+# from omni.isaac.sensor import _sensor
 
 class dbAlphaLocomotionTask(dbLocomotionTask):
     def __init__(
@@ -59,10 +61,13 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # self._num_observations = 21
         # self._num_actions = 18
         # Leg test
-        self._num_observations = 39
+        self._num_observations = 27
         self._num_actions = 18
-        self._sim_gear_ratio = 15
-        self._dbAlpha_positions = torch.tensor([0, 0, 0.0])
+        self._sim_gear_ratio = 1
+        self._dbAlpha_positions = torch.tensor([0, 0, -0.06])
+        self._track_contact_forces = True
+        self._prepare_contact_sensors = False
+        # self._cs = _sensor.acquire_contact_sensor_interface()
 
         dbLocomotionTask.__init__(self, name=name, env=env)
         return
@@ -70,11 +75,21 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
     def set_up_scene(self, scene) -> None:
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
+
         self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False, enable_dof_force_sensors=True)
         # self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha", name="robot_view", reset_xform_properties=False, enable_dof_force_sensors=True)
         # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
+
+        # Add contact force sensor at the robot tips
+        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*/Contact_Sensor_.*",
+            name="tips_view", reset_xform_properties=False, 
+            track_contact_forces=self._track_contact_forces, 
+            prepare_contact_sensors=self._prepare_contact_sensors)
+        scene.add(self._tips)
+
         print('dof_names: ', self._dbAlphas.dof_names)
+        print("---------set_up_scene")
         return
 
     def get_dbAlpha(self):

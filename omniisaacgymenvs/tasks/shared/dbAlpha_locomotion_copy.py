@@ -42,7 +42,7 @@ import torch
 import math
 
 
-class dbLocomotionTask(RLTask):
+class dbLocomotionTask_copy(RLTask):
     def __init__(
         self,
         name,
