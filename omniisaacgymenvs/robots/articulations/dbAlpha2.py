@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 from typing import Optional
 import numpy as np
 import torch
@@ -39,9 +38,6 @@ import numpy as np
 import torch
 
 from pxr import PhysxSchema
-
-import carb
-
 
 class DbAlpha(Robot):
     def __init__(
@@ -91,7 +87,7 @@ class DbAlpha(Robot):
     def dof_names(self):
         return self._dof_names
 
-    def set_dbAlpha_properties(self, stage, prim):
+    def set_anymal_properties(self, stage, prim):
         for link_prim in prim.GetChildren():
             if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
                 rb = PhysxSchema.PhysxRigidBodyAPI.Get(stage, link_prim.GetPrimPath())
@@ -105,7 +101,7 @@ class DbAlpha(Robot):
     def prepare_contacts(self, stage, prim):
         for link_prim in prim.GetChildren():
             if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
-                if "Tips" in str(link_prim.GetPrimPath()):
+                if "Tip" in str(link_prim.GetPrimPath()):
                     rb = PhysxSchema.PhysxRigidBodyAPI.Get(stage, link_prim.GetPrimPath())
                     rb.CreateSleepThresholdAttr().Set(0)
                     cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)

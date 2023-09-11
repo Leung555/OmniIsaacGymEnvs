@@ -2,14 +2,16 @@
 # task_name: Cartpole # Ant, dbAlpha, Cartpole
 task_name: ${task.name}
 # experiment name. defaults to name of training config
-experiment: '_test_New_Contact_sens'
+# experiment: '_test_New_Contact_sens'
+experiment: ''
 rewards_type: 'Vx_'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
+# experiment: 'dbAlpha_t_PPO_tanh'
 
 # if set to positive integer, overrides the default number of environments
-# num_envs: '' # for default setup
-num_envs: 1024 # <---------------
+num_envs: '' # for default setup
+# num_envs: 1024 # <---------------
 
 # disables rendering
 headless: True # <---------------
@@ -30,7 +32,7 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 100 # --166, 250
+SAVE_EVERY: 50 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -108,7 +110,7 @@ ES_params:
   antithetic: True
   learning_rate: 0.1
   learning_rate_decay: 0.999 # 0.9999
-  sigma_init: 0.07 # 0.1
+  sigma_init: 0.1 # 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01

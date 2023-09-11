@@ -4,7 +4,7 @@ physics_engine: ${..physics_engine}
 
 env:
   numEnvs: ${resolve_default:2048,${...num_envs}}
-  numObservations: 27
+  numObservations: 206
   numActions: 18
   envSpacing: 3.  # [m]
 
@@ -41,9 +41,9 @@ env:
     stiffness: 80.0  # [N*m/rad]
     damping: 2.0     # [N*m*s/rad]
     # action scale: target angle = actionScale * action + defaultAngle
-    actionScale: 0.5
+    actionScale: 0.2
     # decimation: Number of control action updates @ sim DT per policy DT
-    decimation: 4
+    decimation: 1
 
   defaultJointAngles:  # = target angles when action = 0.0
     BC0: 0.0
@@ -66,7 +66,7 @@ env:
     FT3: 0.0
     FT4: 0.0
     FT5: 0.0
-    
+
 
   learn:
     # rewards
@@ -112,7 +112,7 @@ sim:
   dt: 0.005
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
-  add_ground_plane: True
+  add_ground_plane: False
   use_flatcache: True
   enable_scene_query_support: False
   disable_contact_processing: True
@@ -142,21 +142,21 @@ sim:
 
     # GPU buffers
     gpu_max_rigid_contact_count: 524288
-    gpu_max_rigid_patch_count: 81920
-    gpu_found_lost_pairs_capacity: 8192
-    gpu_found_lost_aggregate_pairs_capacity: 262144
-    gpu_total_aggregate_pairs_capacity: 9000 # original = 8192
+    gpu_max_rigid_patch_count: 163840
+    gpu_found_lost_pairs_capacity: 4194304
+    gpu_found_lost_aggregate_pairs_capacity: 67009374 # 33554432
+    gpu_total_aggregate_pairs_capacity: 4194304
     gpu_max_soft_body_contacts: 1048576
     gpu_max_particle_contacts: 1048576
-    gpu_heap_capacity: 67108864
-    gpu_temp_buffer_capacity: 16777216
+    gpu_heap_capacity: 134217728
+    gpu_temp_buffer_capacity: 33554432
     gpu_max_num_partitions: 8
 
 
   anymal:
     # -1 to use default values
     override_usd_defaults: False
-    enable_self_collisions: False
+    enable_self_collisions: True
     enable_gyroscopic_forces: False
     # also in stage params
     # per-actor

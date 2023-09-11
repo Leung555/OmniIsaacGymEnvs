@@ -29,11 +29,11 @@ class HebbianNet:
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
                             for i in range(len(sizes) - 1)]
         # print('self.one_array', self.one_array)
-        self.A = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.B = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.C = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.D = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.lr = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.A = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.B = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.C = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.D = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.lr = [torch.normal(0,.1, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
 
         # self.A = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
         #                     for i in range(len(sizes) - 1)]
@@ -108,7 +108,8 @@ class HebbianNet:
 
         # print('weights: ', weights)
 
-        weights = weights + lr * (A*ij + B*i + C*j + D)
+        # weights = weights + lr * (A*ij + B*i + C*j + D)
+        weights = weights + lr * (C*j + D)
         # print('weights update: ', weights)
         weights = WeightStand(weights)
         # print('weights stand: ', weights)
@@ -118,18 +119,18 @@ class HebbianNet:
 
 
     def get_params(self):
-        p = torch.cat([ params.flatten() for params in self.A]  
-                +[ params.flatten() for params in self.B] 
-                +[ params.flatten() for params in self.C]
+        p = torch.cat(#[ params.flatten() for params in self.A]  
+                #+[ params.flatten() for params in self.B] 
+                [ params.flatten() for params in self.C]
                 +[ params.flatten() for params in self.D]
                 +[ params.flatten() for params in self.lr]
                 )
         return p.flatten().numpy()
 
     def get_params_a_model(self):
-        p = torch.cat([ params[0].flatten() for params in self.A]  
-                +[ params[0].flatten() for params in self.B] 
-                +[ params[0].flatten() for params in self.C]
+        p = torch.cat(#[ params[0].flatten() for params in self.A]  
+                #+[ params[0].flatten() for params in self.B] 
+                [ params[0].flatten() for params in self.C]
                 +[ params[0].flatten() for params in self.D]
                 +[ params[0].flatten() for params in self.lr]
                 )
@@ -140,15 +141,15 @@ class HebbianNet:
         # print('flat_params: ', flat_params)
 
         m = 0
-        for i, hebb_A in enumerate(self.A):
-            pop, a, b = hebb_A.shape
-            self.A[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
-            m += a * b 
-
-        for i, hebb_B in enumerate(self.B):
-            pop, a, b = hebb_B.shape
-            self.B[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
-            m += a * b 
+        #for i, hebb_A in enumerate(self.A):
+        #    pop, a, b = hebb_A.shape
+        #    self.A[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+        #    m += a * b 
+#
+        #for i, hebb_B in enumerate(self.B):
+        #    pop, a, b = hebb_B.shape
+        #    self.B[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+        #    m += a * b 
 
         for i, hebb_C in enumerate(self.C):
             pop, a, b = hebb_C.shape

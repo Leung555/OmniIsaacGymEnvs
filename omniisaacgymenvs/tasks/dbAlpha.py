@@ -36,6 +36,7 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, unscale
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
+from omni.isaac.core.utils.stage import get_current_stage
 
 from pxr import PhysxSchema
 
@@ -73,16 +74,17 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         return
 
     def set_up_scene(self, scene) -> None:
+        self._stage = get_current_stage()
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
 
-        self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False, enable_dof_force_sensors=True)
+        self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha_base", name="dbAlpha_view", reset_xform_properties=False)
         # self._dbAlphas = ArticulationView(prim_paths_expr="/World/envs/.*/dbAlpha", name="robot_view", reset_xform_properties=False, enable_dof_force_sensors=True)
         # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
 
         # Add contact force sensor at the robot tips
-        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*/Contact_Sensor_.*",
+        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*",
             name="tips_view", reset_xform_properties=False, 
             track_contact_forces=self._track_contact_forces, 
             prepare_contact_sensors=self._prepare_contact_sensors)
@@ -98,6 +100,23 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha", name="cartpole", translation=self._dbAlpha_positions)
         # self._sim_config.apply_articulation_settings("dbAlpha", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("cartpole"))
         # self._sim_config.enable_actor_dof_force_sensors(get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
+        prim = dbAlpha.prim
+        # for link_prim in prim.GetChildren():
+        #     if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
+        #         rb = PhysxSchema.PhysxRigidBodyAPI.Get(self._stage, link_prim.GetPrimPath())
+        #         rb.GetDisableGravityAttr().Set(False)
+        #         rb.GetRetainAccelerationsAttr().Set(False)
+        #         rb.GetLinearDampingAttr().Set(0.0)
+        #         rb.GetMaxLinearVelocityAttr().Set(1000.0)
+        #         rb.GetAngularDampingAttr().Set(0.0)
+        #         rb.GetMaxAngularVelocityAttr().Set(64/np.pi*180)
+        for link_prim in prim.GetChildren():
+            if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
+                # if "Tips" in str(link_prim.GetPrimPath()):
+                rb = PhysxSchema.PhysxRigidBodyAPI.Get(self._stage, link_prim.GetPrimPath())
+                rb.CreateSleepThresholdAttr().Set(0)
+                cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
+                cr_api.CreateThresholdAttr().Set(0)
 
     def get_robot(self):
         return self._dbAlphas

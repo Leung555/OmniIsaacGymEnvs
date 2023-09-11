@@ -92,7 +92,7 @@ def parse_hydra_configs(cfg: DictConfig):
     experiment = cfg.experiment
     rew = cfg.rewards_type
 
-    exp_name = cfg.model+'_'+TASK
+    exp_name = cfg.model+'_'+TASK+experiment+'_Exp_'+str(1)+rew
     if wandb_activate:
         wandb.init(project='dbAlpha_ES_New_log',
                     name=exp_name, 
@@ -193,7 +193,7 @@ def parse_hydra_configs(cfg: DictConfig):
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'Hebb_rbf_dbAlpha_rew_puhh_RBFHebb_new_ContactSensor_d_66240499_221.92141723632812.pickle'
+            file_name = 'Feedforward_dbAlpha_test_New_Contact_sens_Exp_1Vx__d_4352499_520.1209716796875.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -235,10 +235,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO
-                # actions = models.forward(obs['obs'])
+                actions = models.forward(obs['obs'])
                 # print('actions: ', actions)
                 ###########################################
-                actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
                 obs, reward, done, info = env.step(
                     actions

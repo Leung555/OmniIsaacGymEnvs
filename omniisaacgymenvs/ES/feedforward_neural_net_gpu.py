@@ -24,6 +24,7 @@ class FeedForwardNet:
 
 
     def forward(self, pre):
+        # print('pre: ', pre)
 
         with torch.no_grad():
             # pre = torch.from_numpy(pre)

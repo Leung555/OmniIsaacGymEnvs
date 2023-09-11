@@ -48,16 +48,16 @@ class dbAlphaView(ArticulationView):
             name=name,
             reset_xform_properties=False
         )
-        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha/Tip.*",
+        self._knees = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha/Tips.*",
             name="tips_view", reset_xform_properties=False, track_contact_forces=track_contact_forces, prepare_contact_sensors=prepare_contact_sensors)
         # self._base = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha/base_link",
-        #     name="base_view", reset_xform_properties=False, track_contact_forces=track_contact_forces, prepare_contact_sensors=prepare_contact_sensors)
+        #     name="base_view", reset_xform_properties=False, track_contact_forces=track_contact_forces, prepare_contact_sensors=False)
 
     def get_knee_transforms(self):
-        return self._tips.get_world_poses()
+        return self._knees.get_world_poses()
 
     def is_knee_below_threshold(self, threshold, ground_heights=None):
-        knee_pos, _ = self._tips.get_world_poses()
+        knee_pos, _ = self._knees.get_world_poses()
         knee_heights = knee_pos.view((-1, 4, 3))[:, :, 2]
         if ground_heights is not None:
             knee_heights -= ground_heights
