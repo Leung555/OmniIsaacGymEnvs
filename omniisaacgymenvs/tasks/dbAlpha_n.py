@@ -178,6 +178,9 @@ class dbAlphaTask(RLTask):
         leg_contact_bool = leg_contact > 0.
         
         roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
+        # print('roll: ', normalize_angle(roll).unsqueeze(-1))
+        # print('pitch: ', normalize_angle(pitch).unsqueeze(-1))
+        # print('yaw: ', normalize_angle(yaw).unsqueeze(-1))
         
         obs = torch.cat(
             (
@@ -211,9 +214,9 @@ class dbAlphaTask(RLTask):
         if not self._env._world.is_playing():
             return
 
-        # reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
-        # if len(reset_env_ids) > 0:
-        #     self.reset_idx(reset_env_ids)
+        reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
+        if len(reset_env_ids) > 0:
+            self.reset_idx(reset_env_ids)
 
         indices = torch.arange(self._anymals.count, dtype=torch.int32, device=self._device)
         self.actions[:] = actions.clone().to(self._device)
@@ -226,7 +229,11 @@ class dbAlphaTask(RLTask):
         num_resets = len(env_ids)
         # randomize DOF velocities
         velocities = torch_rand_float(-0.1, 0.1, (num_resets, self._anymals.num_dof), device=self._device)
-        dof_pos = self.default_dof_pos[env_ids]
+        # dof_pos = self.default_dof_pos[env_ids]
+        dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._anymals.num_dof), device=self._device)
+        # dof_pos[:] = tensor_clamp(
+        #     self.initial_dof_pos[env_ids] + dof_pos, self.dof_limits_lower, self.dof_limits_upper
+        # )
         dof_vel = velocities
 
         self.current_targets[env_ids] = dof_pos[:]
@@ -259,6 +266,7 @@ class dbAlphaTask(RLTask):
 
     def post_reset(self):
         # print('post_reset')
+        #self._robots = self.get_robot()
         self.initial_root_pos, self.initial_root_rot = self._anymals.get_world_poses()
         self.current_targets = self.default_dof_pos.clone()
 
@@ -313,17 +321,23 @@ class dbAlphaTask(RLTask):
         rew_cosmetic = torch.sum(torch.abs(self.dof_pos[:, 0:4] - self.default_dof_pos[:, 0:4]), dim=1) * self.rew_scales["cosmetic"]
 
         # Test lin vel x raward
-        rew_lin_vel_x = torch.square(torch.relu(self.velocity[:, 0]))
+        rew_lin_vel_x = torch.square(torch.relu(self.base_lin_vel[:, 0]))
         projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
+        # print('projected_gravity: ', projected_gravity)
+        # rew_orient = projected_gravity[:, 2] * -0.5
+        # rew_orient = torch.where(rew_orient < 0.02 , 0, -height_reward)
         rew_orient = torch.sum(torch.square(projected_gravity[:, :2]), dim=1) * -0.5
 
-        height_reward = torch.ones_like(rew_lin_vel_x) * 0.2
-        height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -height_reward)
+        #height_reward = torch.ones_like(rew_lin_vel_x) * 0.5
+        #height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -height_reward)
+        height_reward = torch.square(self.torso_position[:, 2] + 0.1) * -0.5
 
+        roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
+        rew_yaw = torch.square(normalize_angle(yaw)) * -0.5
         #print('rew_lin_vel_x: ', rew_lin_vel_x[0])
         #print('rew_orient: ', rew_orient[0])
 
-        total_reward = rew_lin_vel_x + rew_orient
+        total_reward = rew_lin_vel_x + rew_orient + height_reward + rew_yaw
         #total_reward = rew_lin_vel_xy + rew_ang_vel_z + rew_lin_vel_z # + rew_joint_acc + rew_action_rate + rew_cosmetic
         total_reward = torch.clip(total_reward, 0.0, None)
 
@@ -336,9 +350,10 @@ class dbAlphaTask(RLTask):
 
 
     def is_done(self) -> None:
+        pass
         # reset agents
-        time_out = self.progress_buf >= self.max_episode_length - 1
-        self.reset_buf[:] = time_out | self.fallen_over
+        # time_out = self.progress_buf >= self.max_episode_length - 1
+        # self.reset_buf[:] = time_out | self.fallen_over
 
 @torch.jit.script
 def normalize_angle(x):
