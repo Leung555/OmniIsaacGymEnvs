@@ -130,8 +130,8 @@ class dbLocomotionTask(RLTask):
         # )
         
         # Reading contact force sensor at the robot tips
-        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
-        self.leg_contact_bool = self.leg_contact > 0.
+        # self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
+        # self.leg_contact_bool = self.leg_contact > 0.
         # print("leg_contact:", leg_contact)
         
         # Run the simulation (make sure to start the simulation before trying to get sensor readings)
@@ -249,7 +249,7 @@ class dbLocomotionTask(RLTask):
             self.actions_cost_scale, self.energy_cost_scale, self.termination_height,
             self.death_cost, self._robots.num_dof, self.alive_reward_scale, self.motor_effort_ratio, 
             self.heading_proj, self.up_proj, self.velocity, self.ang_velocity, self.torso_position,
-            self.vel_loc, self.ang_loc, self.leg_contact
+            self.vel_loc, self.ang_loc, self.leg_contact_bool
         )
 
     def is_done(self) -> None:

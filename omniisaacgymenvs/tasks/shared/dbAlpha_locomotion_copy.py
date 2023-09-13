@@ -31,7 +31,7 @@ from abc import abstractmethod
 
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, get_euler_xyz, quat_rotate
 from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, unscale
 
 from omni.isaac.core.articulations import ArticulationView
@@ -42,7 +42,7 @@ import torch
 import math
 
 
-class dbLocomotionTask_copy(RLTask):
+class dbLocomotionTask(RLTask):
     def __init__(
         self,
         name,
@@ -80,21 +80,57 @@ class dbLocomotionTask_copy(RLTask):
         pass
 
     def get_observations(self) -> dict:
-        torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
-        velocities = self._robots.get_velocities(clone=False)
-        velocity = velocities[:, 0:3]
-        ang_velocity = velocities[:, 3:6]
-        dof_pos = self._robots.get_joint_positions(clone=False)
-        dof_vel = self._robots.get_joint_velocities(clone=False)
+        self.torso_position, self.torso_rotation = self._robots.get_world_poses(clone=False)
+        self.velocities = self._robots.get_velocities(clone=False)
+        self.velocity = self.velocities[:, 0:3]
+        self.ang_velocity = self.velocities[:, 3:6]
+        self.dof_pos = self._robots.get_joint_positions(clone=False)
+        self.dof_vel = self._robots.get_joint_velocities(clone=False)
 
+        roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 0.0
+        self.projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
         # force sensors attached to the feet
-        sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
+        # sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
 
-        self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
-            torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
-            self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
-            sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
+        # self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
+        #     torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
+        #     self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
+        #     sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale
+        # )
+        # to_target = targets - torso_position
+        # to_target[:, 2] = 0.0
+
+        # forces = sensor_force_torques[:, :, 0:3]
+        # print('forces.shape: ', forces.shape)
+        # forces_tot = torch.norm(forces, p=2, dim=2)
+        # print('forces_tot: ', forces_tot)
+        # print('forces_tot: ', torch.where(forces_tot > 0.02, 1, 0))
+
+        #prev_potentials = potentials.clone()
+        #potentials = -torch.norm(to_target, p=2, dim=-1) / dt
+
+        #torso_quat, up_proj, heading_proj, up_vec, heading_vec = compute_heading_and_up(
+        #    torso_rotation, inv_start_rot, to_target, basis_vec0, basis_vec1, 2
+        #)
+#
+        #vel_loc, angvel_loc, roll, pitch, yaw, angle_to_target = compute_rot(
+        #    torso_quat, velocity, ang_velocity, targets, torso_position
+        #)
+
+        # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
+        self.obs_buf = torch.cat(
+            (
+                self.dof_pos,
+                self.leg_contact, # 27
+                # dof_effort, # 39
+                normalize_angle(roll).unsqueeze(-1),
+                normalize_angle(pitch).unsqueeze(-1),
+                normalize_angle(yaw).unsqueeze(-1),
+            ),
+            dim=-1,
         )
+
         observations = {
             self._robots.name: {
                 "obs_buf": self.obs_buf
@@ -111,16 +147,20 @@ class dbLocomotionTask_copy(RLTask):
             self.reset_idx(reset_env_ids)
 
         self.actions = actions.clone().to(self._device)
-        forces = self.actions * self.joint_gears * self.power_scale
-        target_positions = self.actions * self.power_scale
+        # forces = self.actions * self.joint_gears * self.power_scale
+        # target_positions = self.actions
+        # print('actions: ', actions)
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
+        # print('self._robots.count: ', self._robots.count)
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
 
         # applies joint target position
-        self._robots.set_joint_position_targets(target_positions, indices=indices)
+        self.joint_target_pos = self.actions
+        # print(actions)
+        self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -143,16 +183,16 @@ class dbLocomotionTask_copy(RLTask):
         self._robots.set_world_poses(root_pos, root_rot, indices=env_ids)
         self._robots.set_velocities(root_vel, indices=env_ids)
 
-        to_target = self.targets[env_ids] - self.initial_root_pos[env_ids]
-        to_target[:, 2] = 0.0
-        self.prev_potentials[env_ids] = -torch.norm(to_target, p=2, dim=-1) / self.dt
-        self.potentials[env_ids] = self.prev_potentials[env_ids].clone()
+        #to_target = self.targets[env_ids] - self.initial_root_pos[env_ids]
+        #to_target[:, 2] = 0.0
+        #self.prev_potentials[env_ids] = -torch.norm(to_target, p=2, dim=-1) / self.dt
+        #self.potentials[env_ids] = self.prev_potentials[env_ids].clone()
 
         # bookkeeping
         self.reset_buf[env_ids] = 0
         self.progress_buf[env_ids] = 0
 
-        num_resets = len(env_ids)
+        # num_resets = len(env_ids)
 
     def post_reset(self):
         self._robots = self.get_robot()
@@ -160,33 +200,62 @@ class dbLocomotionTask_copy(RLTask):
         self.initial_dof_pos = self._robots.get_joint_positions()
 
         # initialize some data used later on
-        self.start_rotation = torch.tensor([1, 0, 0, 0], device=self._device, dtype=torch.float32)
-        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
-        self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
-        self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((self.num_envs, 1))
+        #self.start_rotation = torch.tensor([1, 0, 0, 0], device=self._device, dtype=torch.float32)
+        #self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
+        #self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
+        #self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((self.num_envs, 1))
 
-        self.basis_vec0 = self.heading_vec.clone()
-        self.basis_vec1 = self.up_vec.clone()
+        #self.basis_vec0 = self.heading_vec.clone()
+        #self.basis_vec1 = self.up_vec.clone()
 
-        self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
-        self.target_dirs = torch.tensor([1, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
-        self.dt = 1.0 / 60.0
-        self.potentials = torch.tensor([-1000.0 / self.dt], dtype=torch.float32, device=self._device).repeat(self.num_envs)
-        self.prev_potentials = self.potentials.clone()
+        #self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
+        #self.target_dirs = torch.tensor([1, 0, 0], dtype=torch.float32, device=self._device).repeat((self.num_envs, 1))
+        #self.dt = 1.0 / 60.0
+        #self.potentials = torch.tensor([-1000.0 / self.dt], dtype=torch.float32, device=self._device).repeat(self.num_envs)
+        #self.prev_potentials = self.potentials.clone()
 
         self.actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
+
+        self.gravity_vec = torch.tensor([0.0, 0.0, -1.0], device=self._device).repeat(
+            (self._num_envs, 1)
+        )
 
         # randomize all envs
         indices = torch.arange(self._robots.count, dtype=torch.int64, device=self._device)
         self.reset_idx(indices)
 
     def calculate_metrics(self) -> None:
-        self.rew_buf[:] = calculate_metrics(
-            self.obs_buf, self.actions, self.up_weight, self.heading_weight, self.potentials, self.prev_potentials,
-            self.actions_cost_scale, self.energy_cost_scale, self.termination_height,
-            self.death_cost, self._robots.num_dof, self.get_dof_at_limit_cost(), self.alive_reward_scale, self.motor_effort_ratio
-        )
+        roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
 
+        rew_lin_vel_x = self.velocity[:, 0]
+        rew_yaw = torch.square(normalize_angle(yaw)) * -0.5
+        rew_orient = torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -0.5
+        height_reward = torch.square(self.torso_position[:, 2] + 0.1) * -0.5
+        # print('rew_lin_vel_x: ', rew_lin_vel_x[0])
+        # print('rew_orient: ', rew_orient[0])
+
+        # total_reward = rew_lin_vel_xy + rew_ang_vel_z + rew_lin_vel_z # + rew_joint_acc + rew_action_rate + rew_cosmetic
+        # total_reward = torch.clip(total_reward, 0.0, None)
+        # print('rew_lin_vel_x: ', rew_lin_vel_x)
+        # print('rew_orient: ', rew_orient)
+        # print('height_reward: ', height_reward)
+        # print('rew_yaw : ', rew_yaw )
+
+        # Test lin vel x raward
+        # rew_lin_vel_x = self.velocity[:, 0] * 2.0
+        # rew_orient = torch.where(self.projected_gravity[:, 2] < -0.93 , 0, -0.5)
+        # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -0.5)
+        # rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -0.5)
+        total_reward = rew_lin_vel_x + rew_orient + height_reward + rew_yaw
+        # total_reward = torch.clip(total_reward, 0.0, None)
+
+        #self.last_actions[:] = self.actions[:]
+        #self.last_dof_vel[:] = self.dof_vel[:]
+
+        # self.fallen_over = self._anymals.is_base_below_threshold(threshold=-0.15, ground_heights=0.0)
+        # total_reward[torch.nonzero(self.fallen_over)] = -1
+        self.rew_buf[:] = total_reward.detach()
+    
     def is_done(self) -> None:
         self.reset_buf[:] = is_done(
             self.obs_buf, self.termination_height, self.reset_buf, self.progress_buf, self._max_episode_length
@@ -200,68 +269,6 @@ class dbLocomotionTask_copy(RLTask):
 @torch.jit.script
 def normalize_angle(x):
     return torch.atan2(torch.sin(x), torch.cos(x))
-
-@torch.jit.script
-def get_observations(
-    torso_position,
-    torso_rotation,
-    velocity,
-    ang_velocity,
-    dof_pos,
-    dof_vel,
-    targets,
-    potentials,
-    dt,
-    inv_start_rot,
-    basis_vec0,
-    basis_vec1,
-    dof_limits_lower,
-    dof_limits_upper,
-    dof_vel_scale,
-    sensor_force_torques,
-    num_envs,
-    contact_force_scale,
-    actions,
-    angular_velocity_scale
-):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
-
-    to_target = targets - torso_position
-    to_target[:, 2] = 0.0
-
-    prev_potentials = potentials.clone()
-    potentials = -torch.norm(to_target, p=2, dim=-1) / dt
-
-    torso_quat, up_proj, heading_proj, up_vec, heading_vec = compute_heading_and_up(
-        torso_rotation, inv_start_rot, to_target, basis_vec0, basis_vec1, 2
-    )
-
-    vel_loc, angvel_loc, roll, pitch, yaw, angle_to_target = compute_rot(
-        torso_quat, velocity, ang_velocity, targets, torso_position
-    )
-
-    dof_pos_scaled = unscale(dof_pos, dof_limits_lower, dof_limits_upper)
-
-    # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
-    obs = torch.cat(
-        (
-            torso_position[:, 2].view(-1, 1),
-            vel_loc,
-            angvel_loc * angular_velocity_scale,
-            normalize_angle(yaw).unsqueeze(-1),
-            normalize_angle(roll).unsqueeze(-1),
-            normalize_angle(angle_to_target).unsqueeze(-1),
-            up_proj.unsqueeze(-1),
-            heading_proj.unsqueeze(-1),
-            dof_pos_scaled,
-            dof_vel * dof_vel_scale,
-            sensor_force_torques.reshape(num_envs, -1) * contact_force_scale,
-            actions,
-        ),
-        dim=-1,
-    )
-
-    return obs, potentials, prev_potentials, up_vec, heading_vec
 
 
 # Original version of calculate_metrics ###################
@@ -341,59 +348,6 @@ def is_done(
     reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset)
     return reset
 
-@torch.jit.script
-def calculate_metrics(
-    obs_buf,
-    actions,
-    up_weight,
-    heading_weight,
-    potentials,
-    prev_potentials,
-    actions_cost_scale,
-    energy_cost_scale,
-    termination_height,
-    death_cost,
-    num_dof,
-    dof_at_limit_cost,
-    alive_reward_scale,
-    motor_effort_ratio
-):
-    # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, Tensor, float, Tensor) -> Tensor
-    # print(obs_buf[:, 11].shape)
-    heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight
-    heading_reward = torch.where(
-        obs_buf[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf[:, 11] / 0.8
-    )
-
-    # aligning up axis of robot and environment
-    up_reward = torch.zeros_like(heading_reward)
-    up_reward = torch.where(obs_buf[:, 10] > 0.93, up_reward + up_weight, up_reward)
-
-    # energy penalty for movement
-    actions_cost = torch.sum(actions ** 2, dim=-1)
-    electricity_cost = torch.sum(torch.abs(actions * obs_buf[:, 12+num_dof:12+num_dof*2])* motor_effort_ratio.unsqueeze(0), dim=-1)
-
-    # reward for duration of staying alive
-    alive_reward = torch.ones_like(potentials) * alive_reward_scale
-    progress_reward = potentials - prev_potentials
-    # print('progress_reward: ', progress_reward.shape)
-    # print('up_reward: ', up_reward.shape)
-    # print('heading_reward: ', heading_reward.shape)
-    total_reward = (
-        progress_reward
-        + alive_reward
-        + up_reward
-        + heading_reward
-        - actions_cost_scale * actions_cost
-        - energy_cost_scale * electricity_cost
-        - dof_at_limit_cost
-    )
-
-    # adjust reward for fallen agents
-    total_reward = torch.where(
-        obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
-    )
-    return total_reward
 
 # Original version of calculate_metrics ###################
 # @torch.jit.script

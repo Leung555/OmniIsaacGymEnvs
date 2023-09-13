@@ -115,12 +115,13 @@ class dbAlphaTask(RLTask):
         scene.add(self._anymals._knees)
 #        scene.add(self._anymals._base)
 
+
         return
 
     def get_anymal(self):
         anymal = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha", name="dbAlpha", translation=self._anymal_translation)
         self._sim_config.apply_articulation_settings("dbAlpha", get_prim_at_path(anymal.prim_path), self._sim_config.parse_actor_config("dbAlpha"))
-        #anymal.set_anymal_properties(self._stage, anymal.prim)
+        anymal.set_anymal_properties(self._stage, anymal.prim)
         anymal.prepare_contacts(self._stage, anymal.prim)
 
         # Configure joint properties
@@ -152,6 +153,8 @@ class dbAlphaTask(RLTask):
             angle = self.named_default_joint_angles[name]
             self.default_dof_pos[:, i] = angle
 
+        self.leg_contact_bool = torch.zeros((self._num_envs, 6), dtype=torch.float, device=self.device)
+
     def get_observations(self) -> dict:
         # print('get_observations')
         self.torso_position, self.torso_rotation = self._anymals.get_world_poses(clone=False)
@@ -176,6 +179,7 @@ class dbAlphaTask(RLTask):
 
         leg_contact = torch.norm(self._anymals._knees.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
         leg_contact_bool = leg_contact > 0.
+        # leg_contact_bool = torch.zeros((self._num_envs, 6), dtype=torch.float, device=self.device)
         
         roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
         # print('roll: ', normalize_angle(roll).unsqueeze(-1))
@@ -220,8 +224,10 @@ class dbAlphaTask(RLTask):
 
         indices = torch.arange(self._anymals.count, dtype=torch.int32, device=self._device)
         self.actions[:] = actions.clone().to(self._device)
-        current_targets = self.current_targets + self.action_scale * self.actions * self.dt 
-        self.current_targets[:] = tensor_clamp(current_targets, self.anymal_dof_lower_limits, self.anymal_dof_upper_limits)
+        # current_targets = self.current_targets + self.action_scale * self.actions * self.dt 
+        current_targets = self.actions
+        # self.current_targets[:] = tensor_clamp(current_targets, self.anymal_dof_lower_limits, self.anymal_dof_upper_limits)
+        self.current_targets[:] = current_targets
         self._anymals.set_joint_position_targets(self.current_targets, indices)
 
     def reset_idx(self, env_ids):
@@ -243,10 +249,10 @@ class dbAlphaTask(RLTask):
         # apply resets
         indices = env_ids.to(dtype=torch.int32)
         self._anymals.set_joint_positions(dof_pos, indices)
-        self._anymals.set_joint_velocities(dof_vel, indices)
+        # self._anymals.set_joint_velocities(dof_vel, indices)
 
         self._anymals.set_world_poses(self.initial_root_pos[env_ids].clone(), self.initial_root_rot[env_ids].clone(), indices)
-        self._anymals.set_velocities(root_vel, indices)
+        # self._anymals.set_velocities(root_vel, indices)
 
         # self.commands_x[env_ids] = torch_rand_float(
         #     self.command_x_range[0], self.command_x_range[1], (num_resets, 1), device=self._device
@@ -292,6 +298,10 @@ class dbAlphaTask(RLTask):
 
         self.time_out_buf = torch.zeros_like(self.reset_buf)
 
+        self.roll = torch.zeros_like(self.reset_buf)
+        self.pitch = torch.zeros_like(self.reset_buf)
+        self.yaw = torch.zeros_like(self.reset_buf)
+
         # randomize all envs
         indices = torch.arange(self._anymals.count, dtype=torch.int64, device=self._device)
         self.reset_idx(indices)
@@ -315,37 +325,47 @@ class dbAlphaTask(RLTask):
         #rew_lin_vel_xy = torch.exp(-lin_vel_error / 0.25) * self.rew_scales["lin_vel_xy"]
         #rew_ang_vel_z = torch.exp(-ang_vel_error / 0.25) * self.rew_scales["ang_vel_z"]
 
-        rew_lin_vel_z = torch.square(self.base_lin_vel[:, 2]) * self.rew_scales["lin_vel_z"]
-        rew_joint_acc = torch.sum(torch.square(self.last_dof_vel - self.dof_vel), dim=1) * self.rew_scales["joint_acc"]
-        rew_action_rate = torch.sum(torch.square(self.last_actions - self.actions), dim=1) * self.rew_scales["action_rate"]
-        rew_cosmetic = torch.sum(torch.abs(self.dof_pos[:, 0:4] - self.default_dof_pos[:, 0:4]), dim=1) * self.rew_scales["cosmetic"]
+        # rew_lin_vel_z = torch.square(self.base_lin_vel[:, 2]) * self.rew_scales["lin_vel_z"]
+        # rew_joint_acc = torch.sum(torch.square(self.last_dof_vel - self.dof_vel), dim=1) * self.rew_scales["joint_acc"]
+        # rew_action_rate = torch.sum(torch.square(self.last_actions - self.actions), dim=1) * self.rew_scales["action_rate"]
+        # rew_cosmetic = torch.sum(torch.abs(self.dof_pos[:, 0:4] - self.default_dof_pos[:, 0:4]), dim=1) * self.rew_scales["cosmetic"]
 
-        # Test lin vel x raward
-        rew_lin_vel_x = torch.square(torch.relu(self.base_lin_vel[:, 0]))
-        projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
+        
+        # projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
         # print('projected_gravity: ', projected_gravity)
         # rew_orient = projected_gravity[:, 2] * -0.5
-        # rew_orient = torch.where(rew_orient < 0.02 , 0, -height_reward)
-        rew_orient = torch.sum(torch.square(projected_gravity[:, :2]), dim=1) * -0.5
 
         #height_reward = torch.ones_like(rew_lin_vel_x) * 0.5
-        #height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -height_reward)
-        height_reward = torch.square(self.torso_position[:, 2] + 0.1) * -0.5
 
         roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
-        rew_yaw = torch.square(normalize_angle(yaw)) * -0.5
+
+        # rew_lin_vel_x = self.velocity[:, 0] * 2.0
+        # rew_yaw = torch.square(normalize_angle(yaw)) * -0.5
+        # rew_orient = torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -0.5
+        # height_reward = torch.square(self.torso_position[:, 2] + 0.1) * -0.5
         #print('rew_lin_vel_x: ', rew_lin_vel_x[0])
         #print('rew_orient: ', rew_orient[0])
 
+        # total_reward = rew_lin_vel_xy + rew_ang_vel_z + rew_lin_vel_z # + rew_joint_acc + rew_action_rate + rew_cosmetic
+        # total_reward = torch.clip(total_reward, 0.0, None)
+        # print('rew_lin_vel_x: ', rew_lin_vel_x)
+        # print('rew_orient: ', rew_orient)
+        # print('height_reward: ', height_reward)
+        # print('rew_yaw : ', rew_yaw )
+
+        # Test lin vel x raward
+        rew_lin_vel_x = self.velocity[:, 0] * 2.0
+        rew_orient = torch.where(self.projected_gravity[:, 2] < -0.93 , 0, -0.5)
+        height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -0.5)
+        rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -0.5)
         total_reward = rew_lin_vel_x + rew_orient + height_reward + rew_yaw
-        #total_reward = rew_lin_vel_xy + rew_ang_vel_z + rew_lin_vel_z # + rew_joint_acc + rew_action_rate + rew_cosmetic
         total_reward = torch.clip(total_reward, 0.0, None)
 
         self.last_actions[:] = self.actions[:]
         self.last_dof_vel[:] = self.dof_vel[:]
 
-        self.fallen_over = self._anymals.is_base_below_threshold(threshold=-0.15, ground_heights=0.0)
-        total_reward[torch.nonzero(self.fallen_over)] = -1
+        # self.fallen_over = self._anymals.is_base_below_threshold(threshold=-0.15, ground_heights=0.0)
+        # total_reward[torch.nonzero(self.fallen_over)] = -1
         self.rew_buf[:] = total_reward.detach()
 
 

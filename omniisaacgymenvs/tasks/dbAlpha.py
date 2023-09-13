@@ -29,7 +29,7 @@
 
 
 from omniisaacgymenvs.robots.articulations.dbAlpha import DbAlpha
-from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion import dbLocomotionTask
+from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
@@ -92,6 +92,9 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 
         print('dof_names: ', self._dbAlphas.dof_names)
         print("---------set_up_scene")
+
+        self.leg_contact_bool = torch.zeros((self._num_envs, 6), dtype=torch.float, device=self.device)
+
         return
 
     def get_dbAlpha(self):
@@ -112,11 +115,11 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         #         rb.GetMaxAngularVelocityAttr().Set(64/np.pi*180)
         for link_prim in prim.GetChildren():
             if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
-                # if "Tips" in str(link_prim.GetPrimPath()):
-                rb = PhysxSchema.PhysxRigidBodyAPI.Get(self._stage, link_prim.GetPrimPath())
-                rb.CreateSleepThresholdAttr().Set(0)
-                cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
-                cr_api.CreateThresholdAttr().Set(0)
+                if "Tips" in str(link_prim.GetPrimPath()):
+                    rb = PhysxSchema.PhysxRigidBodyAPI.Get(self._stage, link_prim.GetPrimPath())
+                    rb.CreateSleepThresholdAttr().Set(0)
+                    cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
+                    cr_api.CreateThresholdAttr().Set(0)
 
     def get_robot(self):
         return self._dbAlphas

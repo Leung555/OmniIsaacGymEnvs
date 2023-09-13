@@ -193,7 +193,7 @@ def parse_hydra_configs(cfg: DictConfig):
     res = listdir(dir_path)
     if USE_TRAIN_PARAMS:
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'Feedforward_dbAlpha_test_New_Contact_sens_Exp_1Vx__d_4352499_520.1209716796875.pickle'
+            file_name = 'Feedforward_dbAlpha_n_Exp_1_lxorheya_d_435299_158.76937866210938.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
