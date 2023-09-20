@@ -208,8 +208,8 @@ class RBFHebbianNet:
         j = post.unsqueeze(2).expand(-1,-1, weights.shape[1]).transpose(1,2)
         ij = i * j
 
-        weights = weights + lr * (A*ij + B*i + C*j + D)
-        # weights = weights + lr * (C*j + D)
+        # weights = weights + lr * (A*ij + B*i + C*j + D)
+        weights = weights + lr * (C*j + D)
 
         weights = WeightStand(weights)
 
@@ -237,9 +237,9 @@ class RBFHebbianNet:
             #         )
 
             p = torch.cat(
-                    [ params.flatten() for params in self.A]  
-                    +[ params.flatten() for params in self.B] 
-                    +[ params.flatten() for params in self.C]
+                    #[ params.flatten() for params in self.A]  
+                    #+[ params.flatten() for params in self.B] 
+                    [ params.flatten() for params in self.C]
                     +[ params.flatten() for params in self.D]
                     +[ params.flatten() for params in self.lr]
                     )
@@ -267,9 +267,9 @@ class RBFHebbianNet:
         # print('p.shape', p.shape)  
         if self.mode == 'hyper_RBFHebb':
             p = torch.cat(
-                    [ params[0].flatten() for params in self.A]  
-                    +[ params[0].flatten() for params in self.B] 
-                    +[ params[0].flatten() for params in self.C]
+                    #[ params[0].flatten() for params in self.A]  
+                    #+[ params[0].flatten() for params in self.B] 
+                    [ params[0].flatten() for params in self.C]
                     +[ params[0].flatten() for params in self.D]
                     +[ params[0].flatten() for params in self.lr]
                     )      
@@ -313,15 +313,15 @@ class RBFHebbianNet:
 
         if self.mode == 'hyper_RBFHebb':
             m = 0
-            for i, hebb_A in enumerate(self.A):
-                pop, a, b = hebb_A.shape
-                self.A[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
-                m += a * b 
+            # for i, hebb_A in enumerate(self.A):
+            #     pop, a, b = hebb_A.shape
+            #     self.A[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+            #     m += a * b 
 
-            for i, hebb_B in enumerate(self.B):
-                pop, a, b = hebb_B.shape
-                self.B[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
-                m += a * b 
+            # for i, hebb_B in enumerate(self.B):
+            #     pop, a, b = hebb_B.shape
+            #     self.B[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
+            #     m += a * b 
 #
             for i, hebb_C in enumerate(self.C):
                 pop, a, b = hebb_C.shape
@@ -379,15 +379,15 @@ class RBFHebbianNet:
 
         if self.mode == 'hyper_RBFHebb':
             m = 0
-            for i, hebb_A in enumerate(self.A):
-                pop, a, b = hebb_A.shape
-                self.A[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
-                m += a * b 
+            # for i, hebb_A in enumerate(self.A):
+            #     pop, a, b = hebb_A.shape
+            #     self.A[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            #     m += a * b 
                 
-            for i, hebb_B in enumerate(self.B):
-                pop, a, b = hebb_B.shape
-                self.B[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
-                m += a * b 
+            # for i, hebb_B in enumerate(self.B):
+            #     pop, a, b = hebb_B.shape
+            #     self.B[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
+            #     m += a * b 
 #
             for i, hebb_C in enumerate(self.C):
                 pop, a, b = hebb_C.shape

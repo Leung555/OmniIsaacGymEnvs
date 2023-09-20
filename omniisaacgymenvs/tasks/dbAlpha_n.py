@@ -143,8 +143,8 @@ class dbAlphaTask(RLTask):
         #     joint_paths.append(f"base/{quadrant}_HAA")
         # print('joint_paths: ', joint_paths)
 
-        for joint_path in joint_paths:
-            set_drive(f"{anymal.prim_path}/{joint_path}", "angular", "position", 0, 400, 40, 1000)
+        #for joint_path in joint_paths:
+        #    set_drive(f"{anymal.prim_path}/{joint_path}", "angular", "position", 0, 400, 40, 1000)
 
         self.default_dof_pos = torch.zeros((self.num_envs, 18), dtype=torch.float, device=self.device, requires_grad=False)
         dof_names = anymal.dof_names
@@ -353,13 +353,22 @@ class dbAlphaTask(RLTask):
         # print('height_reward: ', height_reward)
         # print('rew_yaw : ', rew_yaw )
 
+        rew_lin_vel_x = self.velocity[:, 0]
+        rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -0.5
+        rew_yaw = torch.square(normalize_angle(yaw)) * -0.5
+        rew_orient = torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1) * -0.5
+        height_reward = torch.square(self.torso_position[:, 2] + 0.1) * -0.5
+
+
         # Test lin vel x raward
-        rew_lin_vel_x = self.velocity[:, 0] * 2.0
-        rew_orient = torch.where(self.projected_gravity[:, 2] < -0.93 , 0, -0.5)
-        height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -0.5)
-        rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -0.5)
-        total_reward = rew_lin_vel_x + rew_orient + height_reward + rew_yaw
-        total_reward = torch.clip(total_reward, 0.0, None)
+        # rew_lin_vel_x = self.velocity[:, 0] * 2.0
+        # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -0.5
+        # rew_orient = torch.where(self.projected_gravity[:, 2] < -0.93 , 0, -0.5)
+        # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -0.5)
+        # rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -0.5)
+        total_reward = rew_lin_vel_x + rew_orient + height_reward + rew_yaw + rew_lin_vel_y
+
+        # total_reward = torch.clip(total_reward, 0.0, None)
 
         self.last_actions[:] = self.actions[:]
         self.last_dof_vel[:] = self.dof_vel[:]

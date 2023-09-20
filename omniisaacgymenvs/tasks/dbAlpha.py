@@ -30,6 +30,7 @@
 
 from omniisaacgymenvs.robots.articulations.dbAlpha import DbAlpha
 from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
+# from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_test import dbLocomotionTask
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
@@ -37,6 +38,7 @@ from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, un
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.stage import get_current_stage
+from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 
 from pxr import PhysxSchema
 
@@ -59,14 +61,14 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        # self._num_observations = 21
+        # self._num_observations =  #locomotion_test: 60+6+6+2+6=84
         # self._num_actions = 18
         # Leg test
-        self._num_observations = 27
+        self._num_observations = 102 # 27: Jpos, Legcontact, rpy
         self._num_actions = 18
         self._sim_gear_ratio = 1
         self._dbAlpha_positions = torch.tensor([0, 0, -0.06])
-        self._track_contact_forces = True
+        self._track_contact_forces = False
         self._prepare_contact_sensors = False
         # self._cs = _sensor.acquire_contact_sensor_interface()
 
@@ -90,10 +92,10 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
             prepare_contact_sensors=self._prepare_contact_sensors)
         scene.add(self._tips)
 
-        print('dof_names: ', self._dbAlphas.dof_names)
         print("---------set_up_scene")
 
-        self.leg_contact_bool = torch.zeros((self._num_envs, 6), dtype=torch.float, device=self.device)
+
+        # self.leg_contact_bool = torch.zeros((self._num_envs, 6), dtype=torch.float, device=self.device)
 
         return
 
@@ -121,6 +123,25 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
                     cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
                     cr_api.CreateThresholdAttr().Set(0)
 
+        joint_paths = ['base_link/BC1', 'base_link/BC2', 'base_link/BC4', 'base_link/BC5',
+                 'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
+                 'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4',
+                 'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5', 
+                 'Thorax/BC0', 'Thorax/BC3',
+                 'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
+                 'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3']
+
+        for joint_path in joint_paths:
+            set_drive(f"{dbAlpha.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+
+        # self.default_dof_pos = torch.zeros((self.num_envs, 18), dtype=torch.float, device=self.device, requires_grad=False)
+        # dof_names = dbAlpha.dof_names
+        # for i in range(self.num_actions):
+        #     name = dof_names[i]
+        #     angle = self.named_default_joint_angles[name]
+        #     self.default_dof_pos[:, i] = angle
+
+
     def get_robot(self):
         return self._dbAlphas
 
@@ -140,4 +161,4 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 @torch.jit.script
 def get_dof_at_limit_cost(obs_buf, num_dof):
     # type: (Tensor, int) -> Tensor
-    return torch.sum(obs_buf[:, 0:0+num_dof] > 0.99, dim=-1)
+    return torch.sum(obs_buf[:, 12:12+num_dof] > 0.99, dim=-1) # remenber to change back to 0+num_dof

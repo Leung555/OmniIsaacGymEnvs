@@ -94,6 +94,8 @@ def parse_hydra_configs(cfg: DictConfig):
 
     exp_name = cfg.model+'_'+TASK+experiment+'_Exp_'+str(1)+rew
     if wandb_activate:
+        # wandb.init(project='Cartpole_ES_log',
+        # wandb.init(project='Ant_ES_log',
         wandb.init(project='dbAlpha_ES_New_log',
                     name=exp_name, 
                     config=cfg_dict)
@@ -184,16 +186,16 @@ def parse_hydra_configs(cfg: DictConfig):
     if ARCHITECTURE_NAME == 'Feedforward':
         dir_path = './data/'+TASK+'/model/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
-        dir_path = './data/'+TASK+'/model/Hebb/'
+        dir_path = './data/'+TASK+'/model/Hebb/'# hebb_archive/good_pro/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
-        dir_path = 'data/'+TASK+'/model/Hebb_rbf/'
-    # res = listdir(dir_path+'test_hebb_params/')
-    res = listdir(dir_path)
+        dir_path = 'data/'+TASK+'/model/Hebb_rbf/' # test_hebb_params/'
+    # dir_path = listdir(dir_path+'simpleRBFHebb'+'/')
     if USE_TRAIN_PARAMS:
+        res = listdir(dir_path)
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'Feedforward_dbAlpha_n_Exp_1_lxorheya_d_435299_158.76937866210938.pickle'
+            file_name = 'd_1000499_272.476806640625.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -203,8 +205,10 @@ def parse_hydra_configs(cfg: DictConfig):
 
     TEST = cfg.test
     if TEST == True:
+        res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
-            # file_name = 'Hebb_rbf_dbAlpha_rew_puhh_RBFHebb_new_ContactSensor_d_66240499_221.92141723632812.pickle'
+            # file_name = 'Feedforward_dbAlpha_PPO_gaitrew_Exp_1_lxorheya_gaitrew_d_4352399_224.0114288330078.pickle'
+            # file_name = 'd_1000499_272.476806640625.pickle'
             print('file_name: ', file_name)
 
             # Load Data script
@@ -235,10 +239,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 # print('step: ', _)
                 ############### CPU Version ###############
                 # TODO
-                # actions = models.forward(obs['obs'])
+                actions = models.forward(obs['obs'])
                 # print('actions: ', actions)
                 ###########################################
-                actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
                 # print("Action_3: ", actions)
                 obs, reward, done, info = env.step(
                     actions
@@ -277,12 +281,11 @@ def parse_hydra_configs(cfg: DictConfig):
             # set models parameters 
             models.set_params(solutions)
 
-            total_rewards = torch.zeros(cfg.num_envs)
-            total_rewards = total_rewards.cuda()
-
             obs = env.reset()
             # obs = obs['obs'].cpu().numpy()
             
+            total_rewards = torch.zeros(cfg.num_envs)
+            total_rewards = total_rewards.cuda()
             # for i in range(cfg.num_envs):
             #     actions[i] = models[i].forward(obs['obs'][i])
             

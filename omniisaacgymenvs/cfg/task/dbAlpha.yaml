@@ -8,7 +8,7 @@ env:
 #  numEnvs: ${...num_envs}
   numEnvs: ${resolve_default:4096,${...num_envs}}
   envSpacing: 5
-  episodeLength: 500 # ${resolve_default:1000,${...EPISODE_LENGTH}} # origi 1000
+  episodeLength: ${resolve_default:1000,${...EPISODE_LENGTH}} # origi 1000
   enableDebugVis: False
 
   clipActions: 1.0
@@ -32,8 +32,14 @@ env:
   terminationHeight: -0.15 # 0.31
   alive_reward_scale: 0.5
 
+  rew_lin_vel_x: 2.0
+  rew_lin_vel_y: 0.5
+  rew_orient: 0.5
+  height_reward: 0.5
+  rew_yaw: 0.5
+
 sim:
-  dt: 0.01 # 1/120 s, original 0.0083
+  dt: 0.0083 # 1/120 s, original 0.0083
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
   add_ground_plane: True

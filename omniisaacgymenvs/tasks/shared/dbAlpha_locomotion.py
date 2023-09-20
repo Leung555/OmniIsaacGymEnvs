@@ -130,8 +130,8 @@ class dbLocomotionTask(RLTask):
         # )
         
         # Reading contact force sensor at the robot tips
-        # self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
-        # self.leg_contact_bool = self.leg_contact > 0.
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
+        self.leg_contact_bool = self.leg_contact > 0.
         # print("leg_contact:", leg_contact)
         
         # Run the simulation (make sure to start the simulation before trying to get sensor readings)
@@ -489,6 +489,7 @@ def calculate_metrics(
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
+    # print('progress_reward: ', progress_reward)
 
     # Leg gait reward
     # gait_reward = torch.ones_like(potentials)
