@@ -29,8 +29,8 @@
 
 
 from omniisaacgymenvs.robots.articulations.dbAlpha import DbAlpha
-from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
-# from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_test import dbLocomotionTask
+# from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
+from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_test import dbLocomotionTask
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
@@ -39,6 +39,8 @@ from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
+from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
+from omniisaacgymenvs.tasks.utils.anymal_terrain_generator import *
 
 from pxr import PhysxSchema
 
@@ -64,11 +66,11 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # self._num_observations =  #locomotion_test: 60+6+6+2+6=84
         # self._num_actions = 18
         # Leg test
-        self._num_observations = 102 # 27: Jpos, Legcontact, rpy
+        self._num_observations = 72 # 27: Jpos, Legcontact, rpy
         self._num_actions = 18
         self._sim_gear_ratio = 1
         self._dbAlpha_positions = torch.tensor([0, 0, -0.06])
-        self._track_contact_forces = False
+        self._track_contact_forces = True
         self._prepare_contact_sensors = False
         # self._cs = _sensor.acquire_contact_sensor_interface()
 
@@ -77,6 +79,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 
     def set_up_scene(self, scene) -> None:
         self._stage = get_current_stage()
+        self.get_terrain()
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
 
@@ -141,6 +144,21 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         #     angle = self.named_default_joint_angles[name]
         #     self.default_dof_pos[:, i] = angle
 
+    def get_terrain(self):
+        # self.env_origins = torch.zeros((self.num_envs, 3), device=self.device, requires_grad=False)
+        # if not self.curriculum: self._task_cfg["env"]["terrain"]["maxInitMapLevel"] = self._task_cfg["env"]["terrain"]["numLevels"] - 1
+        # self.terrain_levels = torch.randint(0, self._task_cfg["env"]["terrain"]["maxInitMapLevel"]+1, (self.num_envs,), device=self.device)
+        # self.terrain_types = torch.randint(0, self._task_cfg["env"]["terrain"]["numTerrains"], (self.num_envs,), device=self.device)
+        self._create_trimesh()
+        # self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
+
+    def _create_trimesh(self):
+        self.terrain = Terrain(self._task_cfg["env"]["terrain"], num_robots=self.num_envs)
+        vertices = self.terrain.vertices
+        triangles = self.terrain.triangles
+        position = torch.tensor([-self.terrain.border_size , -self.terrain.border_size , 0.0])
+        add_terrain_to_stage(stage=self._stage, vertices=vertices, triangles=triangles, position=position)  
+        self.height_samples = torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
 
     def get_robot(self):
         return self._dbAlphas

@@ -3,11 +3,13 @@
 task_name: ${task.name}
 # experiment name. defaults to name of training config
 # experiment: ''
-experiment: '_test_requireSensors'
+# experiment: 'dbAlpha_newGaitRew_Jvel30'
+experiment: 'ant_hebb_Test'
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
 rewards_type: 'ant_setup'
+# rewards_type: 'newGaitRew'
 # rewards_type: '_lxorheya_gaitrew'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
@@ -25,8 +27,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
@@ -36,15 +38,20 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 100 # --166, 250
+SAVE_EVERY: 166 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 # ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
+# ARCHITECTURE: [40, 128, 64, 8] # for Ant Env Test leg contact replace
+# ARCHITECTURE: [34, 128, 64, 8] # for Ant Env Test
+# ARCHITECTURE: [27, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO
+ARCHITECTURE: [72, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO, leg contact replace
 # ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
-ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 128, 64, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 # ARCHITECTURE: [27, 64, 180] # for dbAlpha Env Test
 
 
@@ -106,15 +113,28 @@ hydra:
   run:
     dir: .
 
-# ES algorithm
+# ES algorithm Standard
 ES_params:
   POPSIZE: 1024 # workstation (500)
-  EPISODE_LENGTH: 400 # workstation (200)
+  EPISODE_LENGTH: 300 # workstation (200)
   rank_fitness: True
   antithetic: True
-  learning_rate: 0.1
+  learning_rate: 0.05 # 0.05:RBF
   learning_rate_decay: 0.995 # 0.9999
   sigma_init: 0.1 # 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.01
+
+# # ES algorithm Test Hebb
+# ES_params:
+#   POPSIZE: 1024 # workstation (500)
+#   EPISODE_LENGTH: 400 # workstation (200)
+#   rank_fitness: True
+#   antithetic: True
+#   learning_rate: 0.01
+#   learning_rate_decay: 0.9999 # 0.9999
+#   sigma_init: 0.001 # 0.1
+#   sigma_decay: 0.999
+#   learning_rate_limit: 0.001
+#   sigma_limit: 0.0001

@@ -8,7 +8,7 @@ env:
 #  numEnvs: ${...num_envs}
   numEnvs: ${resolve_default:4096,${...num_envs}}
   envSpacing: 5
-  episodeLength: 1000000000000000
+  episodeLength: 300
   enableDebugVis: False
 
   clipActions: 1.0
@@ -21,7 +21,7 @@ env:
   upWeight: 0.1
 
   # cost parameters
-  actionsCost: 0.005
+  actionsCost: 0.005 #0.005 
   energyCost: 0.05
   dofVelocityScale: 0.2
   angularVelocityScale: 1.0

@@ -38,11 +38,27 @@ env:
   height_reward: 0.5
   rew_yaw: 0.5
 
+
+  terrain:
+    staticFriction: 1.0  # [-]
+    dynamicFriction: 1.0  # [-]
+    restitution: 0.        # [-]
+    # rough terrain only:
+    curriculum: true
+    maxInitMapLevel: 0
+    mapLength: 8.
+    mapWidth: 8.
+    numLevels: 10
+    numTerrains: 20
+    # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+    terrainProportions: [0.1, 0.1, 0.35, 0.25, 0.2]
+    # tri mesh only:
+    slopeTreshold: 0.5
 sim:
   dt: 0.0083 # 1/120 s, original 0.0083
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
-  add_ground_plane: True
+  add_ground_plane: False
   add_distant_light: True
   use_flatcache: True
   enable_scene_query_support: False
@@ -97,3 +113,4 @@ sim:
     # per-body
     density: -1
     max_depenetration_velocity: 10.0
+

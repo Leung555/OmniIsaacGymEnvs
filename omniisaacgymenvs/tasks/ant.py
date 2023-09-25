@@ -28,15 +28,19 @@
 
 
 from omniisaacgymenvs.robots.articulations.ant import Ant
-from omniisaacgymenvs.tasks.shared.locomotion import LocomotionTask
+from omniisaacgymenvs.tasks.shared.locomotion_ant_test import LocomotionTask
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omni.isaac.core.utils.torch.maths import torch_rand_float, tensor_clamp, unscale
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
+from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
+from omni.isaac.core.utils.stage import get_current_stage
 
 from pxr import PhysxSchema
+
+from omni.isaac.core.prims import RigidPrimView
 
 import numpy as np
 import torch
@@ -55,23 +59,53 @@ class AntLocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 60
+        self._num_observations = 40 #60
         self._num_actions = 8
         self._ant_positions = torch.tensor([0, 0, 0.5])
+        self._track_contact_forces = True
+        self._prepare_contact_sensors = False
 
         LocomotionTask.__init__(self, name=name, env=env)
         return
 
     def set_up_scene(self, scene) -> None:
+        self._stage = get_current_stage()
         self.get_ant()
         RLTask.set_up_scene(self, scene)
         self._ants = ArticulationView(prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False)
         scene.add(self._ants)
+
+        # Add contact force sensor at the robot tips
+        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/Ant/.*/Tips.*",
+            name="tips_view", reset_xform_properties=False, 
+            track_contact_forces=self._track_contact_forces, 
+            prepare_contact_sensors=self._prepare_contact_sensors)
+        scene.add(self._tips)
+
         return
 
     def get_ant(self):
         ant = Ant(prim_path=self.default_zero_env_path + "/Ant", name="Ant", translation=self._ant_positions)
         self._sim_config.apply_articulation_settings("Ant", get_prim_at_path(ant.prim_path), self._sim_config.parse_actor_config("Ant"))
+
+        prim = ant.prim
+
+        # for link_prim in prim.GetChildren():
+        #     if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
+        #         if "Tips" in str(link_prim.GetPrimPath()):
+        #             rb = PhysxSchema.PhysxRigidBodyAPI.Get(self._stage, link_prim.GetPrimPath())
+        #             rb.CreateSleepThresholdAttr().Set(0)
+        #             cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
+        #             cr_api.CreateThresholdAttr().Set(0)
+
+        # joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
+        #                'joints/front_left_foot',  'joints/left_back_foot',
+        #                'joints/front_right_leg',  'joints/right_back_leg',
+        #                'joints/front_right_foot', 'joints/right_back_foot',
+        #                ]
+
+        # for joint_path in joint_paths:
+        #     set_drive(f"{ant.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
     def get_robot(self):
         return self._ants
@@ -92,4 +126,4 @@ class AntLocomotionTask(LocomotionTask):
 @torch.jit.script
 def get_dof_at_limit_cost(obs_buf, num_dof):
     # type: (Tensor, int) -> Tensor
-    return torch.sum(obs_buf[:, 12:12+num_dof] > 0.99, dim=-1)
+    return torch.sum(obs_buf[:, 3:3+num_dof] > 0.99, dim=-1)

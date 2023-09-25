@@ -95,7 +95,7 @@ class dbLocomotionTask(RLTask):
         self.dof_vel = self._robots.get_joint_velocities(clone=False)
 
         roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
-        # self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 0.0
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 0.0
         self.projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
@@ -108,11 +108,12 @@ class dbLocomotionTask(RLTask):
         # to_target = targets - torso_position
         # to_target[:, 2] = 0.0
 
-        forces = sensor_force_torques[:, :, 0:3]* 100000
+        # forces = sensor_force_torques[:, :, 0:3]
         # print('forces.shape: ', forces.shape)
-        self.forces_tot = torch.norm(forces, p=2, dim=2) 
-        # print('forces_tot: ', self.forces_tot)
+        # self.forces_tot = torch.norm(forces, p=2, dim=2)
+        # print('forces_tot: ', self.forces_tot[0])
         # print('forces_tot: ', torch.where(forces_tot > 0.02, 1, 0))
+        # print('self.leg_contact: ', self.leg_contact[0])
 
         # print('dof_names: ', self._dbAlphas.dof_names)
         #prev_potentials = potentials.clone()
@@ -130,8 +131,8 @@ class dbLocomotionTask(RLTask):
         self.obs_buf = torch.cat(
             (
                 self.dof_pos,
-                # self.leg_contact, # 27
-                self.forces_tot, # 27
+                self.leg_contact, # 27
+                # self.forces_tot, # 27
                 # dof_effort, # 39
                 normalize_angle(roll).unsqueeze(-1),
                 normalize_angle(pitch).unsqueeze(-1),
@@ -168,7 +169,7 @@ class dbLocomotionTask(RLTask):
 
         # applies joint target position
         self.joint_target_pos = self.actions
-        # print(actions)
+        print(actions)
         self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
@@ -256,12 +257,12 @@ class dbLocomotionTask(RLTask):
         height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -self.height_reward_scale)
         rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -self.rew_yaw_reward_scale)
 
-        # gait_reward = torch.ones_like(rew_lin_vel_x)
+        # gait_reward = torch.ones_like(rew_lin_vel_x) to get tripod gait Tips idx[2,4,5,0,3,1]
         o1 = torch.zeros_like(rew_lin_vel_x)
         o2 = torch.zeros_like(rew_lin_vel_x)
-        gait_thres = torch.where(self.forces_tot > 0.0, 1, -1)
-        c1 = gait_thres[:, 0] + gait_thres[:, 2] + gait_thres[:, 4]
-        c2 = gait_thres[:, 1] + gait_thres[:, 3] + gait_thres[:, 5]
+        gait_thres = torch.where(self.leg_contact > 0.0, 1, -1)
+        c1 = gait_thres[:, 0] + gait_thres[:, 1] + gait_thres[:, 3]
+        c2 = gait_thres[:, 2] + gait_thres[:, 4] + gait_thres[:, 5]
         if self.count < 50:
             o1 = torch.where(c1 >  2 , 1, 0)
             o2 = torch.where(c2 < -2 , 1, 0)

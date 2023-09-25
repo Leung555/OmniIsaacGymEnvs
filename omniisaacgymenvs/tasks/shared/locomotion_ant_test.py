@@ -42,7 +42,7 @@ import torch
 import math
 
 
-class dbLocomotionTask(RLTask):
+class LocomotionTask(RLTask):
     def __init__(
         self,
         name,
@@ -87,12 +87,14 @@ class dbLocomotionTask(RLTask):
 
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
-        leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1)
+        self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 4, 3), dim=-1)
+        self.leg_contact_bool = self.leg_contact > 0.
+        print('self.leg_contact_bool: ', self.leg_contact_bool)
 
         self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
             self.inv_start_rot, self.basis_vec0, self.basis_vec1, self.dof_limits_lower, self.dof_limits_upper, self.dof_vel_scale,
-            sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale, leg_contact
+            sensor_force_torques, self._num_envs, self.contact_force_scale, self.actions, self.angular_velocity_scale, self.leg_contact
         )
         observations = {
             self._robots.name: {
@@ -109,15 +111,14 @@ class dbLocomotionTask(RLTask):
         if len(reset_env_ids) > 0:
             self.reset_idx(reset_env_ids)
 
-        self.actions = actions.clone().to(self._device)
+        self.actions = actions.clone().to(self._device) * 0.5
         # forces = self.actions * self.joint_gears * self.power_scale
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
-        # print(actions)
+
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
         self._robots.set_joint_position_targets(self.actions, indices=indices)
-        # self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -219,7 +220,7 @@ def get_observations(
     contact_force_scale,
     actions,
     angular_velocity_scale,
-    leg_contact
+    leg_contact,
 ):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
 

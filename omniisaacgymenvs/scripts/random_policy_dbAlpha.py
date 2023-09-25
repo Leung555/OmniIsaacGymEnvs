@@ -95,8 +95,8 @@ def parse_hydra_configs(cfg: DictConfig):
     exp_name = cfg.model+'_'+TASK+experiment+'_Exp_'+str(1)+rew
     if wandb_activate:
         # wandb.init(project='Cartpole_ES_log',
-        # wandb.init(project='Ant_ES_log',
-        wandb.init(project='dbAlpha_ES_New_log',
+        wandb.init(project='Ant_ES_log',
+        # wandb.init(project='dbAlpha_ES_New_log',
                     name=exp_name, 
                     config=cfg_dict)
     
@@ -207,8 +207,8 @@ def parse_hydra_configs(cfg: DictConfig):
     if TEST == True:
         res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
-            # file_name = 'Feedforward_dbAlpha_PPO_gaitrew_Exp_1_lxorheya_gaitrew_d_4352399_224.0114288330078.pickle'
-            # file_name = 'd_1000499_272.476806640625.pickle'
+            # file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
+            file_name = 'Hebb_Antant_hebb_Test_Exp_1ant_setup_d_81920497_276.04766845703125.pickle'
             print('file_name: ', file_name)
 
             # Load Data script
