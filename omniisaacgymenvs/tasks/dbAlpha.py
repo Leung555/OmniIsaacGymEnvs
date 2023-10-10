@@ -29,8 +29,8 @@
 
 
 from omniisaacgymenvs.robots.articulations.dbAlpha import DbAlpha
-# from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
-from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_test import dbLocomotionTask
+from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_copy import dbLocomotionTask
+# from omniisaacgymenvs.tasks.shared.dbAlpha_locomotion_test import dbLocomotionTask
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
@@ -40,7 +40,7 @@ from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
-from omniisaacgymenvs.tasks.utils.anymal_terrain_generator import *
+from omniisaacgymenvs.tasks.utils.dbAllpha_terrain_generator import *
 
 from pxr import PhysxSchema
 
@@ -66,10 +66,13 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # self._num_observations =  #locomotion_test: 60+6+6+2+6=84
         # self._num_actions = 18
         # Leg test
-        self._num_observations = 72 # 27: Jpos, Legcontact, rpy
+        self._num_observations = 27 # 27: Jpos, Legcontact, rpy
         self._num_actions = 18
+        # 4 legs test
+        # self._num_observations = 19 # 27: Jpos, Legcontact, rpy
+        # self._num_actions = 12
         self._sim_gear_ratio = 1
-        self._dbAlpha_positions = torch.tensor([0, 0, -0.06])
+        self._dbAlpha_positions = torch.tensor([0, 0, -0.05])
         self._track_contact_forces = True
         self._prepare_contact_sensors = False
         # self._cs = _sensor.acquire_contact_sensor_interface()
@@ -79,7 +82,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 
     def set_up_scene(self, scene) -> None:
         self._stage = get_current_stage()
-        self.get_terrain()
+        # self.get_terrain()
         self.get_dbAlpha()
         RLTask.set_up_scene(self, scene)
 
@@ -126,6 +129,7 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
                     cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
                     cr_api.CreateThresholdAttr().Set(0)
 
+        # 6 legs setup
         joint_paths = ['base_link/BC1', 'base_link/BC2', 'base_link/BC4', 'base_link/BC5',
                  'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
                  'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4',
@@ -134,6 +138,17 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
                  'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
                  'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3']
 
+        # 4 legs setup
+        # joint_paths = ['base_link/BC2', 'base_link/BC5',
+        #          'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
+        #          'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5', 
+        #          'Thorax/BC0', 'Thorax/BC3',
+        #          'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
+        #          'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3']
+        # 2 legs setup
+        # joint_paths = ['base_link/BC2', 'base_link/BC5',
+        #          'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
+        #          'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5']
         for joint_path in joint_paths:
             set_drive(f"{dbAlpha.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
@@ -153,12 +168,13 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
         # self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
 
     def _create_trimesh(self):
+        offset = 120
         self.terrain = Terrain(self._task_cfg["env"]["terrain"], num_robots=self.num_envs)
         vertices = self.terrain.vertices
         triangles = self.terrain.triangles
-        position = torch.tensor([-self.terrain.border_size , -self.terrain.border_size , 0.0])
+        position = torch.tensor([-self.terrain.border_size-offset , -self.terrain.border_size-offset , 0.0])
         add_terrain_to_stage(stage=self._stage, vertices=vertices, triangles=triangles, position=position)  
-        self.height_samples = torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
+        # self.height_samples = torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
 
     def get_robot(self):
         return self._dbAlphas
@@ -179,4 +195,4 @@ class dbAlphaLocomotionTask(dbLocomotionTask):
 @torch.jit.script
 def get_dof_at_limit_cost(obs_buf, num_dof):
     # type: (Tensor, int) -> Tensor
-    return torch.sum(obs_buf[:, 12:12+num_dof] > 0.99, dim=-1) # remenber to change back to 0+num_dof
+    return torch.sum(obs_buf[:, 0:0+num_dof] > 0.99, dim=-1) # remenber to change back to 0+num_dof

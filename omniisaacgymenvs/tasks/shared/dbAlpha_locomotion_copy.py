@@ -93,9 +93,19 @@ class dbLocomotionTask(RLTask):
         self.ang_velocity = self.velocities[:, 3:6]
         self.dof_pos = self._robots.get_joint_positions(clone=False)
         self.dof_vel = self._robots.get_joint_velocities(clone=False)
+        # print('dof_pos: ', self.dof_pos)
+        # print('dof_vel: ', self.dof_vel)
 
         roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
+        # 6 legs setup
+        # self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 0.0
+        # 4 legs setup        
+        # self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 4, 3), dim=-1)
+        # 2 legs setup        
         self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 6, 3), dim=-1) > 0.0
+        # print('leg_contact: ', self.leg_contact)
+
+        # self.leg_contact = torch.where(self.leg_contact > 0, 1, -1)        
         self.projected_gravity = quat_rotate(self.torso_rotation, self.gravity_vec)
         # force sensors attached to the feet
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
@@ -130,13 +140,16 @@ class dbLocomotionTask(RLTask):
         # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
         self.obs_buf = torch.cat(
             (
-                self.dof_pos,
+                self.dof_pos * 0.5,
                 self.leg_contact, # 27
                 # self.forces_tot, # 27
                 # dof_effort, # 39
                 normalize_angle(roll).unsqueeze(-1),
                 normalize_angle(pitch).unsqueeze(-1),
                 normalize_angle(yaw).unsqueeze(-1),
+                # input vector for RBF simple modulation
+                # self.velocity[:, 0].unsqueeze(-1)
+                # 
             ),
             dim=-1,
         )
@@ -159,7 +172,7 @@ class dbLocomotionTask(RLTask):
         self.actions = actions.clone().to(self._device)
         # forces = self.actions * self.joint_gears * self.power_scale
         # target_positions = self.actions
-        # print('actions: ', actions)
+        # print('actions: ', torch.round(actions, decimals=0))
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
         # print('self._robots.count: ', self._robots.count)
@@ -169,7 +182,9 @@ class dbLocomotionTask(RLTask):
 
         # applies joint target position
         self.joint_target_pos = self.actions
-        print(actions)
+        # self.joint_target_pos = 0.5*self.actions + 0.5*self.previous_actions 
+        self.previous_actions = self.actions
+        # print(actions)
         self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
     def reset_idx(self, env_ids):
@@ -185,13 +200,14 @@ class dbLocomotionTask(RLTask):
         dof_vel = torch_rand_float(-0.1, 0.1, (num_resets, self._robots.num_dof), device=self._device)
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
-        root_vel = torch.zeros((num_resets, 6), device=self._device)
+        # root_vel = torch.zeros((num_resets, 6), device=self._device)
 
         # apply resets
         self._robots.set_joint_positions(dof_pos, indices=env_ids)
         # self._robots.set_joint_velocities(dof_vel, indices=env_ids)
 
         self._robots.set_world_poses(root_pos, root_rot, indices=env_ids)
+        # print('root_pos: ', root_pos)
         # self._robots.set_velocities(root_vel, indices=env_ids)
 
         #to_target = self.targets[env_ids] - self.initial_root_pos[env_ids]
@@ -226,6 +242,7 @@ class dbLocomotionTask(RLTask):
         #self.prev_potentials = self.potentials.clone()
 
         self.actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
+        self.previous_actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
 
         self.gravity_vec = torch.tensor([0.0, 0.0, -1.0], device=self._device).repeat(
             (self._num_envs, 1)
@@ -257,7 +274,7 @@ class dbLocomotionTask(RLTask):
         height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -self.height_reward_scale)
         rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -self.rew_yaw_reward_scale)
 
-        # gait_reward = torch.ones_like(rew_lin_vel_x) to get tripod gait Tips idx[2,4,5,0,3,1]
+        gait_reward = torch.ones_like(rew_lin_vel_x) # to get tripod gait Tips idx[2,4,5,0,3,1]
         o1 = torch.zeros_like(rew_lin_vel_x)
         o2 = torch.zeros_like(rew_lin_vel_x)
         gait_thres = torch.where(self.leg_contact > 0.0, 1, -1)
@@ -274,7 +291,7 @@ class dbLocomotionTask(RLTask):
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x + rew_orient + rew_yaw + rew_lin_vel_y + height_reward + gait_reward
+        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)

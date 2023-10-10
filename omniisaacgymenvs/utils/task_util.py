@@ -45,6 +45,7 @@ def initialize_task(config, env, init_sim=True):
     from omniisaacgymenvs.tasks.shadow_hand import ShadowHandTask
     from omniisaacgymenvs.tasks.crazyflie import CrazyflieTask
     from omniisaacgymenvs.tasks.dbAlpha import dbAlphaLocomotionTask
+    from omniisaacgymenvs.tasks.dbAlpha_object import dbAlphaObjectTransportTask
     from omniisaacgymenvs.tasks.dbAlpha_terrain import dbAlphaTerrainTask
     from omniisaacgymenvs.tasks.dbAlpha_n import dbAlphaTask
     
@@ -65,7 +66,8 @@ def initialize_task(config, env, init_sim=True):
         "ShadowHand": ShadowHandTask,
         "ShadowHandOpenAI_FF": ShadowHandTask,
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
-        "dbAlpha": dbAlphaLocomotionTask,
+        # "dbAlpha": dbAlphaLocomotionTask,
+        "dbAlpha_object": dbAlphaObjectTransportTask,
         "dbAlpha_t": dbAlphaTerrainTask,
         "dbAlpha_n": dbAlphaTask,
     }

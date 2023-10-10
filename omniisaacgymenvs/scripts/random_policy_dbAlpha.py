@@ -95,8 +95,8 @@ def parse_hydra_configs(cfg: DictConfig):
     exp_name = cfg.model+'_'+TASK+experiment+'_Exp_'+str(1)+rew
     if wandb_activate:
         # wandb.init(project='Cartpole_ES_log',
-        wandb.init(project='Ant_ES_log',
-        # wandb.init(project='dbAlpha_ES_New_log',
+        # wandb.init(project='Ant_ES_log',
+        wandb.init(project='dbAlpha_ES_New_log',
                     name=exp_name, 
                     config=cfg_dict)
     
@@ -186,7 +186,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if ARCHITECTURE_NAME == 'Feedforward':
         dir_path = './data/'+TASK+'/model/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
-        dir_path = './data/'+TASK+'/model/Hebb/'# hebb_archive/good_pro/'
+        dir_path = './data/'+TASK+'/model/test/good_hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -195,7 +195,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if USE_TRAIN_PARAMS:
         res = listdir(dir_path)
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'd_1000499_272.476806640625.pickle'
+            file_name = 'rbf_dbAlpha6legs_Hebb_lowpassAction_uneven_Exp_1ant_setup_d_180499_106.85049438476562.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -208,7 +208,7 @@ def parse_hydra_configs(cfg: DictConfig):
         res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
             # file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
-            file_name = 'Hebb_Antant_hebb_Test_Exp_1ant_setup_d_81920497_276.04766845703125.pickle'
+            file_name = 'Feedforward_dbAlpha6legs_Hebb_Wmaxnormalize_Exp_1ant_setup_d_4352499_260.0474853515625.pickle'
             print('file_name: ', file_name)
 
             # Load Data script
@@ -234,6 +234,10 @@ def parse_hydra_configs(cfg: DictConfig):
             total_rewards = total_rewards.cuda()
 
             obs = env.reset()
+            w1 = []
+            w2 = []
+            w3 = []
+            act = []
 
             for _ in range(EPISODE_LENGTH):
                 # print('step: ', _)
@@ -259,11 +263,35 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     actions[i] = init_net.forward(obs['obs'][i])
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
+                
+                # Weight collection ######
+                # weight = models.get_weights()
+                # w1.append(weight[0].cpu().numpy())
+                # w2.append(weight[1].cpu().numpy())
+                # w3.append(weight[2].cpu().numpy())
+                # w3.append(weight[2].cpu().numpy())
+                # act.append(actions.cpu().numpy())
 
                 total_rewards += reward
 
             # print("reward is", reward)
             print('total_rewards: ', total_rewards)
+            # data_np = np.array(act)
+
+            # Weight save ######
+            # w1 = np.array(w1)
+            # w2 = np.array(w2)
+            # w3 = np.array(w3)
+            # # np.save('np_array/actions_ff', data_np)
+            # # np.save('np_array/w1_ff', w1)
+            # # np.save('np_array/w2_ff', w2)
+            # # np.save('np_array/w3_ff', w3)
+
+            # np.save('np_array/actions_hebb', data_np)
+            # np.save('np_array/w1_hebb', w1)
+            # np.save('np_array/w2_hebb', w2)
+            # np.save('np_array/w3_hebb', w3)
+            # np.save('np_array/param_hebb', init_params)
 
     else:
         initial_time = timeit.default_timer()

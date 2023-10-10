@@ -7,12 +7,13 @@ def WeightStand(w, eps=1e-5):
     # print('w: ', w)
     mean = torch.mean(input=w, dim=[1,2], keepdim=True)
     # print('mean: ', mean)
-    var = torch.var(input=w, dim=[1,2], keepdim=True)
-    # print('var: ', var)
-    # print('w - mean: ', w - mean)
+    # var = torch.var(input=w, dim=[1,2], keepdim=True)
+    max_val = torch.max(torch.abs(w).flatten(start_dim=1, end_dim=2), dim=1)
+    max_val = max_val[0].unsqueeze(1).unsqueeze(2)    # print('w - mean: ', w - mean)
     # print('torch.sqrt(var + eps): ', torch.sqrt(var + eps))
 
-    w = (w - mean) / torch.sqrt(var)
+    # w = (w - mean) / torch.sqrt(var)
+    w = w / max_val
     # w = torch.clip(w, -1.0, 1.0)
     # print('w: ', w)
 
@@ -34,11 +35,11 @@ class HebbianNet:
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
                             for i in range(len(sizes) - 1)]
         # print('self.one_array', self.one_array)
-        self.A = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.B = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.C = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.D = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.lr = [torch.normal(0,.0001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.A = [torch.normal(0,.001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.B = [torch.normal(0,.001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.C = [torch.normal(0,.001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.D = [torch.normal(0,.001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+        self.lr = [torch.normal(0,.001, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
 
         # self.A = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
         #                     for i in range(len(sizes) - 1)]

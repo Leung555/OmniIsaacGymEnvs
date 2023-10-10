@@ -1,12 +1,15 @@
 import numpy as np
 import torch
 from math import cos, sin, tanh
+import pickle
 
-class RBFNet:
+class RBFNet_SimpleModNet:
     def __init__(self, POPSIZE, num_output, num_basis=10):
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
+
+
         self.POPSIZE = POPSIZE
         # cpg params
         # self.omega = 0.03*np.pi
@@ -29,6 +32,15 @@ class RBFNet:
             self.period, self.num_basis, self.x, self.y, self.variance)
         self.KENNE = self.KENNE.cuda()
 
+        # Load trained CPG RBF model
+        dir_path = 'data/dbAlpha/model/rbf/'
+        file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
+        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+        solver = trained_data[0]
+        flat_param = torch.from_numpy(solver.best_mu) # best_mu   
+        print(flat_param.shape)
+        self.rbf_weights = flat_param.repeat(POPSIZE, 1, 1).reshape(POPSIZE, num_basis, 9).cuda()
+        
         # self.centers = torch.linspace(self.input_range[0], 
         #                               self.input_range[1], num_basis).cuda()
         # self.weights = torch.randn(self.POPSIZE, self.num_basis, self.num_output,).cuda()
@@ -41,9 +53,9 @@ class RBFNet:
         # self.weights = torch.Tensor([  y1,-y1, y1, -y1, y1,-y1, 
         #                               -y1,-y1, y1,  y1, y1,-y1,
         #                                y1, y1,-y1, -y1,-y1, y1]).T.repeat(self.POPSIZE, 1, 1).cuda()
-        self.weights = torch.Tensor([  ze,-ze, ze, 
-                                      -ze,-ze, ze,
-                                      -ze,-ze, ze ]).T.repeat(self.POPSIZE, 1, 1).cuda()
+        # self.weights = torch.Tensor([  ze,-ze, ze, 
+        #                               -ze,-ze, ze,
+        #                               -ze,-ze, ze ]).T.repeat(self.POPSIZE, 1, 1).cuda()
 
         # print(self.weights)
         self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
@@ -61,8 +73,9 @@ class RBFNet:
 
             # self.indices = torch.tensor([3, 6, 12, 15, 4, 7, 13, 16, 0, 9, 5, 8, 14, 17, 1, 10, 2, 11]).cuda()
 
-    def forward(self, pre):
+    def forward(self, input):
         # print('pre: ', pre)
+        # print('input', input.shape)
 
         with torch.no_grad():
             # Indirect encoding ##################################
@@ -70,11 +83,18 @@ class RBFNet:
             p2 = self.KENNE[int(self.phase[1])]
             # out_p1 = torch.matmul(p1, self.weights)
             # out_p2 = torch.matmul(p2, self.weights)
-            out_p1 = torch.tanh(torch.matmul(p1, self.weights))
-            out_p2 = torch.tanh(torch.matmul(p2, self.weights))
-            outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
-            outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
-            post = torch.concat([outL, outR], dim=1)
+            out_p1 = torch.tanh(torch.matmul(p1, self.rbf_weights))
+            out_p2 = torch.tanh(torch.matmul(p2, self.rbf_weights))
+            input = input.unsqueeze(-1)
+            # print('input', input.shape)
+            # print('self.weights', self.weights.shape)
+            out_m1 = torch.tanh(torch.matmul(p1, input*self.weights))
+            out_m2 = torch.tanh(torch.matmul(p2, input*self.weights))
+            outL_p = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
+            outR_p = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
+            outL_m = torch.concat([out_m1[:, 0:3], out_m2[:, 3:6], out_m1[:, 6:9]], dim=1)
+            outR_m = torch.concat([out_m2[:, 0:3], out_m1[:, 3:6], out_m2[:, 6:9]], dim=1)
+            post = torch.concat([outL_p+outL_m, outR_p+outR_m], dim=1)
             post = torch.index_select(post, 1, self.indices)
             
             self.phase = self.phase + 1
