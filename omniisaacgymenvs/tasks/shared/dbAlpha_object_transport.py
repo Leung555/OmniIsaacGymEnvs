@@ -88,9 +88,11 @@ class dbObjectTransportTask(RLTask):
 
     def get_observations(self) -> dict:
         self.torso_position, self.torso_rotation = self._robots.get_world_poses(clone=False)
-        self.object_position, self.object_rotation = self._robots.get_world_poses(clone=False)
+        # self.object_position, self.object_rotation = self._objects.get_world_poses(clone=False)
         self.velocities = self._robots.get_velocities(clone=False)
+        self.object_velocities = self._objects.get_velocities(clone=False)
         self.velocity = self.velocities[:, 0:3]
+        self.object_velocity = self.object_velocities[:, 0:3]
         self.ang_velocity = self.velocities[:, 3:6]
         self.dof_pos = self._robots.get_joint_positions(clone=False)
         self.dof_vel = self._robots.get_joint_velocities(clone=False)
@@ -273,6 +275,7 @@ class dbObjectTransportTask(RLTask):
 
         # Test lin vel x raward
         rew_lin_vel_x = self.velocity[:, 0] * self.rew_lin_vel_x_scale
+        rew_lin_vel_x_object = self.object_velocity[:, 0] * self.rew_lin_vel_x_scale
         rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
         rew_orient = torch.where(self.projected_gravity[:, 2] < -0.93 , 0, -self.rew_orient_scale)
         height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -self.height_reward_scale)
@@ -295,7 +298,7 @@ class dbObjectTransportTask(RLTask):
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
+        total_reward = rew_lin_vel_x_object
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)

@@ -208,7 +208,7 @@ def parse_hydra_configs(cfg: DictConfig):
         res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
             # file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
-            file_name = 'Feedforward_dbAlpha6legs_Hebb_Wmaxnormalize_Exp_1ant_setup_d_4352499_260.0474853515625.pickle'
+            # file_name = 'Feedforward_dbAlpha6legs_Hebb_Wmaxnormalize_Exp_1ant_setup_d_4352499_260.0474853515625.pickle'
             print('file_name: ', file_name)
 
             # Load Data script

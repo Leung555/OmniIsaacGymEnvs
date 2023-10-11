@@ -5,7 +5,7 @@ task_name: ${task.name}
 # experiment: ''
 # experiment: 'dbAlpha_newGaitRew_Jvel30'
 # experiment: '6legs_RBF_simMod'
-experiment: '6legs_Hebb_Wmaxnormalize'
+# experiment: '6legs_Hebb_Wmaxnormalize'
 # experiment: '4leg_setup'
 # experiment: '2leg_setup'
 # experiment: '_gaitrew'
@@ -17,6 +17,8 @@ rewards_type: 'ant_setup'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
 # experiment: 'dbAlpha_t_PPO_tanh'
+# Object transportation
+experiment: 'box_transport'
 
 # if set to positive integer, overrides the default number of environments
 num_envs: '' # for default setup
@@ -30,8 +32,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 

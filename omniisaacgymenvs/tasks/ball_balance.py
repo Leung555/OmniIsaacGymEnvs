@@ -96,6 +96,7 @@ class BallBalanceTask(RLTask):
             name="ball_0",
             radius=self._ball_radius,
             color=torch.tensor([0.9, 0.6, 0.2]),
+            mass=0.001
         )
         self._sim_config.apply_articulation_settings("ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball"))
 

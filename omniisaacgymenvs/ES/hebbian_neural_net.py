@@ -52,6 +52,8 @@ class HebbianNet:
         # self.lr = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01)
         #                     for i in range(len(sizes) - 1)]
 
+        self.counter = 0
+
 
 
     def forward(self, pre):
@@ -76,7 +78,13 @@ class HebbianNet:
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())
                 # print(post)
+                # if self.counter > 50 and self.counter < 150:
+                #     self.weights[i] = self.hebbian_update(i, W, pre, post, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
+                #     self.counter += 1
+                #     print(self.counter)
+                # else:
                 self.weights[i] = self.hebbian_update(i, W, pre, post, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
+                self.counter += 1
                 pre = post
 
         return post.detach()
@@ -113,7 +121,10 @@ class HebbianNet:
         # print('ij: ', ij)
 
         # print('weights: ', weights)
-
+        # if self.counter > 50 and self.counter < 200:
+        #     weights = weights + 0.0*lr * (A*ij + B*i + C*j + D)
+        #     print(self.counter)
+        # else:
         weights = weights + lr * (A*ij + B*i + C*j + D)
         # weights = weights + lr * (C*j + D)
         # print('weights update: ', weights)

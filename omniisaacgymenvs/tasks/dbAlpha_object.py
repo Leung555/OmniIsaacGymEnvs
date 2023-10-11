@@ -40,7 +40,7 @@ from omni.isaac.core.utils.stage import get_current_stage, add_reference_to_stag
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
 from omniisaacgymenvs.tasks.utils.dbAllpha_terrain_generator import *
-from omni.isaac.core.objects import DynamicCuboid
+from omni.isaac.core.objects import DynamicCuboid, DynamicSphere
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 
 from pxr import PhysxSchema
@@ -83,9 +83,12 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
 
     def set_up_scene(self, scene) -> None:
         self._stage = get_current_stage()
+        self._assets_root_path = get_assets_root_path()
         # self.get_terrain()
         self.get_dbAlpha()
-        translation = torch.Tensor([0.0, 0.0, 0.1])
+        # self.add_ball()
+        self.add_cube()
+        # translation = torch.Tensor([0.3, 0.0, 0.1])
         # self.get_object(translation, 0, 0.2)
         RLTask.set_up_scene(self, scene)
 
@@ -94,16 +97,11 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
 
-        self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Object",
-            name="object_view")  
-              
-        # self._objects = RigidPrimView(
-        #     prim_paths_expr="/World/envs/.*/dbAlpha_base/Xform/Object",
-        #     name="object_view", 
-        #     reset_xform_properties=False,
-        #     masses=torch.tensor([0.07087]*self._num_envs, device=self.device),
-        # )
+        # self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/object/object",
+        #     name="object_view")  
+        self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False)
         scene.add(self._objects)
+
 
         # Add contact force sensor at the robot tips
         self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*",
@@ -173,21 +171,49 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         #     angle = self.named_default_joint_angles[name]
         #     self.default_dof_pos[:, i] = angle
 
-    def get_object(self, hand_start_translation, pose_dy, pose_dz):
-        self.object_start_translation = hand_start_translation.clone()
-        self.object_start_translation[1] += pose_dy
-        self.object_start_translation[2] += pose_dz
-        self.object_start_orientation = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device)
-        self.object_usd_path = f"{self._assets_root_path}/Isaac/Props/Blocks/block_instanceable.usd"
-        add_reference_to_stage(self.object_usd_path, self.default_zero_env_path + "/object")
-        obj = XFormPrim(
-            prim_path=self.default_zero_env_path + "/object/object",
-            name="object",
-            translation=self.object_start_translation,
-            orientation=self.object_start_orientation,
-            scale=self.object_scale,
+    def add_ball(self):
+        ball = DynamicSphere(
+            prim_path=self.default_zero_env_path + "/Ball/ball", 
+            translation=[0.4, 0.0, 0.1], 
+            name="ball_0",
+            radius=0.1,
+            color=torch.tensor([0.9, 0.6, 0.2]),
+            mass=0.1
         )
-        self._sim_config.apply_articulation_settings("object", get_prim_at_path(obj.prim_path), self._sim_config.parse_actor_config("object"))
+        self._sim_config.apply_articulation_settings("ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball"))
+
+    def add_cube(self):
+        ball = DynamicCuboid(
+            prim_path=self.default_zero_env_path + "/Ball/ball", 
+            translation=[0.4, 0.0, 0.1], 
+            name="ball_0",
+            scale=[0.2, 0.2, 0.2],
+            color=torch.tensor([0.9, 0.6, 0.2]),
+            mass=0.1
+        )
+        self._sim_config.apply_articulation_settings("ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball"))
+
+    # def get_object(self, hand_start_translation, pose_dy, pose_dz):
+    #     self.object_start_translation = hand_start_translation.clone()
+    #     self.object_start_translation[1] += pose_dy
+    #     self.object_start_translation[2] += pose_dz
+    #     self.object_start_orientation = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device)
+    #     self.object_usd_path = f"{self._assets_root_path}/Isaac/Props/Blocks/block_instanceable.usd"
+    #     add_reference_to_stage(self.object_usd_path, self.default_zero_env_path + "/object")
+    #     self.object_scale = torch.tensor([5.0, 5.0, 5.0])
+    #     # obj = XFormPrim(
+    #     #     prim_path=self.default_zero_env_path + "/object/object",
+    #     #     name="object",
+    #     #     translation=self.object_start_translation,
+    #     #     orientation=self.object_start_orientation,
+    #     #     scale=self.object_scale,
+    #     # )
+    #     obj = DynamicCuboid(prim_path="/World/cube_0",
+    #         position=np.array([-.5, -.2, 1.0]),
+    #         scale=np.array([.5, .5, .5]),
+    #         color=np.array([.2,.3,0.])
+    #     )
+    #     self._sim_config.apply_articulation_settings("object", get_prim_at_path(obj.prim_path), self._sim_config.parse_actor_config("object"))
 
     def get_terrain(self):
         # self.env_origins = torch.zeros((self.num_envs, 3), device=self.device, requires_grad=False)
