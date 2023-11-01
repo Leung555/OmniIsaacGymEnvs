@@ -66,7 +66,7 @@ def initialize_task(config, env, init_sim=True):
         "ShadowHand": ShadowHandTask,
         "ShadowHandOpenAI_FF": ShadowHandTask,
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
-        # "dbAlpha": dbAlphaLocomotionTask,
+        "dbAlpha": dbAlphaLocomotionTask,
         "dbAlpha_object": dbAlphaObjectTransportTask,
         "dbAlpha_t": dbAlphaTerrainTask,
         "dbAlpha_n": dbAlphaTask,

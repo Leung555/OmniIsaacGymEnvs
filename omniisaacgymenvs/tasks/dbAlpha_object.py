@@ -67,16 +67,29 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         # self._num_observations =  #locomotion_test: 60+6+6+2+6=84
         # self._num_actions = 18
         # Leg test
-        self._num_observations = 27 # 27: Jpos, Legcontact, rpy
+        self._num_observations = 27 # 27: Jpos, Legcontact, rpy, 30:+relative(x,y, yaw)
         self._num_actions = 18
-        # 4 legs test
+        # 4 legs object transport 
+        self._num_observations = 19 # 27: Jpos, Legcontact, rpy
+        self._num_actions = 12        
+        # # 4 legs test
         # self._num_observations = 19 # 27: Jpos, Legcontact, rpy
         # self._num_actions = 12
         self._sim_gear_ratio = 1
-        self._dbAlpha_positions = torch.tensor([0, 0, -0.05])
         self._track_contact_forces = True
         self._prepare_contact_sensors = False
         # self._cs = _sensor.acquire_contact_sensor_interface()
+        rolling_behavior = False
+        if rolling_behavior:
+            self.dbalpha_orientation = [0.966, 0.0, 0.259, 0.0]
+            self._dbAlpha_positions = torch.tensor([0, 0, 0.3])
+            self._ball_positions = torch.tensor([-0.17, 0, 0.15])
+            self.ball_radius = 0.21
+        else:
+            self.dbalpha_orientation = [1.0,0.0,0.0,0.0]
+            self._dbAlpha_positions = torch.tensor([0, 0, -0.05])
+            self._ball_positions = torch.tensor([0.4, 0.0, 0.1])
+            self.ball_radius = 0.1
 
         dbObjectTransportTask.__init__(self, name=name, env=env)
         return
@@ -86,8 +99,6 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         self._assets_root_path = get_assets_root_path()
         # self.get_terrain()
         self.get_dbAlpha()
-        # self.add_ball()
-        self.add_cube()
         # translation = torch.Tensor([0.3, 0.0, 0.1])
         # self.get_object(translation, 0, 0.2)
         RLTask.set_up_scene(self, scene)
@@ -97,11 +108,10 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         # self._dbAlphas.enable_actor_dof_force_sensors(env_ptr, shadow_hand_actor)
         scene.add(self._dbAlphas)
 
-        # self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/object/object",
-        #     name="object_view")  
-        self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False)
-        scene.add(self._objects)
-
+        # self.add_ball()
+        # self.add_cube()
+        # self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False)
+        # scene.add(self._objects)
 
         # Add contact force sensor at the robot tips
         self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*",
@@ -118,7 +128,10 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         return
 
     def get_dbAlpha(self):
-        dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha_base", name="dbAlpha_base", translation=self._dbAlpha_positions)
+        dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha_base", 
+                          name="dbAlpha_base", 
+                          translation=self._dbAlpha_positions,
+                          orientation=self.dbalpha_orientation)
         self._sim_config.apply_articulation_settings("dbAlpha_base", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("dbAlpha_base"))
         # dbAlpha = DbAlpha(prim_path=self.default_zero_env_path + "/dbAlpha", name="cartpole", translation=self._dbAlpha_positions)
         # self._sim_config.apply_articulation_settings("dbAlpha", get_prim_at_path(dbAlpha.prim_path), self._sim_config.parse_actor_config("cartpole"))
@@ -142,10 +155,18 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
                     cr_api.CreateThresholdAttr().Set(0)
 
         # 6 legs setup
-        joint_paths = ['base_link/BC1', 'base_link/BC2', 'base_link/BC4', 'base_link/BC5',
-                 'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
+        # joint_paths = ['base_link/BC1', 'base_link/BC2', 'base_link/BC4', 'base_link/BC5',
+        #          'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2', 
+        #          'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4',
+        #          'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5', 
+        #          'Thorax/BC0', 'Thorax/BC3',
+        #          'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
+        #          'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3']
+
+        # 4 legs object transport setup
+        joint_paths = ['base_link/BC1', 'base_link/BC4',
+                 'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1', 
                  'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4',
-                 'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5', 
                  'Thorax/BC0', 'Thorax/BC3',
                  'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
                  'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3']
@@ -174,18 +195,19 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
     def add_ball(self):
         ball = DynamicSphere(
             prim_path=self.default_zero_env_path + "/Ball/ball", 
-            translation=[0.4, 0.0, 0.1], 
+            translation=self._ball_positions, 
             name="ball_0",
-            radius=0.1,
-            color=torch.tensor([0.9, 0.6, 0.2]),
-            mass=0.1
+            radius=self.ball_radius,
+            color=torch.tensor([1.0, 0.5, 0.0]),
+            mass=1.0
         )
         self._sim_config.apply_articulation_settings("ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball"))
 
     def add_cube(self):
         ball = DynamicCuboid(
             prim_path=self.default_zero_env_path + "/Ball/ball", 
-            translation=[0.4, 0.0, 0.1], 
+            translation=[-0.4, 0.0, 0.1], 
+            orientation=[1.0, 0.0, 0.0, 0.0], 
             name="ball_0",
             scale=[0.2, 0.2, 0.2],
             color=torch.tensor([0.9, 0.6, 0.2]),

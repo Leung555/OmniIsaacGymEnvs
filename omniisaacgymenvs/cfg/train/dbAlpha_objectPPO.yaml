@@ -60,8 +60,8 @@ params:
     kl_threshold: 0.008
     score_to_win: 20000
     max_epochs: ${resolve_default:500,${....max_iterations}}
-    save_best_after: 100
-    save_frequency: 50
+    save_best_after: 100 #100
+    save_frequency: 50 #50
     grad_norm: 1.0
     entropy_coef: 0.0
     truncate_grads: True
@@ -69,7 +69,7 @@ params:
     horizon_length: 16
     # is calculated self.batch_size % self.minibatch_size == 0. 
     # batch_size is computed as horizon_length * num_envs. (32768: num from AntPPO total_batch/2)
-    minibatch_size: 8192
+    minibatch_size: 8192 #8192:1024, 6400:800
     mini_epochs: 4
     critic_coef: 2
     clip_value: True

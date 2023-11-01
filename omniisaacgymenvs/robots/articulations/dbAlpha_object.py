@@ -55,7 +55,14 @@ class DbAlpha(Robot):
             assets_root_path = get_assets_root_path()
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_small.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5_object.usd"
 
 

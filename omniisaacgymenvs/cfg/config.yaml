@@ -11,14 +11,17 @@ task_name: ${task.name}
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
-rewards_type: 'ant_setup'
+rewards_type: '-vx'
 # rewards_type: 'newGaitRew'
 # rewards_type: '_lxorheya_gaitrew'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
 # experiment: 'dbAlpha_t_PPO_tanh'
 # Object transportation
-experiment: 'box_transport'
+#experiment: 'smallbox_trans'
+experiment: 'box_trans_tiltR'
+# experiment: 'box_trans_forward'
+# experiment: 'ball_rolling'
 
 # if set to positive integer, overrides the default number of environments
 num_envs: '' # for default setup
@@ -32,8 +35,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-# model: 'Feedforward'  # <---------------
-model: 'Hebb'
+model: 'Feedforward'  # <---------------
+# model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
@@ -43,8 +46,8 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 250 # --166, 250
-USE_TRAIN_PARAMS: False # <---------------
+SAVE_EVERY: 500 # --166, 250
+USE_TRAIN_PARAMS: True # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 # ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
@@ -56,16 +59,22 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [72, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO, leg contact replace
 # ARCHITECTURE: [39, 128, 64, 18] # for dbAlpha Env Test
 # ARCHITECTURE: [27, 128, 64, 18] # for dbAlpha Env Test
-ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 # ARCHITECTURE: [27, 64, 180] # for dbAlpha Env Test
 # ARCHITECTURE: [19, 32, 16, 12] # for dbAlpha Env Test 4 legs
 # ARCHITECTURE: [11, 16, 8, 6] # for dbAlpha Env Test 2 legs
 
+# Locomotion
+# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+
+# Object transport 4 legs fix hind legs
+ARCHITECTURE: [19, 64, 32, 12] # 4 legs
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
 # RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
-RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+# RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+RBF_ARCHITECTURE: [20, 12] # 4 legs object transport
 
 # seed - set to -1 to choose random seed
 seed: 42
@@ -127,7 +136,7 @@ ES_params:
   rank_fitness: True
   antithetic: True
   learning_rate: 0.1 # 0.05:RBF
-  learning_rate_decay: 0.995 # 0.9999
+  learning_rate_decay: 0.999 # 0.9999
   sigma_init: 0.1 # 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001

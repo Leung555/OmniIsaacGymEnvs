@@ -112,7 +112,7 @@ def parse_hydra_configs(cfg: DictConfig):
     elif ARCHITECTURE_NAME == 'Hebb':
         models = HebbianNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'rbf':
-        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0])
+        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
     init_params = models.get_params_a_model()
@@ -195,7 +195,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if USE_TRAIN_PARAMS:
         res = listdir(dir_path)
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'rbf_dbAlpha6legs_Hebb_lowpassAction_uneven_Exp_1ant_setup_d_180499_106.85049438476562.pickle'
+            file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltR_Exp_1-vx_d_3648499_231.63973999023438.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -208,7 +208,8 @@ def parse_hydra_configs(cfg: DictConfig):
         res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
             # file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
-            # file_name = 'Feedforward_dbAlpha6legs_Hebb_Wmaxnormalize_Exp_1ant_setup_d_4352499_260.0474853515625.pickle'
+            # file_name = 'Hebb_dbAlpha_objectsmallbox_trans_Exp_1-vx_d_18240249_306.11181640625.pickle'
+            file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_164.72769165039062.pickle'
             print('file_name: ', file_name)
 
             # Load Data script
@@ -329,9 +330,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 ############### GPU Version ###############
                 # obs = torch.zeros(POPSIZE, ARCHITECTURE[0]).cuda()
                 actions = models.forward(obs['obs'])
-                # print('actions: ', actions[0, 0:6])
+                # print('actions: ', actions)
                 ###########################################
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                # actions = torch.zeros_like(actions)
                 # print("Action_3: ", actions)
                 obs, reward, done, info = env.step(
                     actions
