@@ -6,22 +6,40 @@ task_name: ${task.name}
 # experiment: 'dbAlpha_newGaitRew_Jvel30'
 # experiment: '6legs_RBF_simMod'
 # experiment: '6legs_Hebb_Wmaxnormalize'
+# experiment: '6legs_walk'
 # experiment: '4leg_setup'
 # experiment: '2leg_setup'
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
+# rewards_type: 'vx'
 rewards_type: '-vx'
 # rewards_type: 'newGaitRew'
 # rewards_type: '_lxorheya_gaitrew'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
 # experiment: 'dbAlpha_t_PPO_tanh'
+# test_env: 'normal_walk'
+
 # Object transportation
-#experiment: 'smallbox_trans'
-experiment: 'box_trans_tiltR'
+# experiment: 'normalbox_trans'
+# experiment: 'smallbox_trans'
+# experiment: 'box_trans_tiltL'
+# experiment: 'box_trans_tiltR'
+# experiment: 'nobox'
 # experiment: 'box_trans_forward'
 # experiment: 'ball_rolling'
+# lighter object
+# experiment: 'normalbox_trans.1'
+experiment: 'smallbox_trans.1'
+# experiment: 'box_trans_tiltL.1'
+# experiment: 'box_trans_tiltR.1'
+
+# test_env: ''
+# test_env: 'normalbox_trans'
+test_env: 'smallbox_trans'
+# test_env: 'box_trans_tiltL'
+# test_env: 'box_trans_tiltR'
 
 # if set to positive integer, overrides the default number of environments
 num_envs: '' # for default setup
@@ -35,8 +53,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
@@ -47,7 +65,7 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
 SAVE_EVERY: 500 # --166, 250
-USE_TRAIN_PARAMS: True # <---------------
+USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 # ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
@@ -119,7 +137,7 @@ wandb_project: 'dbAlpha_ES_New_log' # 'omniisaacgymenvs'
 
 # set default task and default training config based on task
 defaults:
-  - task: Cartpole
+  - task: dbAlpha # Cartpole
   - train: ${task}PPO
   - hydra/job_logging: disabled
 

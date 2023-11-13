@@ -56,15 +56,25 @@ class DbAlpha(Robot):
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal.usd"
-            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_small.usd"
+            
+            # 1 kg object, heavy
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL.usd"
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"
+            
+            # 0.1 kg object, light           
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_0.1kg.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_0.1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL_0.1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR_0.1kg.usd"
+
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5_object.usd"
 
+            print('self._usd_path: ', self._usd_path)
 
         add_reference_to_stage(self._usd_path, prim_path)
 

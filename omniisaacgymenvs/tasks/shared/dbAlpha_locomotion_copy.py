@@ -193,18 +193,20 @@ class dbLocomotionTask(RLTask):
 
         # randomize DOF positions and velocities
         # print('self._robots.num_dof: ', self._robots.num_dof)
-        dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._robots.num_dof), device=self._device)
+        # dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._robots.num_dof), device=self._device)
+        dof_pos = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
         # dof_pos[:] = tensor_clamp(
         #     self.initial_dof_pos[env_ids] + dof_pos, self.dof_limits_lower, self.dof_limits_upper
         # )
-        dof_vel = torch_rand_float(-0.1, 0.1, (num_resets, self._robots.num_dof), device=self._device)
+        # dof_vel = torch_rand_float(-0.1, 0.1, (num_resets, self._robots.num_dof), device=self._device)
+        dof_vel = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         # root_vel = torch.zeros((num_resets, 6), device=self._device)
 
         # apply resets
         self._robots.set_joint_positions(dof_pos, indices=env_ids)
-        # self._robots.set_joint_velocities(dof_vel, indices=env_ids)
+        self._robots.set_joint_velocities(dof_vel, indices=env_ids)
 
         self._robots.set_world_poses(root_pos, root_rot, indices=env_ids)
         # print('root_pos: ', root_pos)
@@ -291,7 +293,7 @@ class dbLocomotionTask(RLTask):
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
+        total_reward = rew_lin_vel_x # + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)
