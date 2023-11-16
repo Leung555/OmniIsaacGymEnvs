@@ -60,14 +60,14 @@ class DbAlpha(Robot):
             
             # 1 kg object, heavy
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
-            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"
             
             # 0.1 kg object, light           
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_0.1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_0.1kg.usd"
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL_0.1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL_0.1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR_0.1kg.usd"
 
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small.usd"
