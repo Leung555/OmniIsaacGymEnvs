@@ -207,9 +207,9 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = False
+    test_multiple = True
     if TEST == True:
-        experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
+        experiment_list = ['normal', 'small']#, 'tiltL', 'tiltR']
         model_list = ['FF', 'Hebb']
         if test_multiple == True:
             for model in model_list:
@@ -218,40 +218,42 @@ def parse_hydra_configs(cfg: DictConfig):
                 elif model == 'Hebb':
                     models = HebbianNet(ARCHITECTURE, POPSIZE)
                 for exp in experiment_list:
-                    dir_path = './data/dbAlpha_object/model/best_weight/'+model+'/'+exp+'/'
+                    dir_path = './data/dbAlpha_object/model/best_weight_group/'+model+'/'+exp+'/'
                     res = listdir(dir_path)
                     for i, file_name in enumerate(sorted(res)):
                         print('--------------------')
                         print('model: ', model )
                         print('experiment_name: ', exp )
-                        print('filename: ', file_name )
+                        rew_index = file_name.rfind('_')
+                        print('filename: ', file_name)
+                        print('rewards: ', file_name[rew_index:rew_index+4] )
 
-                        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-                        open_es_data = trained_data[0]
-                        init_params = open_es_data.best_param() # best_mu   
+                        # trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+                        # open_es_data = trained_data[0]
+                        # init_params = open_es_data.best_param() # best_mu   
 
-                        models.set_params_single_model(init_params)
+                        # models.set_params_single_model(init_params)
 
-                        total_rewards = torch.zeros(cfg.num_envs)
-                        total_rewards = total_rewards.cuda()
+                        # total_rewards = torch.zeros(cfg.num_envs)
+                        # total_rewards = total_rewards.cuda()
 
-                        obs = env.reset()
+                        # obs = env.reset()
 
-                        for _ in range(EPISODE_LENGTH):
-                            actions = models.forward(obs['obs'])
-                            obs, reward, done, info = env.step(
-                                actions
-                            )
-                            total_rewards += reward
+                        # for _ in range(EPISODE_LENGTH):
+                        #     actions = models.forward(obs['obs'])
+                        #     obs, reward, done, info = env.step(
+                        #         actions
+                        #     )
+                        #     total_rewards += reward
 
-                        print('total_rewards: ', total_rewards)
-                        print('--------------------')
-                        # save rewards tensor to csv
-                        np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                        # print('total_rewards: ', total_rewards)
+                        # print('--------------------')
+                        # # save rewards tensor to csv
+                        # np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
 
         else:
             # Locomotion
-            file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
+            file_name = 'Hebb_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_18240499_318.64013671875.pickle'
             # file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_300.42620849609375.pickle'
             # object transport
             # file_name = 'Hebb_dbAlpha_objectnormalbox_trans_Exp_1-vx_d_18240499_231.8614501953125.pickle'

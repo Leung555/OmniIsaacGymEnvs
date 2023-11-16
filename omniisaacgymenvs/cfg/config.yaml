@@ -31,8 +31,8 @@ rewards_type: '-vx'
 # experiment: 'ball_rolling'
 # lighter object
 # experiment: 'normalbox_trans.1'
-experiment: 'smallbox_trans.1'
-# experiment: 'box_trans_tiltL.1'
+# experiment: 'smallbox_trans.1'
+experiment: 'box_trans_tiltL.1'
 # experiment: 'box_trans_tiltR.1'
 
 # test_env: ''
@@ -53,8 +53,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-# model: 'Feedforward'  # <---------------
-model: 'Hebb'
+model: 'Feedforward'  # <---------------
+# model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
