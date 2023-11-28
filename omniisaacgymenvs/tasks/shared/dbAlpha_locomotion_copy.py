@@ -193,13 +193,14 @@ class dbLocomotionTask(RLTask):
 
         # randomize DOF positions and velocities
         # print('self._robots.num_dof: ', self._robots.num_dof)
-        # dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._robots.num_dof), device=self._device)
-        dof_pos = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
-        # dof_pos[:] = tensor_clamp(
-        #     self.initial_dof_pos[env_ids] + dof_pos, self.dof_limits_lower, self.dof_limits_upper
-        # )
-        # dof_vel = torch_rand_float(-0.1, 0.1, (num_resets, self._robots.num_dof), device=self._device)
-        dof_vel = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
+        dof_pos = torch_rand_float(-0.2, 0.2, (num_resets, self._robots.num_dof), device=self._device)
+        dof_pos[:] = tensor_clamp(
+            self.initial_dof_pos[env_ids] + dof_pos, self.dof_limits_lower, self.dof_limits_upper
+        )
+        dof_vel = torch_rand_float(-0.1, 0.1, (num_resets, self._robots.num_dof), device=self._device)
+        
+        # dof_pos = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
+        # dof_vel = torch.zeros((num_resets, self._robots.num_dof), device=self._device)
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         # root_vel = torch.zeros((num_resets, 6), device=self._device)

@@ -207,9 +207,9 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = True
+    test_multiple = False
     if TEST == True:
-        experiment_list = ['normal', 'small']#, 'tiltL', 'tiltR']
+        experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         model_list = ['FF', 'Hebb']
         if test_multiple == True:
             for model in model_list:
@@ -252,14 +252,16 @@ def parse_hydra_configs(cfg: DictConfig):
                         # # save rewards tensor to csv
                         # np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
                         np.savetxt("np_array/rewards/object_group/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                        # np.savetxt("np_array/rewards/object_group_nobox/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                        # np.savetxt("np_array/rewards/object_group_randJ/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
 
         else:
             # Locomotion
-            file_name = 'Hebb_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_18240499_318.64013671875.pickle'
+            file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
             # file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_300.42620849609375.pickle'
             # object transport
             # file_name = 'Hebb_dbAlpha_objectnormalbox_trans_Exp_1-vx_d_18240499_231.8614501953125.pickle'
-            # file_name = 'Feedforward_dbAlpha_objectsmallbox_trans_Exp_1-vx_d_3648499_274.84320068359375.pickle'
+            # file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             print('file_name: ', file_name)
 
             # Load Data script
@@ -316,18 +318,17 @@ def parse_hydra_configs(cfg: DictConfig):
                 # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
                 
                 # Weight collection ######
-                weight = models.get_weights()
-                w1.append(weight[0].cpu().numpy())
-                w2.append(weight[1].cpu().numpy())
-                w3.append(weight[2].cpu().numpy())
-                w3.append(weight[2].cpu().numpy())
-                act.append(actions.cpu().numpy())
+                # weight = models.get_weights()
+                # w1.append(weight[0].cpu().numpy())
+                # w2.append(weight[1].cpu().numpy())
+                # w3.append(weight[2].cpu().numpy())
+                # act.append(actions.cpu().numpy())
 
                 total_rewards += reward
 
             # print("reward is", reward)
             print('total_rewards: ', total_rewards)
-            data_np = np.array(act)
+            # data_np = np.array(act)
 
             # Weight save ######
             # w1 = np.array(w1)
@@ -338,11 +339,11 @@ def parse_hydra_configs(cfg: DictConfig):
             # np.save('np_array/w2_ff', w2)
             # np.save('np_array/w3_ff', w3)
 
-            np.save('np_array/actions_hebb', data_np)
-            np.save('np_array/w1_hebb', w1)
-            np.save('np_array/w2_hebb', w2)
-            np.save('np_array/w3_hebb', w3)
-            np.save('np_array/param_hebb', init_params)
+            # np.save('np_array/actions_hebb', data_np)
+            # np.save('np_array/w1_hebb', w1)
+            # np.save('np_array/w2_hebb', w2)
+            # np.save('np_array/w3_hebb', w3)
+            # np.save('np_array/param_hebb', init_params)
 
             # save rewards tensor to csv
             # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 

@@ -97,7 +97,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if wandb_activate:
         # wandb.init(project='Cartpole_ES_log',
         # wandb.init(project='Ant_ES_log',
-        wandb.init(project='dbAlpha_ES_New_log',
+        wandb.init(project='dbAlpha_ES_log_rd',
                     name=exp_name, 
                     config=cfg_dict)
     
@@ -141,19 +141,33 @@ def parse_hydra_configs(cfg: DictConfig):
     #                weight_decay=0.995)  # weight decay coefficient
     # solver.set_mu(init_params)
 
+
+
+    # cfg_dict['usd_name'] = 'dbAlpha_object_normal_1kg'
+    # cfg_dict2 = cfg_dict
+    # cfg_dict2['usd_name'] = 'dbAlpha_object_cube_small_1kg'
+
     # simulation GUI config
     headless = cfg.headless
     render = not headless
     enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
 
     # initiate Environment, IsaacGym Simulation
-    env = VecEnvRLGames(headless=headless, sim_device=cfg.device_id, enable_livestream=cfg.enable_livestream, enable_viewport=enable_viewport)
+    env = VecEnvRLGames(headless=headless, 
+                        sim_device=cfg.device_id, 
+                        enable_livestream=cfg.enable_livestream, 
+                        enable_viewport=enable_viewport)
+    # env2 = VecEnvRLGames(headless=headless, 
+    #                     sim_device=cfg.device_id, 
+    #                     enable_livestream=cfg.enable_livestream, 
+    #                     enable_viewport=enable_viewport)
     # sets seed. if seed is -1 will pick a random one
     from omni.isaac.core.utils.torch.maths import set_seed
     cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
     cfg_dict['seed'] = cfg.seed
     # initiate Task, Robot
     task = initialize_task(cfg_dict, env)
+    # task2 = initialize_task(cfg_dict2, env)
 
     print('TASK', TASK)
     print('exp_name', exp_name)
@@ -198,7 +212,8 @@ def parse_hydra_configs(cfg: DictConfig):
     if USE_TRAIN_PARAMS:
         res = listdir(dir_path)
         for i, file_name in enumerate(res[0:1]):
-            file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_224.61102294921875.pickle'
+            # file_name = 'Hebb_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_18240499_318.64013671875.pickle'
+            file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -402,10 +417,21 @@ def parse_hydra_configs(cfg: DictConfig):
                 # print('reward: ', reward)
                 # print('total_rewards: ', total_rewards)
                 total_rewards += reward
+            
+            # switch scene
+            # xxxxxxxxxxxxxxxxxx
 
+            # for _ in range(EPISODE_LENGTH):
+            #     actions = models.forward(obs['obs'])
+            #     obs, reward, done, info = env.step(
+            #         actions
+            #     )
+            #     total_rewards += reward
+# 
+            # total_rewards = total_rewards*0.5
             # print("reward is", reward)
             # print('total_rewards: ', total_rewards)
-
+            total_rewards = torch.where(total_rewards < 600.0, total_rewards, 0.0)
             total_rewards_cpu = total_rewards.cpu().numpy()
             fitlist = list(total_rewards_cpu)
             solver.tell(fitlist)

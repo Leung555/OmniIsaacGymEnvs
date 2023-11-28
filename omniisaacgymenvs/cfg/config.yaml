@@ -6,24 +6,27 @@ task_name: ${task.name}
 # experiment: 'dbAlpha_newGaitRew_Jvel30'
 # experiment: '6legs_RBF_simMod'
 # experiment: '6legs_Hebb_Wmaxnormalize'
-# experiment: '6legs_walk'
+experiment: '6legs_walk'
 # experiment: '4leg_setup'
 # experiment: '2leg_setup'
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
-# rewards_type: 'vx'
-rewards_type: '-vx'
+rewards_type: 'vx'
+# rewards_type: '-vx'
+# rewards_type: '-vx_randJ'
 # rewards_type: 'newGaitRew'
 # rewards_type: '_lxorheya_gaitrew'
 # experiment: 'PPO_gaitreward'
 # experiment: 'dbAlpha_PPO_tanh_sm'
 # experiment: 'dbAlpha_t_PPO_tanh'
 # test_env: 'normal_walk'
+usd_name: ''
 
 # Object transportation
 # experiment: 'normalbox_trans'
 # experiment: 'smallbox_trans'
+# experiment: 'smallbox_transDR_testlrd995' # smallbox_trans(DR)
 # experiment: 'box_trans_tiltL'
 # experiment: 'box_trans_tiltR'
 # experiment: 'nobox'
@@ -32,14 +35,17 @@ rewards_type: '-vx'
 # lighter object
 # experiment: 'normalbox_trans.1'
 # experiment: 'smallbox_trans.1'
-experiment: 'box_trans_tiltL.1'
+# experiment: 'box_trans_tiltL.1'
 # experiment: 'box_trans_tiltR.1'
 
-# test_env: ''
+test_env: ''
 # test_env: 'normalbox_trans'
-test_env: 'smallbox_trans'
-# test_env: 'box_trans_tiltL'
-# test_env: 'box_trans_tiltR'
+# test_env: 'smallboxDR_trans'
+# test_env: 'tiltLbox_trans'
+# test_env: 'tiltRbox_trans'
+# test_env: 'nobox_trans'
+# test_env: 'normalbox01_trans'
+# test_env: 'smallbox01_trans'
 
 # if set to positive integer, overrides the default number of environments
 num_envs: '' # for default setup
@@ -53,8 +59,8 @@ test: False # <---------------
 wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
-model: 'Feedforward'  # <---------------
-# model: 'Hebb'
+# model: 'Feedforward'  # <---------------
+model: 'Hebb'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
@@ -64,7 +70,7 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 500 # --166, 250
+SAVE_EVERY: 250 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -83,10 +89,10 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [11, 16, 8, 6] # for dbAlpha Env Test 2 legs
 
 # Locomotion
-# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 
 # Object transport 4 legs fix hind legs
-ARCHITECTURE: [19, 64, 32, 12] # 4 legs
+# ARCHITECTURE: [19, 64, 32, 12] # 4 legs
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
@@ -95,7 +101,7 @@ ARCHITECTURE: [19, 64, 32, 12] # 4 legs
 RBF_ARCHITECTURE: [20, 12] # 4 legs object transport
 
 # seed - set to -1 to choose random seed
-seed: 42
+seed: -1
 # set to True for deterministic performance
 torch_deterministic: False
 

@@ -158,3 +158,20 @@ sim:
     density: 200
     max_depenetration_velocity: 1000.0
 
+domain_randomization:
+    randomize: False
+    randomization_params:
+      articulation_views:
+        dbAlpha_view:
+          orientation: 
+            on_reset:
+              operation: "direct"
+              distribution: "uniform"
+              distribution_parameters: [[0.0, 0.0, -0.1], [0.0, 0.0, 0.1]]
+#       rigid_prim_views:
+#         object_view:
+#           orientation: 
+#             on_reset:
+#               operation: "direct"
+#               distribution: "uniform"
+#               distribution_parameters: [[0.0, 0.0, -0.4], [0.0, 0.0, 0.4]]

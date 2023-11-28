@@ -87,7 +87,8 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
             self.ball_radius = 0.21
         else:
             self.dbalpha_orientation = [1.0,0.0,0.0,0.0]
-            self._dbAlpha_positions = torch.tensor([0, 0, -0.05])
+            # self._dbAlpha_positions = torch.tensor([0, 0, -0.05])
+            self._dbAlpha_positions = torch.tensor([0, 0, -0.04]) # box pos random
             self._ball_positions = torch.tensor([0.4, 0.0, 0.1])
             self.ball_radius = 0.1
 
@@ -111,7 +112,10 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         # self.add_ball()
         # self.add_cube()
         # self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False)
+        # self._objects = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Object", name="object_view", reset_xform_properties=False)
+        # self._objects = ArticulationView(prim_paths_expr="/World/envs/.*/Object/PrismaticJoint", name="object_view", reset_xform_properties=False)
         # scene.add(self._objects)
+        #print('self._objects: ', self._objects)
 
         # Add contact force sensor at the robot tips
         self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/dbAlpha_base/Tips.*",
@@ -146,6 +150,10 @@ class dbAlphaObjectTransportTask(dbObjectTransportTask):
         #         rb.GetMaxLinearVelocityAttr().Set(1000.0)
         #         rb.GetAngularDampingAttr().Set(0.0)
         #         rb.GetMaxAngularVelocityAttr().Set(64/np.pi*180)
+        
+        # cube_prim = self._stage.GetPrimAtPath(self.default_zero_env_path +'/dbAlpha_base/base_link/Xform_object/Object')
+        # print(cube_prim)
+
         for link_prim in prim.GetChildren():
             if link_prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI): 
                 if "Tips" in str(link_prim.GetPrimPath()):

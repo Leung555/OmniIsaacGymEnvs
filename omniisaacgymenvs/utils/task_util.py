@@ -68,8 +68,8 @@ def initialize_task(config, env, init_sim=True):
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
         "dbAlpha": dbAlphaLocomotionTask,
         "dbAlpha_object": dbAlphaObjectTransportTask,
-        "dbAlpha_t": dbAlphaTerrainTask,
-        "dbAlpha_n": dbAlphaTask,
+        # "dbAlpha_t": dbAlphaTerrainTask,
+        # "dbAlpha_n": dbAlphaTask,
     }
 
     cfg = sim_config.config
