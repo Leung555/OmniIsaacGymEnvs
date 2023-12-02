@@ -159,7 +159,7 @@ sim:
     max_depenetration_velocity: 1000.0
 
 domain_randomization:
-    randomize: False
+    randomize: True
     randomization_params:
       articulation_views:
         dbAlpha_view:

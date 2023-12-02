@@ -5,9 +5,9 @@ import torch
 def WeightStand(w, eps=1e-5):
     # print('---WeightStand---')
     # print('w: ', w)
-    #mean = torch.mean(input=w, dim=[1,2], keepdim=True)
+    # mean = torch.mean(input=w, dim=[1,2], keepdim=True)
     # print('mean: ', mean)
-    #var = torch.var(input=w, dim=[1,2], keepdim=True)
+    # var = torch.var(input=w, dim=[1,2], keepdim=True)
 
     # max normalization
     max_val = torch.max(torch.abs(w).flatten(start_dim=1, end_dim=2), dim=1)

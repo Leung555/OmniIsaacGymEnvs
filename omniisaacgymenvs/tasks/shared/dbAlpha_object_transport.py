@@ -74,9 +74,9 @@ class dbObjectTransportTask(RLTask):
         self.height_reward_scale = self._task_cfg["env"]["height_reward"]
         self.rew_yaw_reward_scale = self._task_cfg["env"]["rew_yaw"]
         self.count = 0
-        self.random_joint_initial = False
+        self.random_joint_initial = True
         print('random_joint_initial: ', self.random_joint_initial)
-        self.joint_index = [0,1,3,4,5,6,7,8,9,10,11,12]
+        self.joint_index = torch.Tensor([0,1,3,4,5,6,7,8,9,10,11,12])
         # self.rng = np.random.default_rng(12345)
 
         
@@ -159,10 +159,11 @@ class dbObjectTransportTask(RLTask):
         #                         normalize_angle(pitch).unsqueeze(-1), 
         #                         normalize_angle(yaw).unsqueeze(-1)])
         # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
+        # self.pos_observation = torch.index_select(self.dof_pos, 1, self.joint_index) * 0.5
         self.obs_buf = torch.cat(
             (
-                self.dof_pos * 0.5,
-                # torch.cat((self.dof_pos[:, 0:2], self.dof_pos[:, 3:]), dim=1) * 0.5,
+                # self.pos_observation,
+                torch.cat((self.dof_pos[:, 0:2], self.dof_pos[:, 3:]), dim=1) * 0.5,
                 self.leg_contact, # 27
                 # self.forces_tot, # 27
                 # dof_effort, # 39
@@ -208,19 +209,19 @@ class dbObjectTransportTask(RLTask):
         # self._robots.set_joint_efforts(forces, indices=indices)
 
         # applies joint target position
-        self.joint_target_pos = self.actions
+        # self.joint_target_pos = self.actions
         # self.joint_target_pos = torch.cat((self.actions, 
         #                                    self.box_pos), dim=1)
         # print('self.actions_pris: ', self.actions_pris.shape)
         # print('self.box_pos: ', self.box_pos.shape)
 
         # set box height
-        # self.actions_pris[:, 0:2] = actions[:, 0:2].clone().to(self._device)
-        # self.actions_pris[:, 3:] = actions[:, 2:].clone().to(self._device)
-        # self.actions_pris[:, 2] = self.box_pos.flatten()
-        # self.joint_target_pos = self.actions_pris
+        self.actions_pris[:, 0:2] = actions[:, 0:2].clone().to(self._device)
+        self.actions_pris[:, 3:] = actions[:, 2:].clone().to(self._device)
+        self.actions_pris[:, 2] = self.box_pos.flatten()
+        self.joint_target_pos = self.actions_pris
 
-        # print('self.box_pos: ', self.box_pos)
+        # print('self.box_pos: ', self.joint_target_pos)
         # self.joint_target_pos = 0.5*self.actions + 0.5*self.previous_actions 
         self.previous_actions = self.actions
         # print(actions)
@@ -267,6 +268,9 @@ class dbObjectTransportTask(RLTask):
         
         # Object
         # self._objects.set_world_poses(object_pos, object_rot, indices=env_ids)
+        # self.random_box_pos = np.random.uniform(-0.1, 0, size=(self.num_envs, 1)).astype(dtype=np.float32)
+        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1)
+        # self.box_pos = torch.full((self.num_envs, 1), 1)
 
         # print('root_pos: ', root_pos)
         self._robots.set_velocities(root_vel, indices=env_ids)
@@ -307,12 +311,13 @@ class dbObjectTransportTask(RLTask):
         #self.potentials = torch.tensor([-1000.0 / self.dt], dtype=torch.float32, device=self._device).repeat(self.num_envs)
         #self.prev_potentials = self.potentials.clone()
         # np.random.seed(-1)
-        # self.random_box_pos = np.random.randint(-1, 2, size=(self.num_envs, 1)).astype(dtype=np.float32)
-        # print('random_box_pos: ', self.random_box_pos)
+        # self.random_box_pos = np.random.uniform(-0.1, 0, size=(self.num_envs, 1)).astype(dtype=np.float32)
         self.actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
-        # self.actions_pris = torch.zeros((self.num_envs, self.num_actions+1), device=self._device)
+        self.actions_pris = torch.zeros((self.num_envs, self.num_actions+1), device=self._device)
         self.previous_actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
-        # self.box_pos = torch.from_numpy(self.random_box_pos).cuda()
+        self.pos_observation = torch.zeros((self.num_envs, self.num_observations), device=self._device)
+        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1).cuda()
+        print('random_box_pos: ', self.box_pos)
 
         self.gravity_vec = torch.tensor([0.0, 0.0, -1.0], device=self._device).repeat(
             (self._num_envs, 1)
@@ -369,7 +374,7 @@ class dbObjectTransportTask(RLTask):
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x *-1.0 # + rew_roll + rew_pitch + rew_yaw
+        total_reward = rew_lin_vel_x *-1.0 + rew_orient + rew_yaw #+ rew_roll + rew_pitch
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)

@@ -57,13 +57,16 @@ class DbAlpha(Robot):
                 carb.log_error("Could not find Isaac Sim assets folder")
             dir_path = 'omniverse://localhost/Library/assets/dbalpha/'
             # self._usd_path = dir_path+usd_path+'.usd'
+
+            # Randomization
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg_test.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd.usd"
 
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_small.usd"
             
             # 1 kg object, heavy
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"

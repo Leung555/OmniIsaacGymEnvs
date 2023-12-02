@@ -201,13 +201,13 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     if ARCHITECTURE_NAME == 'Feedforward':
-        dir_path = './data/'+TASK+'/model/FF/'
+        dir_path = './data/'+TASK+'/model/rd/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
-        dir_path = './data/'+TASK+'/model/test/good_hebb/'
+        dir_path = './data/'+TASK+'/model/rd/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
-        dir_path = 'data/'+TASK+'/model/rbf/'
+        dir_path = 'data/'+TASK+'/model/rd/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
-        dir_path = 'data/'+TASK+'/model/Hebb_rbf/' # test_hebb_params/'
+        dir_path = 'data/'+TASK+'/model/rd/Hebb_rbf/' # test_hebb_params/'
     # dir_path = listdir(dir_path+'simpleRBFHebb'+'/')
     if USE_TRAIN_PARAMS:
         res = listdir(dir_path)

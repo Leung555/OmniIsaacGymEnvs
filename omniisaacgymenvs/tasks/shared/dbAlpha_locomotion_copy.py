@@ -294,7 +294,7 @@ class dbLocomotionTask(RLTask):
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x # + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
+        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)

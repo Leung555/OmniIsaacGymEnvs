@@ -187,13 +187,13 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     if ARCHITECTURE_NAME == 'Feedforward':
-        dir_path = './data/'+TASK+'/model/FF/'
+        dir_path = './data/'+TASK+'/model/rd/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
-        dir_path = './data/'+TASK+'/model/test/good_hebb/'
+        dir_path = './data/'+TASK+'/model/rd/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
-        dir_path = 'data/'+TASK+'/model/rbf/'
+        dir_path = 'data/'+TASK+'/model/rd/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
-        dir_path = 'data/'+TASK+'/model/Hebb_rbf/' # test_hebb_params/'
+        dir_path = 'data/'+TASK+'/model/rd/Hebb_rbf/' # test_hebb_params/'
     # dir_path = listdir(dir_path+'simpleRBFHebb'+'/')
     if USE_TRAIN_PARAMS:
         res = listdir(dir_path)
@@ -256,97 +256,109 @@ def parse_hydra_configs(cfg: DictConfig):
                         # np.savetxt("np_array/rewards/object_group_randJ/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
 
         else:
+            # Locomotion mean
+            # file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
+            # file_name = 'Hebb_dbAlpha_6legs_walk_mean_vx_d_21760499_54.347007751464844.pickle'
             # Locomotion
-            file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
+            file_name = 'Hebb_dbAlpha_6legs_walk_vx_d_21760499_428.657470703125.pickle'
+            # file_name = 'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle'
             # file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_300.42620849609375.pickle'
             # object transport
             # file_name = 'Hebb_dbAlpha_objectnormalbox_trans_Exp_1-vx_d_18240499_231.8614501953125.pickle'
             # file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
-            print('file_name: ', file_name)
+            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_vxuy_d_18240499_211.0892333984375.pickle',
+                         'Hebb_dbAlpha_object_smallballRD_trans_vxuy_d_18240499_211.0892333984375.pickle']
+            for file_name in file_list:
+                print('file_name: ', file_name)
+                rew_index = file_name.rfind('_')
+                rew = file_name[rew_index:rew_index+4]
+                # Load Data script
+                # time.sleep(2)
+                trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+                open_es_data = trained_data[0]
+                # init_params = open_es_data.best_mu # best_mu   
+                init_params = open_es_data.best_param() # best_mu   
 
-            # Load Data script
-            # time.sleep(2)
-            trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-            open_es_data = trained_data[0]
-            # init_params = open_es_data.best_mu # best_mu   
-            init_params = open_es_data.best_param() # best_mu   
-
-            # print('trained_data: ', trained_data)
-            # print('init_params: ', init_params)
-            # models.set_params_single_model(init_params)            
-            # models = [None] * cfg.num_envs
-            # for i in range(cfg.num_envs):
-            #     models[i] = FeedForwardNet(ARCHITECTURE)
-            #     models[i].set_params(solutions[i])
-            # solutions = open_es_data.ask()
-            obs = env.reset()
-            
-            models.set_params_single_model(init_params)
-
-            total_rewards = torch.zeros(cfg.num_envs)
-            total_rewards = total_rewards.cuda()
-
-            obs = env.reset()
-            w1 = []
-            w2 = []
-            w3 = []
-            act = []
-
-            for _ in range(EPISODE_LENGTH):
-                # print('step: ', _)
-                ############### CPU Version ###############
-                # TODO
-                actions = models.forward(obs['obs'])
-                # print('actions: ', actions)
-                ###########################################
-                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
-                # print("Action_3: ", actions)
-                obs, reward, done, info = env.step(
-                    actions
-                )
-                ###########################################
-                ############### CPU Version Multiple models ###############
-                # obs_cpu = obs['obs'].cpu().numpy()
+                # print('trained_data: ', trained_data)
+                # print('init_params: ', init_params)
+                # models.set_params_single_model(init_params)            
+                # models = [None] * cfg.num_envs
                 # for i in range(cfg.num_envs):
-                #     actions[i] = models[i].forward(obs_cpu[i])
-                ##########################################################
-
-                ############### GPU Version ###############
-                # for i in range(cfg.num_envs):
-                #     actions[i] = init_net.forward(obs['obs'][i])
-                ###########################################
-                # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
+                #     models[i] = FeedForwardNet(ARCHITECTURE)
+                #     models[i].set_params(solutions[i])
+                # solutions = open_es_data.ask()
+                obs = env.reset()
                 
-                # Weight collection ######
-                # weight = models.get_weights()
-                # w1.append(weight[0].cpu().numpy())
-                # w2.append(weight[1].cpu().numpy())
-                # w3.append(weight[2].cpu().numpy())
-                # act.append(actions.cpu().numpy())
+                models.set_params_single_model(init_params)
 
-                total_rewards += reward
+                total_rewards = torch.zeros(cfg.num_envs)
+                total_rewards = total_rewards.cuda()
 
-            # print("reward is", reward)
-            print('total_rewards: ', total_rewards)
-            # data_np = np.array(act)
+                obs = env.reset()
+                w1 = []
+                w2 = []
+                w3 = []
+                act = []
+                input = []
 
-            # Weight save ######
-            # w1 = np.array(w1)
-            # w2 = np.array(w2)
-            # w3 = np.array(w3)
-            # np.save('np_array/actions_ff', data_np)
-            # np.save('np_array/w1_ff', w1)
-            # np.save('np_array/w2_ff', w2)
-            # np.save('np_array/w3_ff', w3)
+                for _ in range(EPISODE_LENGTH):
+                    # print('step: ', _)
+                    ############### CPU Version ###############
+                    # TODO
+                    actions = models.forward(obs['obs'])
+                    # print('actions: ', actions)
+                    ###########################################
+                    # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)
+                    # print("Action_3: ", actions)
+                    obs, reward, done, info = env.step(
+                        actions
+                    )
+                    ###########################################
+                    ############### CPU Version Multiple models ###############
+                    # obs_cpu = obs['obs'].cpu().numpy()
+                    # for i in range(cfg.num_envs):
+                    #     actions[i] = models[i].forward(obs_cpu[i])
+                    ##########################################################
 
-            # np.save('np_array/actions_hebb', data_np)
-            # np.save('np_array/w1_hebb', w1)
-            # np.save('np_array/w2_hebb', w2)
-            # np.save('np_array/w3_hebb', w3)
-            # np.save('np_array/param_hebb', init_params)
+                    ############### GPU Version ###############
+                    # for i in range(cfg.num_envs):
+                    #     actions[i] = init_net.forward(obs['obs'][i])
+                    ###########################################
+                    # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
+                    
+                    # Weight collection ######
+                    weight = models.get_weights()
+                    w1.append(weight[0].cpu().numpy())
+                    w2.append(weight[1].cpu().numpy())
+                    w3.append(weight[2].cpu().numpy())
+                    act.append(actions.cpu().numpy())
+                    input.append(obs['obs'].cpu().numpy())
 
-            # save rewards tensor to csv
-            # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    total_rewards += reward
+
+                # print("reward is", reward)
+                print('total_rewards: ', total_rewards)
+                action_np = np.array(act)
+                input_np = np.array(input)
+
+                # Weight save ######
+                # w1 = np.array(w1)
+                # w2 = np.array(w2)
+                # w3 = np.array(w3)
+                # np.save('np_array/actions_ff', data_np)
+                # np.save('np_array/w1_ff', w1)
+                # np.save('np_array/w2_ff', w2)
+                # np.save('np_array/w3_ff', w3)
+
+                np.save('np_array/behavior/rd/walk/input_hebb'+rew, input_np)
+                np.save('np_array/behavior/rd/walk/actions_hebb'+rew, action_np)
+                np.save('np_array/behavior/rd/walk/w1_hebb'+rew, w1)
+                np.save('np_array/behavior/rd/walk/w2_hebb'+rew, w2)
+                np.save('np_array/behavior/rd/walk/w3_hebb'+rew, w3)
+                np.save('np_array/behavior/rd/walk/param_hebb'+rew, init_params)
+
+                # save rewards tensor to csv
+                # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
             
     env._simulation_app.close()
 
