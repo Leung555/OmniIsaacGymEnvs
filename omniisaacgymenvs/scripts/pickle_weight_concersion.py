@@ -75,7 +75,7 @@ def parse_hydra_configs(cfg: DictConfig):
     SIGMA_LIMIT         = cfg.ES_params.sigma_limit
 
     # Model
-    ARCHITECTURE_NAME = cfg.model
+    ARCHITECTURE_NAME = 'Hebb'
     ARCHITECTURE_TYPE = cfg.RBFHebb_model_type
     # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
     ARCHITECTURE = cfg.ARCHITECTURE
@@ -89,81 +89,9 @@ def parse_hydra_configs(cfg: DictConfig):
     USE_TRAIN_PARAMS = cfg.USE_TRAIN_PARAMS
     wandb_activate = cfg.wandb_activate
     TASK = cfg["task_name"]
-    experiment = cfg.experiment
+    experiment = 'walking_vxuy'
     test_env = cfg.test_env
     rew = cfg.rewards_type
-
-    exp_name = cfg.model+'_'+TASK+experiment+'_Exp_'+str(1)+rew
-    if wandb_activate:
-        # wandb.init(project='Cartpole_ES_log',
-        # wandb.init(project='Ant_ES_log',
-        wandb.init(project='dbAlpha_ES_New_log',
-                    name=exp_name, 
-                    config=cfg_dict)
-    
-    # print("POPSIZE: ", POPSIZE)
-    # print("EPISODE_LENGTH: ", EPISODE_LENGTH)
-    # print("REWARD_FUNCTION: ", REWARD_FUNCTION)
-    # print("ARCHITECTURE_NAME: ", ARCHITECTURE_NAME)
-    # print("ARCHITECTURE_size: ", ARCHITECTURE)
-
-    # if ARCHITECTURE_NAME == 'Feedforward':
-    #     models = FeedForwardNet(ARCHITECTURE, POPSIZE)
-    #     # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
-    # elif ARCHITECTURE_NAME == 'Hebb':
-    #     models = HebbianNet(ARCHITECTURE, POPSIZE)
-    # elif ARCHITECTURE_NAME == 'rbf':
-    #     models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
-    # elif ARCHITECTURE_NAME == 'Hebb_rbf':
-    #     models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
-    # init_params = models.get_params_a_model()
-
-
-    # with open('log_'+str(run)+'.txt', 'a') as outfile:
-    #     outfile.write('trainable parameters: ' + str(len(init_params)))
-
-    # solver = OpenES(len(init_params),
-    #                 popsize=POPSIZE,
-    #                 rank_fitness=RANK_FITNESS,
-    #                 antithetic=ANTITHETIC,
-    #                 learning_rate=LEARNING_RATE,
-    #                 learning_rate_decay=LEARNING_RATE_DECAY,
-    #                 sigma_init=SIGMA_INIT,
-    #                 sigma_decay=SIGMA_DECAY,
-    #                 learning_rate_limit=LEARNING_RATE_LIMIT,
-    #                 sigma_limit=SIGMA_LIMIT)
-    # solver.set_mu(init_params)
-
-    # print(np.array([POPSIZE]).ndim)
-    # solver = CMAES(init_params,  # number of model parameters
-    #                sigma_init=0.4,  # initial standard deviation
-    #                popsize=POPSIZE,  # population size
-    #                weight_decay=0.995)  # weight decay coefficient
-    # solver.set_mu(init_params)
-
-    print('TASK', TASK)
-    print('exp_name', exp_name)
-    print('experiment', experiment)
-    print('test_env', test_env)
-    print('model: ', ARCHITECTURE_NAME)
-    print('model size: ', ARCHITECTURE)
-    # print('trainable parameters: ', len(init_params))
-    # print("Action space is", env.action_space)
-    # obs = env.reset()
-
-    # obs_cpu = obs['obs'].cpu().numpy()
-    # print("Observation: ", obs)
-    # actions = torch.ones(cfg.num_envs, ARCHITECTURE[-1])
-    # total_rewards = torch.zeros(cfg.num_envs)
-    # total_rewards = torch.unsqueeze(total_rewards, 0)
-    # total_rewards = total_rewards.cuda()
-    # print("Action: ", actions)
-    # for i in range(cfg.num_envs):
-    #     actions[i] = models[i].forward(obs_cpu[i])
-    # actions = torch.unsqueeze(actions, 1)
-    # print("Action2: ", actions)
-    # actions = actions.cuda()
-    # print("Action2_cuda: ", actions)
 
     pop_mean_curve = np.zeros(EPOCHS)
     best_sol_curve = np.zeros(EPOCHS)
@@ -171,9 +99,9 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     if ARCHITECTURE_NAME == 'Feedforward':
-        dir_path = './data/'+TASK+'/model/FF/'
+        dir_path = './data/'+TASK+'/model/rd/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
-        dir_path = './data/'+TASK+'/model/test/good_hebb/'
+        dir_path = './data/'+TASK+'/model/rd/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -182,9 +110,9 @@ def parse_hydra_configs(cfg: DictConfig):
 
     res = listdir(dir_path)
     for i, file_name in enumerate(sorted(res[0:1])):
-        file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_300.42620849609375.pickle'
+        # file_name = 'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle'
         # file_name = 'rbf_dbAlphadbAlpha_newGaitRew_Exp_1newGaitRew_d_180497_260.62725830078125.pickle'
-        # file_name = 'Hebb_dbAlpha_objectsmallbox_trans_Exp_1-vx_d_18240249_306.11181640625.pickle'
+        file_name = 'Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760499_345.48382568359375.pickle'
         print('file_name: ', file_name)
 
         # Load Data script

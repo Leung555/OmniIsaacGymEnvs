@@ -77,7 +77,7 @@ class HebbianNet:
                 # pre = torch.Tensor([[1., 0], 
                 #                     [1., 0]]).cuda()
                 # W = torch.ones(weights.shape).cuda()
-                post =  torch.einsum('ij, ijk -> ik', pre, W.float())
+                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()))
                 # post = torch.tanh(pre @ W.float())
                 # post = torch.tanh(pre @ W.double())
                 # print(post)

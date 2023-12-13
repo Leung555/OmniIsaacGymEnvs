@@ -48,6 +48,7 @@ from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 from omniisaacgymenvs.ES.ES_classes import OpenES, CMAES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
+from omniisaacgymenvs.ES.LSTM_neural_net import LSTMs
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 
@@ -97,7 +98,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if wandb_activate:
         # wandb.init(project='Cartpole_ES_log',
         # wandb.init(project='Ant_ES_log',
-        wandb.init(project='dbAlpha_ES_log_rd',
+        wandb.init(project='dbAlpha_ES_log_rd_2',
                     name=exp_name, 
                     config=cfg_dict)
     
@@ -112,6 +113,11 @@ def parse_hydra_configs(cfg: DictConfig):
         # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'Hebb':
         models = HebbianNet(ARCHITECTURE, POPSIZE)
+    elif ARCHITECTURE_NAME == 'lstm':
+        models = LSTMs(POPSIZE, tuple(ARCHITECTURE))
+        n_params = models.get_n_params()
+        init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
+        models.set_params(init_params)
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -204,6 +210,8 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/rd/FF/'
     elif ARCHITECTURE_NAME == 'Hebb':
         dir_path = './data/'+TASK+'/model/rd/Hebb/'
+    elif ARCHITECTURE_NAME == 'lstm':
+        dir_path = './data/'+TASK+'/model/rd/LSTM/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rd/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -213,7 +221,8 @@ def parse_hydra_configs(cfg: DictConfig):
         res = listdir(dir_path)
         for i, file_name in enumerate(res[0:1]):
             # file_name = 'Hebb_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_18240499_318.64013671875.pickle'
-            file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
+            # file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
+            file_name = 'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_104.20500183105469.pickle'
             print('file_name: ', file_name)
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
@@ -372,6 +381,9 @@ def parse_hydra_configs(cfg: DictConfig):
 
             # retrieve solution from ES 
             solutions = solver.ask()
+
+            # LSTM test
+            solutions = torch.from_numpy(solutions)
             
             # set models parameters 
             models.set_params(solutions)

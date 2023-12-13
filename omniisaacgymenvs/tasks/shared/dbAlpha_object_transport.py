@@ -75,6 +75,7 @@ class dbObjectTransportTask(RLTask):
         self.rew_yaw_reward_scale = self._task_cfg["env"]["rew_yaw"]
         self.count = 0
         self.random_joint_initial = True
+        self.set_object_RD = True
         print('random_joint_initial: ', self.random_joint_initial)
         self.joint_index = torch.Tensor([0,1,3,4,5,6,7,8,9,10,11,12])
         # self.rng = np.random.default_rng(12345)
@@ -159,11 +160,15 @@ class dbObjectTransportTask(RLTask):
         #                         normalize_angle(pitch).unsqueeze(-1), 
         #                         normalize_angle(yaw).unsqueeze(-1)])
         # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
-        # self.pos_observation = torch.index_select(self.dof_pos, 1, self.joint_index) * 0.5
+        if self.set_object_RD:
+            self.pos_observation = torch.cat((self.dof_pos[:, 0:2], self.dof_pos[:, 3:]), dim=1) * 0.5
+        else:
+            self.pos_observation = self.dof_pos * 0.5
+
         self.obs_buf = torch.cat(
             (
                 # self.pos_observation,
-                torch.cat((self.dof_pos[:, 0:2], self.dof_pos[:, 3:]), dim=1) * 0.5,
+                self.pos_observation,
                 self.leg_contact, # 27
                 # self.forces_tot, # 27
                 # dof_effort, # 39
@@ -216,15 +221,19 @@ class dbObjectTransportTask(RLTask):
         # print('self.box_pos: ', self.box_pos.shape)
 
         # set box height
-        self.actions_pris[:, 0:2] = actions[:, 0:2].clone().to(self._device)
-        self.actions_pris[:, 3:] = actions[:, 2:].clone().to(self._device)
-        self.actions_pris[:, 2] = self.box_pos.flatten()
-        self.joint_target_pos = self.actions_pris
+        if self.set_object_RD:
+            self.actions_pris[:, 0:2] = actions[:, 0:2].clone().to(self._device)
+            self.actions_pris[:, 3:] = actions[:, 2:].clone().to(self._device)
+            self.actions_pris[:, 2] = self.box_pos.flatten()
+            self.joint_target_pos = self.actions_pris
+        else:
+            self.joint_target_pos = self.actions
 
         # print('self.box_pos: ', self.joint_target_pos)
         # self.joint_target_pos = 0.5*self.actions + 0.5*self.previous_actions 
-        self.previous_actions = self.actions
+        # self.previous_actions = self.actions
         # print(actions)
+
         self._robots.set_joint_position_targets(self.joint_target_pos, indices=indices)
 
         if self._dr_randomizer.randomize:

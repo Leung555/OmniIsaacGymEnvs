@@ -60,7 +60,9 @@ class DbAlpha(Robot):
 
             # Randomization
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg_test.usd"
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd_stiff.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_bigball_rd_stiff.usd"
 
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_small.usd"

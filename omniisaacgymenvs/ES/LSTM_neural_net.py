@@ -1,105 +1,89 @@
-import numpy as np
 import torch
 
+class LSTMs():
 
-def WeightStand(w, eps=1e-5):
-
-    mean = torch.mean(input=w, dim=[1,2], keepdim=True)
-    var = torch.var(input=w, dim=[1,2], keepdim=True)
-
-    w = (w - mean) / torch.sqrt(var + eps)
-
-    return w
+    def __init__(self, popsize, arch): #in_channels, hid_size, out_channels):
+        super(LSTMs, self).__init__()
 
 
-class LSTMNet:
-    def __init__(self, sizes, popsize):
-        """
-        sizes: [input_size, hid_1, ..., output_size]
-        """
-        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.1, 0.1).cuda()
-                            for i in range(len(sizes) - 1)]
-        self.architecture = sizes 
-        # print('Weight: ', self.weights)   
+        self.arch = arch
+        in_channels = arch[0]
+        hid_size = arch[1]
+        out_channels = arch[2]
+        
+        self.popsize = popsize
+
+        self.in_channels = in_channels
+        self.hid_size = hid_size
+        self.out_channels = out_channels
+
+        self.hidden_state = torch.zeros(popsize,hid_size, 1).cuda()
+        self.cell_state = torch.zeros(popsize,hid_size, 1).cuda()
+
+    def forward(self, inp):
+        with torch.no_grad():        
+
+            x = torch.cat((inp.unsqueeze(-1), self.hidden_state), dim=1)
+
+            f = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wf.float(), x.float())+self.Bf.float())
+            i = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wi.float(), x.float())+self.Bi.float())
+
+            c = torch.tanh( torch.einsum('lbn,lbc->lnc', self.Wc.float(), x.float())+self.Bc.float())
+
+            self.cell_state = f * self.cell_state + i * c
+
+            o = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wo.float(), x.float())+self.Bo.float())
+
+            self.hidden_state = o * torch.tanh(self.cell_state)
+
+            x = torch.cat((inp.unsqueeze(-1), self.hidden_state), dim=1)
+            out = torch.tanh( torch.einsum('lbn,lbc->lnc', self.Wout.float(), x.float())) ## (popsize, out_size, 1)
+
+        return out.squeeze_()
 
 
-    def forward(self, pre):
-        # print('pre: ', pre)
+    def set_params(self, pop):
+        
+        ##population shape: (popsize, n_total_params)
 
-        with torch.no_grad():
-            # pre = torch.from_numpy(pre)
-            """
-            pre: (n_in, )
-            """
-            # print('---- forward ----------------------------------')
-            # print('self.test: ', self.weights[0])
-            # print('----------------------------------------------')
-            # c = 0
-            for i, W in enumerate(self.weights):
-                # W = W.cuda()
-                # print('pre: ', i, pre.shape)
-                # print('W: ', i, W.shape)
-                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()))
-                # post = torch.tanh(pre @ W.float())
-                # post = torch.tanh(pre @ W.double())
 
-                pre = post
-                # c+=1
-            
-            # print('c: ', c)
-                # print('post: ', post)
-            # print('post: ', post.detach())
+        n_i, n_h, n_o = self.arch
+        popsize = pop.shape[0]
 
-        return post.detach()
+        m = 0
+        self.Wf = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wi = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wc = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wo = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wout = pop[:,m:m+(n_i+n_h)*n_o].reshape(popsize, n_i+n_h, n_o).cuda()
+        m += (n_i+n_h)*n_o
 
-    def get_params(self):
-        p = torch.cat([ params.flatten() for params in self.weights] )
+        self.Bf = pop[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bi = pop[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bc = pop[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bo = pop[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
 
-        return p.cpu().flatten().numpy()
-    
+    def get_n_params(self):
+        n_i, n_h, n_o = self.arch
+        return (n_i+n_h)*n_h * 4 + (n_i+n_h)*n_o + n_h * 4
+
     def get_params_a_model(self):
-        p = torch.cat([ params[0].flatten() for params in self.weights] )
-
-        return p.cpu().flatten().numpy()
-
-
-    def set_params(self, flat_params):
-        flat_params = torch.from_numpy(flat_params)
-        # print('flat_params: ', flat_params)
-
-        m = 0
-        # print('---- set_params ---------------------------------')
-        # print('flat_params: ', flat_params)
-        # print('flat_params_slice: ', flat_params[0:4])
-        # print('self.weights[0]: ', self.weights[0])
-        # print('----------------------------------------------')
-        for i, w in enumerate(self.weights):
-            # print('w: ', w)
-            pop, a, b = w.shape
-            # print('pop, a, b', pop, a, b)
-            self.weights[i] = flat_params[:, m:m + a * b].reshape(pop, a, b).cuda()
-            # self.weights[i] = self.weights[i].cuda()
-            m += a * b 
-        # print('---- set_params ouput ---------------------------------')
-        # print('self.weights_already set: ', self.weights)
-        # print('----------------------------------------------')
-
-    def set_params_single_model(self, flat_params):
-        flat_params = torch.from_numpy(flat_params)
-        # print('flat_params: ', flat_params)
-
-        m = 0
-        for i, w in enumerate(self.weights):
-            # print('w: ', w)
-            pop, a, b = w.shape
-            # print('pop, a, b', pop, a, b)
-            # print('self.weights[i]: ', self.weights[i].shape)
-            # print('flat_params: ', flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).shape)
-            self.weights[i] = flat_params[m:m + a * b].repeat(pop, 1, 1).reshape(pop, a, b).cuda()
-            # self.weights[i] = self.weights[i].cuda()
-            m += a * b 
-
-
-
-    def get_weights(self):
-        return [w for w in self.weights]
+        p = torch.cat([ self.Wf[0].flatten()]  
+                +[  self.Wi[0].flatten()] 
+                +[  self.Wc[0].flatten()]
+                +[  self.Wo[0].flatten()]
+                +[  self.Wout[0].flatten()]
+                +[  self.Bf[0].flatten()]
+                +[  self.Bi[0].flatten()]
+                +[  self.Bc[0].flatten()]
+                +[  self.Bo[0].flatten()]
+                )
+        return p.flatten().cpu().numpy()

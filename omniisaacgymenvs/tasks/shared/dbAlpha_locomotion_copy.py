@@ -136,6 +136,8 @@ class dbLocomotionTask(RLTask):
         #vel_loc, angvel_loc, roll, pitch, yaw, angle_to_target = compute_rot(
         #    torso_quat, velocity, ang_velocity, targets, torso_position
         #)
+        # print('roll: ', roll)
+        # print('normalize_angle roll: ', normalize_angle(yaw).unsqueeze(-1))
 
         # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
         self.obs_buf = torch.cat(
@@ -224,6 +226,8 @@ class dbLocomotionTask(RLTask):
 
         num_resets = len(env_ids)
 
+        self.count = 0
+
     def post_reset(self):
         self._robots = self.get_robot()
         self.initial_root_pos, self.initial_root_rot = self._robots.get_world_poses()
@@ -277,24 +281,23 @@ class dbLocomotionTask(RLTask):
         height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -self.height_reward_scale)
         rew_yaw = torch.where(abs(normalize_angle(yaw)) < 0.45 , 0, -self.rew_yaw_reward_scale)
 
-        gait_reward = torch.ones_like(rew_lin_vel_x) # to get tripod gait Tips idx[2,4,5,0,3,1]
-        o1 = torch.zeros_like(rew_lin_vel_x)
-        o2 = torch.zeros_like(rew_lin_vel_x)
-        gait_thres = torch.where(self.leg_contact > 0.0, 1, -1)
-        c1 = gait_thres[:, 0] + gait_thres[:, 1] + gait_thres[:, 3]
-        c2 = gait_thres[:, 2] + gait_thres[:, 4] + gait_thres[:, 5]
-        if self.count < 50:
-            o1 = torch.where(c1 >  2 , 1, 0)
-            o2 = torch.where(c2 < -2 , 1, 0)
-        elif self.count > 50:
-            o1 = torch.where(c1 < -2 , 1, 0)
-            o2 = torch.where(c2 >  2 , 1, 0)
-
-        gait_reward = (o1 + o2) * 0.3
+        # gait_reward = torch.ones_like(rew_lin_vel_x) # to get tripod gait Tips idx[2,4,5,0,3,1]
+        # o1 = torch.zeros_like(rew_lin_vel_x)
+        # o2 = torch.zeros_like(rew_lin_vel_x)
+        # gait_thres = torch.where(self.leg_contact > 0.0, 1, -1)
+        # c1 = gait_thres[:, 0] + gait_thres[:, 1] + gait_thres[:, 3]
+        # c2 = gait_thres[:, 2] + gait_thres[:, 4] + gait_thres[:, 5]
+        # if self.count < 30:
+        #     o1 = torch.where(c1 >  2 , 1, 0)
+        #     o2 = torch.where(c2 < -2 , 1, 0)
+        # elif self.count > 30:
+        #     o1 = torch.where(c1 < -2 , 1, 0)
+        #     o2 = torch.where(c2 >  2 , 1, 0)
+        # gait_reward = torch.where(o1 + o2 > 1, 1.0, 0.0) * 0.3
         # print('gait_reward: ', gait_reward)
 
 
-        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward + rew_lin_vel_y #+ height_reward 
+        total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
         # total_reward = torch.clip(total_reward, 0.0, None)
 
         # print('rew_lin_vel_x: ', rew_lin_vel_x)
@@ -309,7 +312,7 @@ class dbLocomotionTask(RLTask):
         # total_reward[torch.nonzero(self.fallen_over)] = -1
         self.rew_buf[:] = total_reward.detach()
         self.count += 1
-        if self.count > 99:
+        if self.count > 59:
             self.count = 0
     
     def is_done(self) -> None:

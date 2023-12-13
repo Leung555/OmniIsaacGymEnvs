@@ -46,6 +46,8 @@ from omniisaacgymenvs.utils.task_util import initialize_task
 from omniisaacgymenvs.ES.ES_classes import OpenES
 from omniisaacgymenvs.ES.feedforward_neural_net import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
+from omniisaacgymenvs.ES.LSTM_neural_net import LSTMs
+
 
 # read Config file
 @hydra.main(config_name="config", config_path="../cfg")

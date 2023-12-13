@@ -6,13 +6,14 @@ task_name: ${task.name}
 # experiment: 'dbAlpha_newGaitRew_Jvel30'
 # experiment: '6legs_RBF_simMod'
 # experiment: '6legs_Hebb_Wmaxnormalize'
-# experiment: '6legs_walk_mean'
+# experiment: '6legs_walk'
 # experiment: '4leg_setup'
 # experiment: '2leg_setup'
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
-rewards_type: 'vxuy'
+# rewards_type: 'vxuy'
+rewards_type: '-vxuy'
 # rewards_type: '-vx'
 # rewards_type: '-vx_randJ'
 # rewards_type: 'newGaitRew'
@@ -39,7 +40,9 @@ experiment: 'smallballRD_trans' # smallbox_trans(DR)
 # experiment: 'box_trans_tiltL.1'
 # experiment: 'box_trans_tiltR.1'
 
-test_env: ''
+# test_env: ''
+test_env: 'smallballRD_trans'
+# test_env: 'bigballRD_trans'
 # test_env: 'normalbox_trans'
 # test_env: 'smallboxDR_trans'
 # test_env: 'tiltLbox_trans'
@@ -61,7 +64,8 @@ wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
-model: 'Hebb'
+# model: 'Hebb'
+model: 'lstm'
 # model: 'rbf'
 # model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
@@ -71,7 +75,7 @@ RBFHebb_model_type: 'hyper_RBFHebb'
 
 EPOCHS: 500 # <---------------
 EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 250 # --166, 250
+SAVE_EVERY: 500 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
@@ -93,13 +97,17 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 
 # Object transport 4 legs fix hind legs
-ARCHITECTURE: [19, 64, 32, 12] # 4 legs
+# ARCHITECTURE: [19, 64, 32, 12] # 4 legs
 
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
 # RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
 # RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 RBF_ARCHITECTURE: [20, 12] # 4 legs object transport
+
+# LSTM
+# ARCHITECTURE: [27, 27, 18] # 6 legs walkinf
+ARCHITECTURE: [19, 19, 12] # 4 legs object trans
 
 # seed - set to -1 to choose random seed
 seed: -1

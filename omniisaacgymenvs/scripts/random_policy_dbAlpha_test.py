@@ -48,6 +48,7 @@ from omniisaacgymenvs.envs.vec_env_rlgames import VecEnvRLGames
 from omniisaacgymenvs.ES.ES_classes import OpenES, CMAES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
+from omniisaacgymenvs.ES.LSTM_neural_net import LSTMs
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 
@@ -112,11 +113,15 @@ def parse_hydra_configs(cfg: DictConfig):
         # init_net = FeedForwardNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'Hebb':
         models = HebbianNet(ARCHITECTURE, POPSIZE)
+    elif ARCHITECTURE_NAME == 'lstm':
+        models = LSTMs(POPSIZE, tuple(ARCHITECTURE))
+        n_params = models.get_n_params()
+        init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
-    init_params = models.get_params_a_model()
+    # init_params = models.get_params_a_model()
 
 
     # with open('log_'+str(run)+'.txt', 'a') as outfile:
@@ -207,9 +212,10 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = False
+    test_multiple = True
     if TEST == True:
-        experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
+        # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
+        exp = experiment
         model_list = ['FF', 'Hebb']
         if test_multiple == True:
             for model in model_list:
@@ -217,57 +223,62 @@ def parse_hydra_configs(cfg: DictConfig):
                     models = FeedForwardNet(ARCHITECTURE, POPSIZE)
                 elif model == 'Hebb':
                     models = HebbianNet(ARCHITECTURE, POPSIZE)
-                for exp in experiment_list:
-                    dir_path = './data/dbAlpha_object/model/best_weight_group/'+model+'/'+exp+'/'
-                    res = listdir(dir_path)
-                    for i, file_name in enumerate(sorted(res)):
-                        print('--------------------')
-                        print('model: ', model )
-                        print('experiment_name: ', exp )
-                        rew_index = file_name.rfind('_')
-                        print('filename: ', file_name)
-                        rew = file_name[rew_index:rew_index+4]
-                        print('rewards: ', rew )
+                
+                dir_path = './data/dbAlpha_object/model/best_weight_rd/'+model+'/'
+                res = listdir(dir_path)
+                for i, file_name in enumerate(sorted(res)):
+                    print('--------------------')
+                    print('model: ', model )
+                    print('experiment_name: ', exp )
+                    rew_index = file_name.rfind('_')
+                    print('filename: ', file_name)
+                    rew = file_name[rew_index:rew_index+4]
+                    print('rewards: ', rew )
 
-                        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-                        open_es_data = trained_data[0]
-                        init_params = open_es_data.best_param() # best_mu   
+                    trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+                    open_es_data = trained_data[0]
+                    init_params = open_es_data.best_param() # best_mu   
 
-                        models.set_params_single_model(init_params)
+                    models.set_params_single_model(init_params)
 
-                        total_rewards = torch.zeros(cfg.num_envs)
-                        total_rewards = total_rewards.cuda()
+                    total_rewards = torch.zeros(cfg.num_envs)
+                    total_rewards = total_rewards.cuda()
 
-                        obs = env.reset()
+                    obs = env.reset()
 
-                        for _ in range(EPISODE_LENGTH):
-                            actions = models.forward(obs['obs'])
-                            obs, reward, done, info = env.step(
-                                actions
-                            )
-                            total_rewards += reward
+                    for _ in range(EPISODE_LENGTH):
+                        actions = models.forward(obs['obs'])
+                        obs, reward, done, info = env.step(
+                            actions
+                        )
+                        total_rewards += reward
 
-                        print('total_rewards: ', total_rewards)
-                        print('--------------------')
-                        # # save rewards tensor to csv
-                        # np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
-                        np.savetxt("np_array/rewards/object_group/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
-                        # np.savetxt("np_array/rewards/object_group_nobox/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
-                        # np.savetxt("np_array/rewards/object_group_randJ/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    print('total_rewards: ', total_rewards)
+                    print('--------------------')
+                    # # save rewards tensor to csv
+                    # np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    # np.savetxt("np_array/rewards/object_group_nobox/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    # np.savetxt("np_array/rewards/object_group_randJ/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    # np.savetxt("np_array/rewards/rd/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
 
         else:
             # Locomotion mean
             # file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
             # file_name = 'Hebb_dbAlpha_6legs_walk_mean_vx_d_21760499_54.347007751464844.pickle'
             # Locomotion
-            file_name = 'Hebb_dbAlpha_6legs_walk_vx_d_21760499_428.657470703125.pickle'
-            # file_name = 'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle'
-            # file_name = 'Feedforward_dbAlpha6legs_walk_Exp_1vx_d_4352499_300.42620849609375.pickle'
+            # file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_d_21760249_316.81439208984375.pickle',
+            #              'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle']
+            file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760249_275.0323181152344.pickle']
+            # file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
             # object transport
             # file_name = 'Hebb_dbAlpha_objectnormalbox_trans_Exp_1-vx_d_18240499_231.8614501953125.pickle'
             # file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
-            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_vxuy_d_18240499_211.0892333984375.pickle',
-                         'Hebb_dbAlpha_object_smallballRD_trans_vxuy_d_18240499_211.0892333984375.pickle']
+            # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
+            #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
+            #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_141.87167358398438.pickle']
+            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_119.32131958007812.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_174.88729858398438.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_235.26649475097656.pickle']
             for file_name in file_list:
                 print('file_name: ', file_name)
                 rew_index = file_name.rfind('_')
@@ -325,7 +336,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     #     actions[i] = init_net.forward(obs['obs'][i])
                     ###########################################
                     # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
-                    
+
                     # Weight collection ######
                     weight = models.get_weights()
                     w1.append(weight[0].cpu().numpy())
@@ -342,20 +353,20 @@ def parse_hydra_configs(cfg: DictConfig):
                 input_np = np.array(input)
 
                 # Weight save ######
-                # w1 = np.array(w1)
-                # w2 = np.array(w2)
-                # w3 = np.array(w3)
-                # np.save('np_array/actions_ff', data_np)
-                # np.save('np_array/w1_ff', w1)
-                # np.save('np_array/w2_ff', w2)
-                # np.save('np_array/w3_ff', w3)
-
-                np.save('np_array/behavior/rd/walk/input_hebb'+rew, input_np)
-                np.save('np_array/behavior/rd/walk/actions_hebb'+rew, action_np)
-                np.save('np_array/behavior/rd/walk/w1_hebb'+rew, w1)
-                np.save('np_array/behavior/rd/walk/w2_hebb'+rew, w2)
-                np.save('np_array/behavior/rd/walk/w3_hebb'+rew, w3)
-                np.save('np_array/behavior/rd/walk/param_hebb'+rew, init_params)
+                model = ARCHITECTURE_NAME 
+                if model == 'Feedforward':
+                    np.save('np_array/behavior/rd/walk/input_'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/walk/actions_'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/walk/w1_'+model+rew, w1)
+                    np.save('np_array/behavior/rd/walk/w2_'+model+rew, w2)
+                    np.save('np_array/behavior/rd/walk/w3_'+model+rew, w3)
+                elif model == 'Hebb':
+                    np.save('np_array/behavior/rd/walk/input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/walk/actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/walk/w1'+model+rew, w1)
+                    np.save('np_array/behavior/rd/walk/w2'+model+rew, w2)
+                    np.save('np_array/behavior/rd/walk/w3'+model+rew, w3)
+                    np.save('np_array/behavior/rd/walk/param'+model+rew, init_params)
 
                 # save rewards tensor to csv
                 # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
