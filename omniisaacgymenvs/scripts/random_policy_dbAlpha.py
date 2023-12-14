@@ -119,7 +119,7 @@ def parse_hydra_configs(cfg: DictConfig):
         init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
         models.set_params(init_params)
     elif ARCHITECTURE_NAME == 'rbf':
-        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
+        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
     init_params = models.get_params_a_model()
@@ -383,7 +383,8 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = solver.ask()
 
             # LSTM test
-            solutions = torch.from_numpy(solutions)
+            if ARCHITECTURE_NAME == 'lstm':
+                solutions = torch.from_numpy(solutions)
             
             # set models parameters 
             models.set_params(solutions)

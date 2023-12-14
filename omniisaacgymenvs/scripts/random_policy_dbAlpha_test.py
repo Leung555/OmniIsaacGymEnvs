@@ -114,14 +114,15 @@ def parse_hydra_configs(cfg: DictConfig):
     elif ARCHITECTURE_NAME == 'Hebb':
         models = HebbianNet(ARCHITECTURE, POPSIZE)
     elif ARCHITECTURE_NAME == 'lstm':
-        models = LSTMs(POPSIZE, tuple(ARCHITECTURE))
+        models = LSTMs(POPSIZE, tuple([19, 19, 12]))
         n_params = models.get_n_params()
         init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
+        models.set_params(init_params)
     elif ARCHITECTURE_NAME == 'rbf':
-        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'obj_trans')
+        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
-    # init_params = models.get_params_a_model()
+    init_params = models.get_params_a_model()
 
 
     # with open('log_'+str(run)+'.txt', 'a') as outfile:
@@ -197,6 +198,8 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/rd/Hebb/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rd/rbf/'
+    elif ARCHITECTURE_NAME == 'lstm':
+        dir_path = './data/'+TASK+'/model/rd/LSTM/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         dir_path = 'data/'+TASK+'/model/rd/Hebb_rbf/' # test_hebb_params/'
     # dir_path = listdir(dir_path+'simpleRBFHebb'+'/')
@@ -216,14 +219,19 @@ def parse_hydra_configs(cfg: DictConfig):
     if TEST == True:
         # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         exp = experiment
-        model_list = ['FF', 'Hebb']
+        model_list = ['FF', 'Hebb', 'lstm']
         if test_multiple == True:
             for model in model_list:
                 if model == 'FF':
                     models = FeedForwardNet(ARCHITECTURE, POPSIZE)
                 elif model == 'Hebb':
                     models = HebbianNet(ARCHITECTURE, POPSIZE)
-                
+                elif model == 'lstm':
+                    models = LSTMs(POPSIZE, tuple([19, 19, 12]))
+                    # n_params = models.get_n_params()
+                    # init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
+                    # models.set_params(init_params)   
+                                 
                 dir_path = './data/dbAlpha_object/model/best_weight_rd/'+model+'/'
                 res = listdir(dir_path)
                 for i, file_name in enumerate(sorted(res)):
@@ -239,7 +247,13 @@ def parse_hydra_configs(cfg: DictConfig):
                     open_es_data = trained_data[0]
                     init_params = open_es_data.best_param() # best_mu   
 
-                    models.set_params_single_model(init_params)
+                    if model == 'lstm':
+                        # LSTM test
+                        init_params = torch.from_numpy(init_params).unsqueeze(0)
+                        models.set_params(init_params)
+                        print(init_params.shape)
+                    else:
+                        models.set_params_single_model(init_params)
 
                     total_rewards = torch.zeros(cfg.num_envs)
                     total_rewards = total_rewards.cuda()
@@ -259,26 +273,36 @@ def parse_hydra_configs(cfg: DictConfig):
                     # np.savetxt("np_array/rewards/object/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
                     # np.savetxt("np_array/rewards/object_group_nobox/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
                     # np.savetxt("np_array/rewards/object_group_randJ/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
-                    # np.savetxt("np_array/rewards/rd/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
+                    np.savetxt("np_array/rewards/rd/rewards_"+model+'_'+exp+'_'+test_env+rew+".csv", total_rewards.cpu().numpy(), delimiter=",") 
 
         else:
             # Locomotion mean
-            # file_name = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
-            # file_name = 'Hebb_dbAlpha_6legs_walk_mean_vx_d_21760499_54.347007751464844.pickle'
+            # file_list = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
+            # file_list = 'Hebb_dbAlpha_6legs_walk_mean_vx_d_21760499_54.347007751464844.pickle'
             # Locomotion
             # file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_d_21760249_316.81439208984375.pickle',
             #              'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle']
-            file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760249_275.0323181152344.pickle']
+            # file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760249_275.0323181152344.pickle']
+            file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_203.77328491210938.pickle',
+                         'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_207.6489715576172.pickle',
+                         'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
             # file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_203.3082733154297.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_248.80465698242188.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
             # object transport
-            # file_name = 'Hebb_dbAlpha_objectnormalbox_trans_Exp_1-vx_d_18240499_231.8614501953125.pickle'
-            # file_name = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
+            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_204.8306121826172.pickle']
+            # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_141.87167358398438.pickle']
             # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_119.32131958007812.pickle',
             #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_174.88729858398438.pickle',
             #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_235.26649475097656.pickle']
+            # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_140.42498779296875.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_1024499_185.63446044921875.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_224.7894744873047.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
             for file_name in file_list:
                 print('file_name: ', file_name)
                 rew_index = file_name.rfind('_')
@@ -299,8 +323,13 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     models[i].set_params(solutions[i])
                 # solutions = open_es_data.ask()
                 obs = env.reset()
-                
-                models.set_params_single_model(init_params)
+                if ARCHITECTURE_NAME == 'lstm':
+                    # LSTM test
+                    init_params = torch.from_numpy(init_params).unsqueeze(0)
+                    models.set_params(init_params)
+                    print(init_params.shape)
+                else:
+                    models.set_params_single_model(init_params)
 
                 total_rewards = torch.zeros(cfg.num_envs)
                 total_rewards = total_rewards.cuda()
@@ -338,12 +367,12 @@ def parse_hydra_configs(cfg: DictConfig):
                     # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
 
                     # Weight collection ######
-                    weight = models.get_weights()
-                    w1.append(weight[0].cpu().numpy())
-                    w2.append(weight[1].cpu().numpy())
-                    w3.append(weight[2].cpu().numpy())
-                    act.append(actions.cpu().numpy())
-                    input.append(obs['obs'].cpu().numpy())
+                    # weight = models.get_weights()
+                    # w1.append(weight[0].cpu().numpy())
+                    # w2.append(weight[1].cpu().numpy())
+                    # w3.append(weight[2].cpu().numpy())
+                    # act.append(actions.cpu().numpy())
+                    # input.append(obs['obs'].cpu().numpy())
 
                     total_rewards += reward
 

@@ -77,13 +77,13 @@ class LSTMs():
 
     def get_params_a_model(self):
         p = torch.cat([ self.Wf[0].flatten()]  
-                +[  self.Wi[0].flatten()] 
-                +[  self.Wc[0].flatten()]
-                +[  self.Wo[0].flatten()]
-                +[  self.Wout[0].flatten()]
-                +[  self.Bf[0].flatten()]
-                +[  self.Bi[0].flatten()]
-                +[  self.Bc[0].flatten()]
-                +[  self.Bo[0].flatten()]
-                )
+                     +[ self.Wi[0].flatten()] 
+                     +[ self.Wc[0].flatten()]
+                     +[ self.Wo[0].flatten()]
+                     +[ self.Wout[0].flatten()]
+                     +[ self.Bf[0].flatten()]
+                     +[ self.Bi[0].flatten()]
+                     +[ self.Bc[0].flatten()]
+                     +[ self.Bo[0].flatten()]
+                     )
         return p.flatten().cpu().numpy()
