@@ -121,7 +121,7 @@ def parse_hydra_configs(cfg: DictConfig):
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
-        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
+        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE, ARCHITECTURE_TYPE)
     init_params = models.get_params_a_model()
 
 
@@ -215,7 +215,7 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = True
+    test_multiple = False
     if TEST == True:
         # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         exp = experiment
@@ -283,15 +283,20 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_d_21760249_316.81439208984375.pickle',
             #              'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle']
             # file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760249_275.0323181152344.pickle']
-            file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_203.77328491210938.pickle',
-                         'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_207.6489715576172.pickle',
-                         'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
-            # file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
+            # file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_203.77328491210938.pickle',
+            #              'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_207.6489715576172.pickle',
+            #              'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_249.73641967773438.pickle']
+            # file_list = ['rbf_dbAlpha_6legs_walk_vxuy_d_180499_196.0548095703125.pickle',
+            #              'rbf_dbAlpha_6legs_walk_vxuy_d_180499_197.6668243408203.pickle',
+            #              'rbf_dbAlpha_6legs_walk_vxuy_d_180499_222.55014038085938.pickle']
+            # file_list = ['Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_203.24395751953125.pickle',
+            #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_207.1593017578125.pickle',
+            #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_234.76168823242188.pickle']
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_203.3082733154297.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_248.80465698242188.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
             # object transport
-            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_204.8306121826172.pickle']
+            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
             # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
@@ -302,6 +307,9 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_140.42498779296875.pickle',
             #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_1024499_185.63446044921875.pickle',
             #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_224.7894744873047.pickle']
+            # file_list = ['Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_116800499_125.71685791015625.pickle',
+            #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_116800499_143.835693359375.pickle',
+            #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_208960499_142.8429412841797.pickle']
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
             for file_name in file_list:
                 print('file_name: ', file_name)
@@ -367,12 +375,12 @@ def parse_hydra_configs(cfg: DictConfig):
                     # actions = torch.tensor(np.array([env.action_space.sample() for _ in range(env.num_envs)]), device=task.rl_device)                # print("Action3: ", actions)
 
                     # Weight collection ######
-                    # weight = models.get_weights()
-                    # w1.append(weight[0].cpu().numpy())
-                    # w2.append(weight[1].cpu().numpy())
-                    # w3.append(weight[2].cpu().numpy())
-                    # act.append(actions.cpu().numpy())
-                    # input.append(obs['obs'].cpu().numpy())
+                    weight = models.get_weights()
+                    w1.append(weight[0].cpu().numpy())
+                    w2.append(weight[1].cpu().numpy())
+                    w3.append(weight[2].cpu().numpy())
+                    act.append(actions.cpu().numpy())
+                    input.append(obs['obs'].cpu().numpy())
 
                     total_rewards += reward
 
@@ -390,12 +398,12 @@ def parse_hydra_configs(cfg: DictConfig):
                     np.save('np_array/behavior/rd/walk/w2_'+model+rew, w2)
                     np.save('np_array/behavior/rd/walk/w3_'+model+rew, w3)
                 elif model == 'Hebb':
-                    np.save('np_array/behavior/rd/walk/input'+model+rew, input_np)
-                    np.save('np_array/behavior/rd/walk/actions'+model+rew, action_np)
-                    np.save('np_array/behavior/rd/walk/w1'+model+rew, w1)
-                    np.save('np_array/behavior/rd/walk/w2'+model+rew, w2)
-                    np.save('np_array/behavior/rd/walk/w3'+model+rew, w3)
-                    np.save('np_array/behavior/rd/walk/param'+model+rew, init_params)
+                    np.save('np_array/behavior/rd/walk/base_input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/walk/base_actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/walk/base_w1'+model+rew, w1)
+                    np.save('np_array/behavior/rd/walk/base_w2'+model+rew, w2)
+                    np.save('np_array/behavior/rd/walk/base_w3'+model+rew, w3)
+                    np.save('np_array/behavior/rd/walk/base_param'+model+rew, init_params)
 
                 # save rewards tensor to csv
                 # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 

@@ -121,7 +121,7 @@ def parse_hydra_configs(cfg: DictConfig):
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
-        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE_TYPE)
+        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], ARCHITECTURE, ARCHITECTURE_TYPE)
     init_params = models.get_params_a_model()
 
 

@@ -75,7 +75,7 @@ class dbObjectTransportTask(RLTask):
         self.rew_yaw_reward_scale = self._task_cfg["env"]["rew_yaw"]
         self.count = 0
         self.random_joint_initial = True
-        self.set_object_RD = False
+        self.set_object_RD = True
         print('random_joint_initial: ', self.random_joint_initial)
         self.joint_index = torch.Tensor([0,1,3,4,5,6,7,8,9,10,11,12])
         # self.rng = np.random.default_rng(12345)
@@ -219,6 +219,10 @@ class dbObjectTransportTask(RLTask):
         #                                    self.box_pos), dim=1)
         # print('self.actions_pris: ', self.actions_pris.shape)
         # print('self.box_pos: ', self.box_pos.shape)
+        if self.count == 150:
+            print('reset box pos')
+            # self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
+        self.count += 1
 
         # set box height
         if self.set_object_RD:
@@ -278,7 +282,7 @@ class dbObjectTransportTask(RLTask):
         # Object
         # self._objects.set_world_poses(object_pos, object_rot, indices=env_ids)
         # self.random_box_pos = np.random.uniform(-0.1, 0, size=(self.num_envs, 1)).astype(dtype=np.float32)
-        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1)
+        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.1, 0.2)
         # self.box_pos = torch.full((self.num_envs, 1), 1)
 
         # print('root_pos: ', root_pos)
@@ -325,8 +329,8 @@ class dbObjectTransportTask(RLTask):
         self.actions_pris = torch.zeros((self.num_envs, self.num_actions+1), device=self._device)
         self.previous_actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
         self.pos_observation = torch.zeros((self.num_envs, self.num_observations), device=self._device)
-        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1).cuda()
-        print('random_box_pos: ', self.box_pos)
+        # self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1).cuda()
+        # print('random_box_pos: ', self.box_pos)
 
         self.gravity_vec = torch.tensor([0.0, 0.0, -1.0], device=self._device).repeat(
             (self._num_envs, 1)
@@ -397,9 +401,9 @@ class dbObjectTransportTask(RLTask):
         # self.fallen_over = self._anymals.is_base_below_threshold(threshold=-0.15, ground_heights=0.0)
         # total_reward[torch.nonzero(self.fallen_over)] = -1
         self.rew_buf[:] = total_reward.detach()
-        self.count += 1
-        if self.count > 99:
-            self.count = 0
+        # self.count += 1
+        # if self.count > 99:
+        #     self.count = 0
     
     def is_done(self) -> None:
         self.reset_buf[:] = is_done(

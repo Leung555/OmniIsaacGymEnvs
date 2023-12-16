@@ -61,7 +61,7 @@ class DbAlpha(Robot):
             # Randomization
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_1kg_test.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd.usd"
-            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd_stiff.usd"
+            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_ball_rd_stiff.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_bigball_rd_stiff.usd"
 
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal.usd"
@@ -74,7 +74,7 @@ class DbAlpha(Robot):
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR.usd"
             
             # 0.1 kg object, light           
-            self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_0.1kg.usd"
+            # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_0.1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_cube_small_0.1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltL_0.1kg.usd"
             # self._usd_path = "omniverse://localhost/Library/assets/dbalpha/dbAlpha_object_normal_tiltR_0.1kg.usd"
