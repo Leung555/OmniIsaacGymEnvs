@@ -221,7 +221,7 @@ class dbObjectTransportTask(RLTask):
         # print('self.box_pos: ', self.box_pos.shape)
         if self.count == 150:
             print('reset box pos')
-            # self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
+            self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
         self.count += 1
 
         # set box height

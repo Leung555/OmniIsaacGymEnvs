@@ -296,7 +296,7 @@ def parse_hydra_configs(cfg: DictConfig):
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_248.80465698242188.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
             # object transport
-            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
+            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_204.8306121826172.pickle']
             # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
@@ -398,12 +398,12 @@ def parse_hydra_configs(cfg: DictConfig):
                     np.save('np_array/behavior/rd/walk/w2_'+model+rew, w2)
                     np.save('np_array/behavior/rd/walk/w3_'+model+rew, w3)
                 elif model == 'Hebb':
-                    np.save('np_array/behavior/rd/walk/base_input'+model+rew, input_np)
-                    np.save('np_array/behavior/rd/walk/base_actions'+model+rew, action_np)
-                    np.save('np_array/behavior/rd/walk/base_w1'+model+rew, w1)
-                    np.save('np_array/behavior/rd/walk/base_w2'+model+rew, w2)
-                    np.save('np_array/behavior/rd/walk/base_w3'+model+rew, w3)
-                    np.save('np_array/behavior/rd/walk/base_param'+model+rew, init_params)
+                    np.save('np_array/behavior/rd/walk/input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/walk/actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/walk/w1'+model+rew, w1)
+                    np.save('np_array/behavior/rd/walk/w2'+model+rew, w2)
+                    np.save('np_array/behavior/rd/walk/w3'+model+rew, w3)
+                    np.save('np_array/behavior/rd/walk/param'+model+rew, init_params)
 
                 # save rewards tensor to csv
                 # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
