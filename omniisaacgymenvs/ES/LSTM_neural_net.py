@@ -1,5 +1,67 @@
 import torch
 
+class SeqLSTMs():
+
+    def __init__(self, popsize, arch): #in_channels, hid_size, out_channels):
+        super(SeqLSTMs, self).__init__()
+
+
+        self.arch = arch
+        in_channels = arch[0]
+        hid_size = arch[1]
+        out_channels = arch[2]
+        
+        self.popsize = popsize
+
+
+        arch_base = tuple([in_channels, hid_size, hid_size])
+        arch_final = tuple([in_channels, hid_size, out_channels])
+
+        self.model_1 = LSTMs(popsize, arch_base)
+        self.model_2 = LSTMs(popsize, arch_base)
+        self.model_3 = LSTMs(popsize, arch_final)
+
+        self.n_params_b = self.model_1.get_n_params()
+        self.n_params_f = self.model_3.get_n_params()
+
+        init_params_b = torch.Tensor(popsize, self.n_params_b).uniform_(-0.1, 0.1)
+        init_params_f = torch.Tensor(popsize, self.n_params_f).uniform_(-0.1, 0.1)
+
+        self.model_1.set_params(init_params_b)
+        self.model_2.set_params(init_params_b)
+        self.model_3.set_params(init_params_f)
+
+    def forward(self, inp):
+        out_1 = self.model_1.forward(inp)
+        out_2 = self.model_2.forward(out_1)
+        out_3 = self.model_3.forward(out_2)
+
+        return out_3.squeeze_()
+    
+    def set_params(self, pop):
+        m = 0
+        popsize = pop.shape[0]
+
+        self.model_1.set_params(torch.Tensor(pop[:, m:m+self.n_params_b]))
+        m += self.n_params_b
+        self.model_2.set_params(torch.Tensor(pop[:, m:m+self.n_params_b]))
+        m += self.n_params_b
+        self.model_3.set_params(torch.Tensor(pop[:, m:m+self.n_params_f]))
+        m += self.n_params_f
+
+
+    def get_n_params(self):
+        
+        return self.n_params_b + self.n_params_b + self.n_params_f
+
+    def get_params_a_model(self):
+        p = torch.cat([torch.Tensor(self.model_1.get_params_a_model())]  
+                     +[torch.Tensor(self.model_2.get_params_a_model())] 
+                     +[torch.Tensor(self.model_3.get_params_a_model())]
+                     )
+        return p.flatten()
+
+
 class LSTMs():
 
     def __init__(self, popsize, arch): #in_channels, hid_size, out_channels):
@@ -17,13 +79,18 @@ class LSTMs():
         self.hid_size = hid_size
         self.out_channels = out_channels
 
-        self.hidden_state = torch.zeros(popsize,hid_size, 1).cuda()
-        self.cell_state = torch.zeros(popsize,hid_size, 1).cuda()
+        self.hidden_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.00, 0.00).cuda()
+        self.cell_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.00, 0.00).cuda()
 
     def forward(self, inp):
         with torch.no_grad():        
 
             x = torch.cat((inp.unsqueeze(-1), self.hidden_state), dim=1)
+            # print('inp', inp.shape)
+            # print('self.hidden_state', self.hidden_state.shape)
+            # print('x', x.shape)
+            # print('self.Wf', self.Wf.shape)
+            # print('self.Bf', self.Bf.shape)
 
             f = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wf.float(), x.float())+self.Bf.float())
             i = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wi.float(), x.float())+self.Bi.float())

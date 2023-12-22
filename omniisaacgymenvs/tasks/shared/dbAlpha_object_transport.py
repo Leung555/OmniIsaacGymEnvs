@@ -146,6 +146,8 @@ class dbObjectTransportTask(RLTask):
         # print('self.leg_contact: ', self.leg_contact[0])
 
         # print('dof_names: ', self._dbAlphas.dof_names)
+        # print(self._tips._prim_paths[0:4])
+        # print()
         #prev_potentials = potentials.clone()
         #potentials = -torch.norm(to_target, p=2, dim=-1) / dt
 
@@ -219,7 +221,8 @@ class dbObjectTransportTask(RLTask):
         #                                    self.box_pos), dim=1)
         # print('self.actions_pris: ', self.actions_pris.shape)
         # print('self.box_pos: ', self.box_pos.shape)
-        if self.count == 150:
+        
+        if self.count == 250:
             print('reset box pos')
             self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
         self.count += 1
@@ -282,7 +285,7 @@ class dbObjectTransportTask(RLTask):
         # Object
         # self._objects.set_world_poses(object_pos, object_rot, indices=env_ids)
         # self.random_box_pos = np.random.uniform(-0.1, 0, size=(self.num_envs, 1)).astype(dtype=np.float32)
-        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.1, 0.2)
+        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
         # self.box_pos = torch.full((self.num_envs, 1), 1)
 
         # print('root_pos: ', root_pos)

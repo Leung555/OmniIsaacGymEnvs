@@ -123,7 +123,6 @@ class dbLocomotionTask(RLTask):
         # self.forces_tot = torch.norm(forces, p=2, dim=2)
         # print('forces_tot: ', self.forces_tot[0])
         # print('forces_tot: ', torch.where(forces_tot > 0.02, 1, 0))
-        # print('self.leg_contact: ', self.leg_contact[0])
 
         # print('dof_names: ', self._dbAlphas.dof_names)
         #prev_potentials = potentials.clone()
@@ -138,7 +137,12 @@ class dbLocomotionTask(RLTask):
         #)
         # print('roll: ', roll)
         # print('normalize_angle roll: ', normalize_angle(yaw).unsqueeze(-1))
+        # print(self._tips._prim_paths[0:6])
+        # print()
 
+        # self.leg_contact[:, 0] = 0.0
+        # self.leg_contact[:, 2] = 0.0
+        # print('self.leg_contact: ', self.leg_contact*1.0)
         # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
         self.obs_buf = torch.cat(
             (
