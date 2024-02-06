@@ -116,7 +116,7 @@ def parse_hydra_configs(cfg: DictConfig):
     elif ARCHITECTURE_NAME == 'lstm':
         models = LSTMs(POPSIZE, tuple(ARCHITECTURE))
         n_params = models.get_n_params()
-        init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
+        init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.01, 0.01)
         models.set_params(init_params)
     elif ARCHITECTURE_NAME == 'seqlstm':
         models = SeqLSTMs(POPSIZE, tuple(ARCHITECTURE))
@@ -183,7 +183,7 @@ def parse_hydra_configs(cfg: DictConfig):
     print('test_env', test_env)
     print('model: ', ARCHITECTURE_NAME)
     print('model size: ', ARCHITECTURE)
-    print('trainable parameters: ', len(init_params))
+    print('trainable parameters: ', models.get_n_params())
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
     # print("Action space is", env.action_space)
@@ -448,7 +448,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # total_rewards = total_rewards*0.5
             # print("reward is", reward)
             # print('total_rewards: ', total_rewards)
-            total_rewards = torch.where(total_rewards < 600.0, total_rewards, 0.0)
+            # total_rewards = torch.where(total_rewards < 600.0, total_rewards, 0.0)
             total_rewards_cpu = total_rewards.cpu().numpy()
             fitlist = list(total_rewards_cpu)
             solver.tell(fitlist)

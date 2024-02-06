@@ -49,6 +49,7 @@ from omniisaacgymenvs.ES.ES_classes import OpenES, CMAES
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
 from omniisaacgymenvs.ES.LSTM_neural_net import LSTMs
+from omniisaacgymenvs.ES.LSTM_neural_net import SeqLSTMs
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 
@@ -118,6 +119,8 @@ def parse_hydra_configs(cfg: DictConfig):
         n_params = models.get_n_params()
         init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
         models.set_params(init_params)
+    elif ARCHITECTURE_NAME == 'seqlstm':
+        models = SeqLSTMs(POPSIZE, tuple(ARCHITECTURE))
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -200,6 +203,8 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = 'data/'+TASK+'/model/rd/rbf/'
     elif ARCHITECTURE_NAME == 'lstm':
         dir_path = './data/'+TASK+'/model/rd/LSTM/'
+    elif ARCHITECTURE_NAME == 'seqlstm':
+        dir_path = './data/'+TASK+'/model/rd/LSTM/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
         dir_path = 'data/'+TASK+'/model/rd/Hebb_rbf/' # test_hebb_params/'
     # dir_path = listdir(dir_path+'simpleRBFHebb'+'/')
@@ -215,11 +220,11 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = False
+    test_multiple = True
     if TEST == True:
         # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         exp = experiment
-        model_list = ['FF', 'Hebb', 'lstm']
+        model_list = ['seqlstm']
         if test_multiple == True:
             for model in model_list:
                 if model == 'FF':
@@ -228,6 +233,8 @@ def parse_hydra_configs(cfg: DictConfig):
                     models = HebbianNet(ARCHITECTURE, POPSIZE)
                 elif model == 'lstm':
                     models = LSTMs(POPSIZE, tuple(ARCHITECTURE))
+                elif ARCHITECTURE_NAME == 'seqlstm':
+                    models = SeqLSTMs(POPSIZE, tuple(ARCHITECTURE))
                     # n_params = models.get_n_params()
                     # init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
                     # models.set_params(init_params)   
@@ -247,7 +254,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     open_es_data = trained_data[0]
                     init_params = open_es_data.best_param() # best_mu   
 
-                    if model == 'lstm':
+                    if model == 'lstm' or model == 'seqlstm':
                         # LSTM test
                         init_params = torch.from_numpy(init_params).unsqueeze(0)
                         models.set_params(init_params)
@@ -280,8 +287,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = 'Hebb_dbAlpha6legs_walk_Exp_1vx_d_21760499_476.8061218261719.pickle'
             # file_list = 'Hebb_dbAlpha_6legs_walk_mean_vx_d_21760499_54.347007751464844.pickle'
             # Locomotion
-            file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_d_21760249_316.81439208984375.pickle',
-                         'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle']
+            # file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_d_21760249_316.81439208984375.pickle',
+            #              'Hebb_dbAlpha_6legs_walk_vxuy_d_21760499_361.0952453613281.pickle']
             # file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760249_275.0323181152344.pickle']
             # file_list = ['Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_203.77328491210938.pickle',
             #              'Feedforward_dbAlpha_6legs_walk_vxuy_d_4352499_207.6489715576172.pickle',
@@ -292,12 +299,18 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760499_224.12179565429688.pickle',
             #              'Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760499_233.1861114501953.pickle',
             #              'Hebb_dbAlpha_6legs_walk_vxuymaxtanh_d_21760499_345.48382568359375.pickle']
+            # file_list = ['Hebb_dbAlpha_6legs_walk_vxuy_initnoise.1_d_21760499_205.12734985351562.pickle',
+            #              'Hebb_dbAlpha_6legs_walk_vxuy_initnoise.1_d_21760499_273.4963073730469.pickle',
+            #              'Hebb_dbAlpha_6legs_walk_vxuy_initnoise.1_d_21760499_365.3984375.pickle']
             # file_list = ['Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_203.24395751953125.pickle',
             #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_207.1593017578125.pickle',
             #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_234.76168823242188.pickle']
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_203.3082733154297.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_248.80465698242188.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_270.00140380859375.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_213.86270141601562.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_200.1686553955078.pickle']
             # object transport
             # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
             # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
@@ -307,6 +320,12 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_119.32131958007812.pickle',
             #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_174.88729858398438.pickle',
             #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_235.26649475097656.pickle']
+            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_158.12611389160156.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_159.90499877929688.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_191.3115234375.pickle']
+            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_120.01819610595703.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_143.33645629882812.pickle',
+            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_180.69235229492188.pickle']
             # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_140.42498779296875.pickle',
             #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_1024499_185.63446044921875.pickle',
             #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_224.7894744873047.pickle']
@@ -314,8 +333,15 @@ def parse_hydra_configs(cfg: DictConfig):
             #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_116800499_143.835693359375.pickle',
             #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_208960499_142.8429412841797.pickle']
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
+            # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_163.10443115234375.pickle',
+            #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_135.10821533203125.pickle',
+            #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_119.84886169433594.pickle']
+            file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle',
+                        'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_116.25672912597656.pickle',
+                        'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']
+
             for file_name in file_list:
-                # print('file_name: ', file_name)
+                print('file_name: ', file_name)
                 rew_index = file_name.rfind('_')
                 rew = file_name[rew_index:rew_index+4]
                 # # Load Data script
@@ -334,7 +360,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     models[i].set_params(solutions[i])
                 # solutions = open_es_data.ask()
                 obs = env.reset()
-                if ARCHITECTURE_NAME == 'lstm':
+                if ARCHITECTURE_NAME == 'lstm' or ARCHITECTURE_NAME == 'seqlstm':
                     # LSTM test
                     init_params = torch.from_numpy(init_params).unsqueeze(0)
                     models.set_params(init_params)
@@ -413,10 +439,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 #     np.save('np_array/behavior/rd/b2_w2'+model+rew, w2)
                 #     np.save('np_array/behavior/rd/b2_w3'+model+rew, w3)
                 #     np.save('np_array/behavior/rd/b2_param'+model+rew, init_params)
-                # elif model == 'lstm':
-                #     np.save('np_array/behavior/rd/input'+model+rew, input_np)
-                #     np.save('np_array/behavior/rd/actions'+model+rew, action_np)
-                #     np.save('np_array/behavior/rd/hiddenstate'+model+rew, hiddenstate)
+                elif model == 'lstm':
+                    np.save('np_array/behavior/rd/input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/hiddenstate'+model+rew, hiddenstate)
 
                 # save rewards tensor to csv
                 # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 

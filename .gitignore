@@ -6,3 +6,7 @@ checkpoints
 omniisaacgymenvs/wandb
 
 omniisaacgymenvs/data/
+
+omniisaacgymenvs/np_array/analysis.ipynb
+
+omniisaacgymenvs/np_array/Hebbian data analysis.ipynb
