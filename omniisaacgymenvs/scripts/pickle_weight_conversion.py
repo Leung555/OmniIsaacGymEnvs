@@ -112,7 +112,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     exp = experiment
-    model_list = ['FF', 'Hebb', 'rbf', 'lstm']
+    model_list = ['lstm']
     for model in model_list:
        
         dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'/'

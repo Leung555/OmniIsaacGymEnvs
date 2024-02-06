@@ -29,7 +29,8 @@ class HebbianNet:
         sizes: [input_size, hid_1, ..., output_size]
         """
         # initial weight uniform dist range (-0.1, 0.1)
-        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.01, 0.01).cuda()
+        init_noise = 0.01
+        self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-init_noise, init_noise).cuda()
                             for i in range(len(sizes) - 1)]
         # initial weight uniform dist range (-0.0, 0.0)
         # self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-0.0, 0.0).cuda()

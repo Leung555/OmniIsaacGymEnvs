@@ -24,12 +24,13 @@ class SeqLSTMs():
         self.n_params_b = self.model_1.get_n_params()
         self.n_params_f = self.model_3.get_n_params()
 
-        init_params_b = torch.Tensor(popsize, self.n_params_b).uniform_(-0.1, 0.1)
-        init_params_f = torch.Tensor(popsize, self.n_params_f).uniform_(-0.1, 0.1)
+        init_params_b = torch.Tensor(popsize, self.n_params_b).uniform_(-0.01, 0.01)
+        init_params_f = torch.Tensor(popsize, self.n_params_f).uniform_(-0.01, 0.01)
 
         self.model_1.set_params(init_params_b)
         self.model_2.set_params(init_params_b)
         self.model_3.set_params(init_params_f)
+        
 
     def forward(self, inp):
         out_1 = self.model_1.forward(inp)
@@ -79,8 +80,8 @@ class LSTMs():
         self.hid_size = hid_size
         self.out_channels = out_channels
 
-        self.hidden_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.00, 0.00).cuda()
-        self.cell_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.00, 0.00).cuda()
+        self.hidden_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.01, 0.01).cuda()
+        self.cell_state = torch.Tensor(popsize, hid_size, 1).uniform_(-0.01, 0.01).cuda()
 
     def forward(self, inp):
         with torch.no_grad():        
@@ -128,6 +129,12 @@ class LSTMs():
         m += (n_i+n_h)*n_h
         self.Wout = pop[:,m:m+(n_i+n_h)*n_o].reshape(popsize, n_i+n_h, n_o).cuda()
         m += (n_i+n_h)*n_o
+
+        # print('self.Wf: ', self.Wf.shape)
+        # print('self.Wi: ', self.Wi.shape)
+        # print('self.Wc: ', self.Wc.shape)
+        # print('self.Wo: ', self.Wo.shape)
+        # print('self.Wout: ', self.Wout.shape)
 
         self.Bf = pop[:,m:m+n_h].unsqueeze(-1).cuda()
         m += n_h

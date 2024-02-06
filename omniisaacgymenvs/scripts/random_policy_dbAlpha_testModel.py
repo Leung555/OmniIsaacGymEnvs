@@ -57,7 +57,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # print_dict(cfg_dict)
 
     # open config files for reading prams
-    with open('cfg/ES_config.yml', 'r') as file:
+    with open('cfg/ES_config_.yml', 'r') as file:
         configs = yaml.safe_load(file)
 
     # ES parameters configuration

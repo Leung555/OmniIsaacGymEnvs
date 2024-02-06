@@ -75,7 +75,7 @@ class dbObjectTransportTask(RLTask):
         self.rew_yaw_reward_scale = self._task_cfg["env"]["rew_yaw"]
         self.count = 0
         self.random_joint_initial = True
-        self.set_object_RD = True
+        self.set_object_RD = False
         print('random_joint_initial: ', self.random_joint_initial)
         self.joint_index = torch.Tensor([0,1,3,4,5,6,7,8,9,10,11,12])
         # self.rng = np.random.default_rng(12345)
@@ -222,10 +222,10 @@ class dbObjectTransportTask(RLTask):
         # print('self.actions_pris: ', self.actions_pris.shape)
         # print('self.box_pos: ', self.box_pos.shape)
         
-        if self.count == 250:
-            print('reset box pos')
-            self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
-        self.count += 1
+        # if self.count == 250:
+        #     print('reset box pos')
+        #     self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
+        # self.count += 1
 
         # set box height
         if self.set_object_RD:
@@ -285,7 +285,7 @@ class dbObjectTransportTask(RLTask):
         # Object
         # self._objects.set_world_poses(object_pos, object_rot, indices=env_ids)
         # self.random_box_pos = np.random.uniform(-0.1, 0, size=(self.num_envs, 1)).astype(dtype=np.float32)
-        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.0)
+        self.box_pos = torch.Tensor(self.num_envs, 1).uniform_(0.0, 0.1)
         # self.box_pos = torch.full((self.num_envs, 1), 1)
 
         # print('root_pos: ', root_pos)
