@@ -220,7 +220,7 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(init_params)
 
     TEST = cfg.test
-    test_multiple = True
+    test_multiple = False
     if TEST == True:
         # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         exp = experiment
@@ -311,8 +311,11 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_270.00140380859375.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_213.86270141601562.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_200.1686553955078.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_214.51100158691406.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_258.36907958984375.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_280.5940246582031.pickle']
             # object transport
-            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
+            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
             # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
@@ -336,9 +339,9 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_163.10443115234375.pickle',
             #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_135.10821533203125.pickle',
             #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_119.84886169433594.pickle']
-            file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle',
-                        'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_116.25672912597656.pickle',
-                        'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']
+            # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle',
+            #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_116.25672912597656.pickle',
+            #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']
 
             for file_name in file_list:
                 print('file_name: ', file_name)
@@ -432,13 +435,13 @@ def parse_hydra_configs(cfg: DictConfig):
                     np.save('np_array/behavior/rd/w1_'+model+rew, w1)
                     np.save('np_array/behavior/rd/w2_'+model+rew, w2)
                     np.save('np_array/behavior/rd/w3_'+model+rew, w3)
-                # elif model == 'Hebb':
-                #     np.save('np_array/behavior/rd/b2_input'+model+rew, input_np)
-                #     np.save('np_array/behavior/rd/b2_actions'+model+rew, action_np)
-                #     np.save('np_array/behavior/rd/b2_w1'+model+rew, w1)
-                #     np.save('np_array/behavior/rd/b2_w2'+model+rew, w2)
-                #     np.save('np_array/behavior/rd/b2_w3'+model+rew, w3)
-                #     np.save('np_array/behavior/rd/b2_param'+model+rew, init_params)
+                elif model == 'Hebb':
+                    np.save('np_array/behavior/rd/adapt_input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/adapt_actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/adapt_w1'+model+rew, w1)
+                    np.save('np_array/behavior/rd/adapt_w2'+model+rew, w2)
+                    np.save('np_array/behavior/rd/adapt_w3'+model+rew, w3)
+                    np.save('np_array/behavior/rd/adapt_param'+model+rew, init_params)
                 elif model == 'lstm':
                     np.save('np_array/behavior/rd/input'+model+rew, input_np)
                     np.save('np_array/behavior/rd/actions'+model+rew, action_np)

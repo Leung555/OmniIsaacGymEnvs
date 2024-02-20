@@ -105,6 +105,8 @@ def parse_hydra_configs(cfg: DictConfig):
         dir_path = './data/'+TASK+'/model/rd/Hebb/'
     elif ARCHITECTURE_NAME == 'lstm':
         dir_path = './data/'+TASK+'/model/rd/LSTM/'
+    elif ARCHITECTURE_NAME == 'seqlstm':
+        dir_path = './data/'+TASK+'/model/rd/seqlstm/'
     elif ARCHITECTURE_NAME == 'rbf':
         dir_path = 'data/'+TASK+'/model/rd/rbf/'
     elif ARCHITECTURE_NAME == 'Hebb_rbf':
@@ -112,7 +114,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     exp = experiment
-    model_list = ['lstm']
+    model_list = ['seqlstm']
     for model in model_list:
        
         dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'/'
@@ -128,7 +130,8 @@ def parse_hydra_configs(cfg: DictConfig):
 
             trained_data = pickle.load(open(dir_path+file_name, 'rb'))
             open_es_data = trained_data[0]
-            init_params = open_es_data.best_param() # best_mu   
+            init_params = open_es_data.best_param() # best_mu  
+            print('number parameters: ', len(init_params)) 
             
             print('save: '+TASK+'_'+model+'_'+rew)
             np.save('np_array/weight_for_robot/'+TASK+'_'+model+'_'+rew, init_params)
