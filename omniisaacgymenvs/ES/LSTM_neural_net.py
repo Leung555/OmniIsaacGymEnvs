@@ -24,8 +24,8 @@ class SeqLSTMs():
         self.n_params_b = self.model_1.get_n_params()
         self.n_params_f = self.model_3.get_n_params()
 
-        init_params_b = torch.Tensor(popsize, self.n_params_b).uniform_(-0.01, 0.01)
-        init_params_f = torch.Tensor(popsize, self.n_params_f).uniform_(-0.01, 0.01)
+        init_params_b = torch.Tensor(popsize, self.n_params_b).uniform_(-0.1, 0.1)
+        init_params_f = torch.Tensor(popsize, self.n_params_f).uniform_(-0.1, 0.1)
 
         self.model_1.set_params(init_params_b)
         self.model_2.set_params(init_params_b)
