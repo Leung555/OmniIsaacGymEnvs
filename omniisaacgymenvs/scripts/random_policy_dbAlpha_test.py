@@ -239,7 +239,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     # init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
                     # models.set_params(init_params)   
                                  
-                dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'/'
+                dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'w.1n.01'+'/'
                 res = listdir(dir_path)
                 for i, file_name in enumerate(sorted(res)):
                     print('--------------------')
@@ -257,6 +257,8 @@ def parse_hydra_configs(cfg: DictConfig):
                     if model == 'lstm' or model == 'seqlstm':
                         # LSTM test
                         init_params = torch.from_numpy(init_params).unsqueeze(0)
+                        rand_init_params_tensor = torch.Tensor(1, len(init_params)).uniform_(-0.1, 0.1)
+                        init_params = torch.from_numpy(rand_init_params_tensor).unsqueeze(0) #initial param
                         models.set_params(init_params)
                         print(init_params.shape)
                     else:
@@ -314,8 +316,11 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_214.51100158691406.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_258.36907958984375.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_280.5940246582031.pickle']
+            file_list = ['seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_463.4554443359375.pickle']#,
+            #              'seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_432.46807861328125.pickle',
+            #              'seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_398.9600830078125.pickle']
             # object transport
-            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
+            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle']
             # file_list = 'Feedforward_dbAlpha_objectbox_trans_tiltL_Exp_1-vx_d_3648499_213.71273803710938.pickle'
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
@@ -342,6 +347,9 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle',
             #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_116.25672912597656.pickle',
             #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']
+            # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_285.8484191894531.pickle']#,
+                        #  'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_281.1954345703125.pickle',
+                        #  'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_181.48983764648438.pickle']
 
             for file_name in file_list:
                 print('file_name: ', file_name)
@@ -366,6 +374,11 @@ def parse_hydra_configs(cfg: DictConfig):
                 if ARCHITECTURE_NAME == 'lstm' or ARCHITECTURE_NAME == 'seqlstm':
                     # LSTM test
                     init_params = torch.from_numpy(init_params).unsqueeze(0)
+                    print('init_params size: ', init_params.shape)
+                    #initial param
+                    # init_params = torch.Tensor(1, init_params.shape[1]).uniform_(-0.1, 0.1)
+                    print('init_params size: ', init_params.shape)
+                    
                     models.set_params(init_params)
                     print(init_params.shape)
                 else:
@@ -381,6 +394,9 @@ def parse_hydra_configs(cfg: DictConfig):
                 act = []
                 input = []
                 hiddenstate = []
+                seqhiddenstate1 = []
+                seqhiddenstate2 = []
+                seqhiddenstate3 = []
 
                 for _ in range(EPISODE_LENGTH):
                     # print('step: ', _)
@@ -419,6 +435,12 @@ def parse_hydra_configs(cfg: DictConfig):
                         hiddenstate.append(models.hidden_state.cpu().numpy())
                         act.append(actions.cpu().numpy())
                         input.append(obs['obs'].cpu().numpy())
+                    elif ARCHITECTURE_NAME == 'seqlstm':
+                        seqhiddenstate1.append(models.model_1.hidden_state.cpu().numpy())
+                        seqhiddenstate2.append(models.model_2.hidden_state.cpu().numpy())
+                        seqhiddenstate3.append(models.model_3.hidden_state.cpu().numpy())
+                        act.append(actions.cpu().numpy())
+                        input.append(obs['obs'].cpu().numpy())
 
                     total_rewards += reward
 
@@ -446,6 +468,12 @@ def parse_hydra_configs(cfg: DictConfig):
                     np.save('np_array/behavior/rd/input'+model+rew, input_np)
                     np.save('np_array/behavior/rd/actions'+model+rew, action_np)
                     np.save('np_array/behavior/rd/hiddenstate'+model+rew, hiddenstate)
+                elif model == 'seqlstm':
+                    np.save('np_array/behavior/rd/input'+model+rew, input_np)
+                    np.save('np_array/behavior/rd/actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/seqhiddenstate_1'+model+rew, seqhiddenstate1)
+                    np.save('np_array/behavior/rd/seqhiddenstate_2'+model+rew, seqhiddenstate2)
+                    np.save('np_array/behavior/rd/seqhiddenstate_3'+model+rew, seqhiddenstate3)
 
                 # save rewards tensor to csv
                 # np.savetxt("np_array/rewards_"+ARCHITECTURE_NAME+'_'+experiment+'_'+test_env+".csv", total_rewards.cpu().numpy(), delimiter=",") 
