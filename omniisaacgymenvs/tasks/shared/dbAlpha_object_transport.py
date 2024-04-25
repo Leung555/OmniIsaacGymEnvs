@@ -75,7 +75,7 @@ class dbObjectTransportTask(RLTask):
         self.rew_yaw_reward_scale = self._task_cfg["env"]["rew_yaw"]
         self.count = 0
         self.random_joint_initial = True
-        self.set_object_RD = False
+        self.set_object_RD = True
         print('random_joint_initial: ', self.random_joint_initial)
         print('set_object_RD: ', self.set_object_RD)
         self.joint_index = torch.Tensor([0,1,3,4,5,6,7,8,9,10,11,12])

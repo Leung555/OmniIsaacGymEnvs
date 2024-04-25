@@ -14,7 +14,7 @@ class SeqLSTMs():
         self.popsize = popsize
 
 
-        arch_base = tuple([in_channels, hid_size, hid_size])
+        arch_base = tuple([in_channels, hid_size, in_channels])
         arch_final = tuple([in_channels, hid_size, out_channels])
 
         self.model_1 = LSTMs(popsize, arch_base)
@@ -148,6 +148,11 @@ class LSTMs():
         m += n_h
         self.Bo = pop[:,m:m+n_h].unsqueeze(-1).cuda()
         m += n_h
+
+        # print('self.Bf: ', self.Bf.shape)
+        # print('self.Bi: ', self.Bi.shape)
+        # print('self.Bc: ', self.Bc.shape)
+        # print('self.Bo: ', self.Bo.shape)
 
     def get_n_params(self):
         n_i, n_h, n_o = self.arch

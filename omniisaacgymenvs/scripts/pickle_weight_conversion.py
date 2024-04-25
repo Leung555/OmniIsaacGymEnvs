@@ -114,10 +114,10 @@ def parse_hydra_configs(cfg: DictConfig):
 
 
     exp = experiment
-    model_list = ['seqlstm']
+    model_list = ['lstm']
     for model in model_list:
        
-        dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'w.1n.01'+'/'
+        dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'hid100'+'/'
         res = listdir(dir_path)
         for i, file_name in enumerate(sorted(res)):
             print('--------------------')

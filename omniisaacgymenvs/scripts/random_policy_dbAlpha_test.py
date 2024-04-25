@@ -224,7 +224,7 @@ def parse_hydra_configs(cfg: DictConfig):
     if TEST == True:
         # experiment_list = ['normal', 'small', 'tiltL', 'tiltR']
         exp = experiment
-        model_list = ['seqlstm']
+        model_list = ['lstm']
         if test_multiple == True:
             for model in model_list:
                 if model == 'FF':
@@ -239,7 +239,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     # init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1)
                     # models.set_params(init_params)   
                                  
-                dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+'w.1n.01'+'/'
+                dir_path = './data/'+TASK+'/model/best_weight_rd/'+model+''+'/'
                 res = listdir(dir_path)
                 for i, file_name in enumerate(sorted(res)):
                     print('--------------------')
@@ -249,6 +249,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     print('filename: ', file_name)
                     rew = file_name[rew_index:rew_index+4]
                     print('rewards: ', rew )
+                    print('test_env: ', test_env )
 
                     trained_data = pickle.load(open(dir_path+file_name, 'rb'))
                     open_es_data = trained_data[0]
@@ -256,9 +257,15 @@ def parse_hydra_configs(cfg: DictConfig):
 
                     if model == 'lstm' or model == 'seqlstm':
                         # LSTM test
+                        # Normal Test #####
                         init_params = torch.from_numpy(init_params).unsqueeze(0)
-                        rand_init_params_tensor = torch.Tensor(1, len(init_params)).uniform_(-0.1, 0.1)
-                        init_params = torch.from_numpy(rand_init_params_tensor).unsqueeze(0) #initial param
+                        ###################
+
+                        # init random param ####
+                        # rand_init_params_tensor = torch.Tensor(1, len(init_params)).uniform_(-0.1, 0.1)
+                        # init_params = torch.from_numpy(rand_init_params_tensor).unsqueeze(0) #initial param
+                        ########################
+
                         models.set_params(init_params)
                         print(init_params.shape)
                     else:
@@ -269,7 +276,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
                     obs = env.reset()
 
-                    for _ in range(EPISODE_LENGTH):
+                    for _ in range(300):
                         actions = models.forward(obs['obs'])
                         obs, reward, done, info = env.step(
                             actions
@@ -307,16 +314,16 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_203.24395751953125.pickle',
             #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_207.1593017578125.pickle',
             #              'Hebb_rbf_dbAlpha_6legs_walk_vxuy_d_120320499_234.76168823242188.pickle']
-            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_203.3082733154297.pickle',
-            #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_248.80465698242188.pickle',
-            #              'lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
-            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_270.00140380859375.pickle',
-            #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_213.86270141601562.pickle',
-            #              'lstm_dbAlpha_6legs_walk_vxuy_testVistecWS_d_6912499_200.1686553955078.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid60_d_22686499_247.88597106933594.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid60_d_22686499_256.232177734375.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid60_d_22686499_284.6104736328125.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid100_d_53486499_244.40037536621094.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid100_d_53486499_245.97280883789062.pickle',
+            #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid100_d_53486499_249.55047607421875.pickle']
             # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_214.51100158691406.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_258.36907958984375.pickle',
             #              'lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_d_6912499_280.5940246582031.pickle']
-            file_list = ['seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_463.4554443359375.pickle']#,
+            # file_list = ['seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_463.4554443359375.pickle',
             #              'seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_432.46807861328125.pickle',
             #              'seqlstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstm_d_21708499_398.9600830078125.pickle']
             # object transport
@@ -325,28 +332,25 @@ def parse_hydra_configs(cfg: DictConfig):
             # file_list = ['Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_123.86629486083984.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_130.18069458007812.pickle',
             #              'Feedforward_dbAlpha_object_smallballRD_trans_-vxuy_d_3648499_141.87167358398438.pickle']
-            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_119.32131958007812.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_174.88729858398438.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_d_18240499_235.26649475097656.pickle']
-            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_158.12611389160156.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_159.90499877929688.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_191.3115234375.pickle']
-            # file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_120.01819610595703.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_143.33645629882812.pickle',
-            #              'Hebb_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWSnoise.1_d_18240499_180.69235229492188.pickle']
-            # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_140.42498779296875.pickle',
-            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_1024499_185.63446044921875.pickle',
-            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_d_3420499_224.7894744873047.pickle']
+            file_list = ['Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_152.06454467773438.pickle',
+                         'Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_160.960693359375.pickle',
+                         'Hebb_dbAlpha_object_smallballRD_trans_-vxuymaxtanh_d_18240499_204.8306121826172.pickle']
+            # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmhid60_d_20148499_138.6539306640625.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmhid60_d_20148499_147.17816162109375.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmhid60_d_20148499_157.654052734375.pickle']
+            # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmmorehidd_d_49428499_137.2750244140625.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmmorehidd_d_49428499_154.7152862548828.pickle',
+            #              'lstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_w0.1lstmmorehidd_d_49428499_169.99588012695312.pickle']
             # file_list = ['Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_116800499_125.71685791015625.pickle',
             #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_116800499_143.835693359375.pickle',
             #              'Hebb_rbf_dbAlpha_object_smallballRD_trans_-vxuy_d_208960499_142.8429412841797.pickle']
-            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_d_6912499_271.7966613769531.pickle']
+            # file_list = ['lstm_dbAlpha_6legs_walk_vxuy_initnoise.01_w0.1lstmhid60_d_22686499_284.6104736328125.pickle']
             # file_list = ['lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_163.10443115234375.pickle',
             #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_135.10821533203125.pickle',
             #             'lstm_dbAlpha_object_smallballRD_trans_-vxuy_testVistecWS_d_3420499_119.84886169433594.pickle']
-            # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle',
+            # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']#,
             #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_116.25672912597656.pickle',
-            #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_129.69451904296875.pickle']
+            #             'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_111.46509552001953.pickle']
             # file_list = ['seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_285.8484191894531.pickle']#,
                         #  'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_281.1954345703125.pickle',
                         #  'seqlstm_dbAlpha_object_smallballRD_trans_-vxuy_initnoise.01_d_10792499_181.48983764648438.pickle']
@@ -377,6 +381,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     print('init_params size: ', init_params.shape)
                     #initial param
                     # init_params = torch.Tensor(1, init_params.shape[1]).uniform_(-0.1, 0.1)
+                    # init_params = torch.Tensor(POPSIZE, n_params).uniform_(-0.1, 0.1) # for lstm
                     print('init_params size: ', init_params.shape)
                     
                     models.set_params(init_params)
@@ -435,7 +440,9 @@ def parse_hydra_configs(cfg: DictConfig):
                         hiddenstate.append(models.hidden_state.cpu().numpy())
                         act.append(actions.cpu().numpy())
                         input.append(obs['obs'].cpu().numpy())
+                        w1.append(models.get_params_a_model())
                     elif ARCHITECTURE_NAME == 'seqlstm':
+                        w1.append(models.get_params_a_model().cpu().numpy())
                         seqhiddenstate1.append(models.model_1.hidden_state.cpu().numpy())
                         seqhiddenstate2.append(models.model_2.hidden_state.cpu().numpy())
                         seqhiddenstate3.append(models.model_3.hidden_state.cpu().numpy())
@@ -457,20 +464,22 @@ def parse_hydra_configs(cfg: DictConfig):
                     np.save('np_array/behavior/rd/w1_'+model+rew, w1)
                     np.save('np_array/behavior/rd/w2_'+model+rew, w2)
                     np.save('np_array/behavior/rd/w3_'+model+rew, w3)
-                elif model == 'Hebb':
-                    np.save('np_array/behavior/rd/adapt_input'+model+rew, input_np)
-                    np.save('np_array/behavior/rd/adapt_actions'+model+rew, action_np)
-                    np.save('np_array/behavior/rd/adapt_w1'+model+rew, w1)
-                    np.save('np_array/behavior/rd/adapt_w2'+model+rew, w2)
-                    np.save('np_array/behavior/rd/adapt_w3'+model+rew, w3)
-                    np.save('np_array/behavior/rd/adapt_param'+model+rew, init_params)
-                elif model == 'lstm':
-                    np.save('np_array/behavior/rd/input'+model+rew, input_np)
-                    np.save('np_array/behavior/rd/actions'+model+rew, action_np)
-                    np.save('np_array/behavior/rd/hiddenstate'+model+rew, hiddenstate)
+                # elif model == 'Hebb':
+                #     np.save('np_array/behavior/rd/adapt_input'+model+rew, input_np)
+                #     np.save('np_array/behavior/rd/adapt_actions'+model+rew, action_np)
+                #     np.save('np_array/behavior/rd/adapt_w1'+model+rew, w1)
+                #     np.save('np_array/behavior/rd/adapt_w2'+model+rew, w2)
+                #     np.save('np_array/behavior/rd/adapt_w3'+model+rew, w3)
+                #     np.save('np_array/behavior/rd/adapt_param'+model+rew, init_params)
+                # elif model == 'lstm':
+                #     np.save('np_array/behavior/rd/init_input'+model+rew, input_np)
+                #     np.save('np_array/behavior/rd/init_actions'+model+rew, action_np)
+                #     np.save('np_array/behavior/rd/init_hiddenstate'+model+rew, hiddenstate)
+                #     np.save('np_array/behavior/rd/init_lstm_weights'+model+rew, w1)
                 elif model == 'seqlstm':
                     np.save('np_array/behavior/rd/input'+model+rew, input_np)
                     np.save('np_array/behavior/rd/actions'+model+rew, action_np)
+                    np.save('np_array/behavior/rd/seqlstm_weights'+model+rew, w1)
                     np.save('np_array/behavior/rd/seqhiddenstate_1'+model+rew, seqhiddenstate1)
                     np.save('np_array/behavior/rd/seqhiddenstate_2'+model+rew, seqhiddenstate2)
                     np.save('np_array/behavior/rd/seqhiddenstate_3'+model+rew, seqhiddenstate3)
