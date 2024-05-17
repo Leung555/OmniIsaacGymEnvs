@@ -52,7 +52,12 @@ class RBFNet:
         #                               -ze,-ze, ze ]).T.repeat(self.POPSIZE, 1, 1).cuda()
 
         # print(self.weights)
-        self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
+
+        # Dung beetle robot configuration
+        # self.indices = torch.tensor([1, 2, 4, 5, 7, 8, 10, 11, 0, 3, 13, 14, 16, 17, 6, 9, 12, 15]).cuda()
+        
+        # Ant robot configuration
+        self.indices = torch.tensor([0, 2, 6, 4, 1, 3, 7, 5]).cuda()
         
         self.motor_encode = 'semi-indirect' # 'direct', 'indirect'
         if self.motor_encode == 'semi-indirect':
@@ -63,7 +68,10 @@ class RBFNet:
             # self.indices = torch.tensor([0, 3, 6, 9, 12, 15, 1, 4, 7, 10, 13, 16, 2, 5, 8, 11, 14, 17]).cuda() # new setup with contact sensor
             
             # Newest indices for robot updated on 19/09/2023 
-            self.indices = torch.tensor([3, 6, 12, 15, 0, 9,4, 7, 13, 16, 1, 10, 5, 8, 14, 17, 2, 11]).cuda()
+            # Dung beetle robot configuration
+            # self.indices = torch.tensor([3, 6, 12, 15, 0, 9,4, 7, 13, 16, 1, 10, 5, 8, 14, 17, 2, 11]).cuda()
+            # Ant robot configuration
+            self.indices = torch.tensor([0, 2, 6, 4, 1, 3, 7, 5]).cuda()
             # self.indices = torch.tensor([3, 6, 12, 15, 4, 7, 13, 16, 0, 9, 5, 8, 14, 17, 1, 10, 2, 11]).cuda()
             if behavior == 'obj_trans':
                 self.indices = torch.tensor([ 2, 0, 3, 1, 6, 4, 7, 5, 10, 8, 11, 9]).cuda()
@@ -81,11 +89,13 @@ class RBFNet:
                 # out_p2 = torch.matmul(p2, self.weights)
                 out_p1 = torch.tanh(torch.matmul(p1, self.weights))
                 out_p2 = torch.tanh(torch.matmul(p2, self.weights))
-                outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6]], dim=1)
-                outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6]], dim=1)
+                # print('out_p1: ', out_p1)
+                outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
+                outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
                 post = torch.concat([outL, outR], dim=1)
                 post = torch.index_select(post, 1, self.indices)
-                
+                # print('post: ', post)
+          
                 self.phase = self.phase + 1
                 self.phase = torch.where(self.phase > self.period, 0, self.phase) 
 
@@ -98,11 +108,16 @@ class RBFNet:
                 # out_p2 = torch.matmul(p2, self.weights)
                 out_p1 = torch.tanh(torch.matmul(p1, self.weights))
                 out_p2 = torch.tanh(torch.matmul(p2, self.weights))
-                outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
-                outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
+                # print('out_p1: ', out_p1)
+                outL = torch.concat([out_p1[:, 0:2], out_p2[:, 2:4]], dim=1)
+                outR = torch.concat([out_p2[:, 0:2], out_p1[:, 2:4]], dim=1)
+                # outL = torch.concat([out_p1[:, 0:3], out_p2[:, 3:6], out_p1[:, 6:9]], dim=1)
+                # outR = torch.concat([out_p2[:, 0:3], out_p1[:, 3:6], out_p2[:, 6:9]], dim=1)
+                # print('outR: ', outR)
                 post = torch.concat([outL, outR], dim=1)
                 post = torch.index_select(post, 1, self.indices)
-                
+                # print('post: ', post)
+
                 self.phase = self.phase + 1
                 self.phase = torch.where(self.phase > self.period, 0, self.phase) 
                 ####################################################
@@ -152,6 +167,9 @@ class RBFNet:
             
     def get_weights(self):
         return self.weights
+    
+    def get_n_params(self):
+        return self.num_basis * self.num_output//2
     
     def pre_compute_cpg(self):
         # Run for one period

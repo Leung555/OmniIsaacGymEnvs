@@ -238,3 +238,7 @@ class HebbianNet:
 
     def get_weights(self):
         return [w for w in self.weights]
+    
+    def get_n_params(self):
+        return np.sum(self.architecture)*5
+

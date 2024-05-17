@@ -59,7 +59,7 @@ class AntLocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 40 #60
+        self._num_observations = 15 #60
         self._num_actions = 8
         self._ant_positions = torch.tensor([0, 0, 0.5])
         self._track_contact_forces = True
@@ -76,7 +76,7 @@ class AntLocomotionTask(LocomotionTask):
         scene.add(self._ants)
 
         # Add contact force sensor at the robot tips
-        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/Ant/.*/Tips.*",
+        self._tips = RigidPrimView(prim_paths_expr="/World/envs/.*/Ant/Tip.*",
             name="tips_view", reset_xform_properties=False, 
             track_contact_forces=self._track_contact_forces, 
             prepare_contact_sensors=self._prepare_contact_sensors)
@@ -98,14 +98,14 @@ class AntLocomotionTask(LocomotionTask):
         #             cr_api = PhysxSchema.PhysxContactReportAPI.Apply(link_prim)
         #             cr_api.CreateThresholdAttr().Set(0)
 
-        # joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
-        #                'joints/front_left_foot',  'joints/left_back_foot',
-        #                'joints/front_right_leg',  'joints/right_back_leg',
-        #                'joints/front_right_foot', 'joints/right_back_foot',
-        #                ]
+        joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
+                       'joints/front_left_foot',  'joints/left_back_foot',
+                       'joints/front_right_leg',  'joints/right_back_leg',
+                       'joints/front_right_foot', 'joints/right_back_foot',
+                       ]
 
-        # for joint_path in joint_paths:
-        #     set_drive(f"{ant.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+        for joint_path in joint_paths:
+            set_drive(f"{ant.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
     def get_robot(self):
         return self._ants

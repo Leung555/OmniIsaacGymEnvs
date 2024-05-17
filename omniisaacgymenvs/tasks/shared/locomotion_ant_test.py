@@ -89,7 +89,9 @@ class LocomotionTask(RLTask):
         sensor_force_torques = self._robots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
         self.leg_contact = torch.norm(self._tips.get_net_contact_forces(clone=False).view(self._num_envs, 4, 3), dim=-1)
         self.leg_contact_bool = self.leg_contact > 0.
-        print('self.leg_contact_bool: ', self.leg_contact_bool)
+        # print('self.leg_contact_bool: ', self.leg_contact_bool)
+
+        # print('dof_names: ', self._robots.dof_names)
 
         self.obs_buf[:], self.potentials[:], self.prev_potentials[:], self.up_vec[:], self.heading_vec[:] = get_observations(
             torso_position, torso_rotation, velocity, ang_velocity, dof_pos, dof_vel, self.targets, self.potentials, self.dt,
@@ -111,7 +113,9 @@ class LocomotionTask(RLTask):
         if len(reset_env_ids) > 0:
             self.reset_idx(reset_env_ids)
 
-        self.actions = actions.clone().to(self._device) * 0.5
+        self.actions = actions.clone().to(self._device)
+        self.actions *= 180/math.pi
+        # print(self.actions)
         # forces = self.actions * self.joint_gears * self.power_scale
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
@@ -243,19 +247,32 @@ def get_observations(
     # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
     obs = torch.cat(
         (
-            torso_position[:, 2].view(-1, 1),
-            vel_loc,
-            angvel_loc * angular_velocity_scale,
-            normalize_angle(yaw).unsqueeze(-1),
+        # Previous original Any observation setup
+            # torso_position[:, 2].view(-1, 1),
+            # vel_loc,
+            # angvel_loc * angular_velocity_scale,
+            # normalize_angle(yaw).unsqueeze(-1),
+            # normalize_angle(roll).unsqueeze(-1),
+            # normalize_angle(angle_to_target).unsqueeze(-1),
+            # up_proj.unsqueeze(-1),
+            # heading_proj.unsqueeze(-1),
+            # dof_pos_scaled,
+            # dof_vel * dof_vel_scale,
+            # # sensor_force_torques.reshape(num_envs, -1) * contact_force_scale,
+            # leg_contact,
+            # actions,
+        # Current observation setup
+            dof_pos * 0.5,
+            leg_contact, # 27
+            # self.forces_tot, # 27
+            # dof_effort, # 39
             normalize_angle(roll).unsqueeze(-1),
-            normalize_angle(angle_to_target).unsqueeze(-1),
-            up_proj.unsqueeze(-1),
-            heading_proj.unsqueeze(-1),
-            dof_pos_scaled,
-            dof_vel * dof_vel_scale,
-            # sensor_force_torques.reshape(num_envs, -1) * contact_force_scale,
-            leg_contact,
-            actions,
+            normalize_angle(pitch).unsqueeze(-1),
+            normalize_angle(yaw).unsqueeze(-1),
+            # input vector for RBF simple modulation
+            # self.velocity[:, 0].unsqueeze(-1)
+            # 
+
         ),
         dim=-1,
     )
@@ -272,8 +289,8 @@ def is_done(
     max_episode_length
 ):
     # type: (Tensor, float, Tensor, Tensor, float) -> Tensor
-    reset = torch.where(obs_buf[:, 0] < termination_height, torch.ones_like(reset_buf), reset_buf)
-    reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset)
+    # reset = torch.where(obs_buf[:, 0] < termination_height, torch.ones_like(reset_buf), reset_buf)
+    reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset_buf)
     return reset
 
 
@@ -315,16 +332,16 @@ def calculate_metrics(
 
     total_reward = (
         progress_reward
-        + alive_reward
-        + up_reward
-        + heading_reward
-        - actions_cost_scale * actions_cost
-        - energy_cost_scale * electricity_cost
-        - dof_at_limit_cost
+        # + alive_reward
+        # + up_reward
+        # + heading_reward
+        # - actions_cost_scale * actions_cost
+        # - energy_cost_scale * electricity_cost
+        # - dof_at_limit_cost
     )
 
     # adjust reward for fallen agents
-    total_reward = torch.where(
-        obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
-    )
+    # total_reward = torch.where(
+    #     obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
+    # )
     return total_reward

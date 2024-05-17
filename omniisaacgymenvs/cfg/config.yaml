@@ -1,18 +1,18 @@
 # Task name - used to pick the class to load
 # task_name: Cartpole # Ant, dbAlpha, Cartpole
-task_name: ${task.name}
+task_name: ${task.name} # <---------------
 # experiment name. defaults to name of training config
 # experiment: ''
 # experiment: 'dbAlpha_newGaitRew_Jvel30'
 # experiment: '6legs_RBF_simMod'
 # experiment: '6legs_Hebb_Wmaxnormalize'
-experiment: '6legs_walk'
+experiment: 'walk' # <---------------
 # experiment: '4leg_setup'
 # experiment: '2leg_setup'
 # experiment: '_gaitrew'
 # experiment: '_lxor'
 # rewards_type: ''
-rewards_type: 'vxuy_initnoise.01_w0.1lstmhid100'
+rewards_type: 'vx' # <---------------
 # rewards_type: '-vxuy_initnoise.01_w0.1lstmhid200'
 # rewards_type: '-vx'
 # rewards_type: '-vx_randJ'
@@ -64,24 +64,30 @@ wandb_activate: False # <---------------
 
 # Model for learning, 'Feedforward' 'Hebb'
 # model: 'Feedforward'  # <---------------
-model: 'Hebb'
+# model: 'Hebb'
 # model: 'lstm'
 # model: 'seqlstm'
 # model: 'rbf'
-# model: 'Hebb_rbf'
+model: 'Hebb_rbf'
 # 'FF_hyper_network', 'simple_RBF_hebb', 'hyper_RBFHebb', 
 # 'hyper_RBFFF', 'parallel_FF', 'parallel_Hebb'
 RBFHebb_model_type: 'parallel_Hebb'
+HEBB_INIT_W: 0.1
+HEBB_INIT_WNOISE: 0.01
+HEBB_RBF_train_option: 1 # 0:rbf, 1:hebb, 2:both
+HEBB_RBF_use_train_rbf: True
+HEBB_RBF_train_rbf_file: ''
 
-EPOCHS: 500 # <---------------
-EPISODE_LENGTH: 300 # <--------------- default: 300
-SAVE_EVERY: 500 # --166, 250
+EPOCHS: 5 # <---------------
+TRAIN_EPISODE_LENGTH: 500 # <--------------- default: 300
+TEST_EPISODE_LENGTH: 300 
+SAVE_EVERY: 10 # --166, 250
 USE_TRAIN_PARAMS: False # <---------------
 
 # ARCHITECTURE = configs['Model']['HEBB']['ARCHITECTURE']['size']
 # ARCHITECTURE: [4, 16, 8, 1] # for cartpole Env Test
 # ARCHITECTURE: [60, 128, 64, 8] # for Ant Env Test
-# ARCHITECTURE: [40, 128, 64, 8] # for Ant Env Test leg contact replace
+ARCHITECTURE: [15, 128, 64, 8] # for Ant Env Test leg contact replace
 # ARCHITECTURE: [34, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [27, 128, 64, 8] # for Ant Env Test
 # ARCHITECTURE: [102, 128, 64, 18] # for dbAlpha Env Test # old Architecture and Rewards based on  the originall PPO
@@ -94,7 +100,7 @@ USE_TRAIN_PARAMS: False # <---------------
 # ARCHITECTURE: [11, 16, 8, 6] # for dbAlpha Env Test 2 legs
 
 # Locomotion
-ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
+# ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 # ARCHITECTURE: [47, 64, 32, 18] # rbf hebbian parallel
 
 # Object transport 4 legs fix hind legs
@@ -104,8 +110,9 @@ ARCHITECTURE: [27, 64, 32, 18] # for dbAlpha Env Test
 # Test RBF network
 # RBF_ARCHITECTURE: [20, 1] # [num_kernel, num_output] cartpole 1 output
 # RBF_ARCHITECTURE: [10, 1] # [num_kernel, num_output] Ant 1 output
-RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+# RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 # RBF_ARCHITECTURE: [20, 12] # 4 legs object transport
+RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
 
 # LSTM
 # ARCHITECTURE: [27, 100, 18] # 6 legs walkinf
