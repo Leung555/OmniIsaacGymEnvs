@@ -8,7 +8,7 @@ experiment: ''
 num_envs: ''
 
 # seed - set to -1 to choose random seed
-seed: 42
+seed: -1
 # set to True for deterministic performance
 torch_deterministic: False
 
@@ -41,7 +41,7 @@ checkpoint: ''
 evaluation: False
 
 # disables rendering
-headless: False
+headless: True  # <----------------------------------
 # enables native livestream
 enable_livestream: False
 # timeout for MT script
@@ -62,7 +62,7 @@ wandb_activate: False
 wandb_group: ''
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
-wandb_project: 'omniisaacgymenvs_'
+wandb_project: 'my-awesome-Ant_ES_RBFHebb'
 
 # path to a kit app file
 kit_app: ''
@@ -83,3 +83,25 @@ hydra:
   run:
     dir: .
 
+# Training params
+EPOCHS: 200           # <----------------------------------
+SAVE_EVERY: 100        # <----------------------------------
+EPISODE_LENGTH: 300   # <----------------------------------
+
+# ES algorithm Standard
+ES_params:
+  POPSIZE: 1024 # workstation (500)
+  rank_fitness: True
+  antithetic: True
+  learning_rate: 0.1 # 0.05:RBF
+  learning_rate_decay: 0.999 # 0.9999
+  sigma_init: 0.1 # 0.1
+  sigma_decay: 0.999
+  learning_rate_limit: 0.001
+  sigma_limit: 0.0001
+
+# model 
+model: 'rbf' 
+HEBB_ARCHITECTURE: [40, 40, 8] # [num_kernel, num_output] dbAlpha 1 output
+RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
+USE_TRAIN_RBF: False

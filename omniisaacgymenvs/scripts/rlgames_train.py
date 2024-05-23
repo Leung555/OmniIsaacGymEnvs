@@ -151,13 +151,13 @@ def parse_hydra_configs(cfg: DictConfig):
         run_name = f"{cfg.wandb_name}_{time_str}"
 
         wandb.init(
-            project=cfg.wandb_project,
-            group=cfg.wandb_group,
-            entity=cfg.wandb_entity,
+            project=cfg.wandb_project+cfg.task_name,
+            # group=cfg.wandb_group,
+            # entity=cfg.wandb_entity,
             config=cfg_dict,
             sync_tensorboard=True,
             name=run_name,
-            resume="allow",
+            # resume="allow",
         )
 
     torch.cuda.set_device(local_rank)
