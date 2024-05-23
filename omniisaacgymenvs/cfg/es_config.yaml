@@ -86,7 +86,7 @@ hydra:
 # Training params
 EPOCHS: 500           # <----------------------------------
 SAVE_EVERY: 250        # <----------------------------------
-EPISODE_LENGTH: 300   # <----------------------------------
+EPISODE_LENGTH: 500   # <----------------------------------
 
 # ES algorithm Standard
 ES_params:
@@ -104,6 +104,6 @@ ES_params:
 model: 'rbf_hebb' 
 model_type: 'parallel_Hebb'
 HEBB_ARCHITECTURE: [60, 40, 8] # [num_kernel, num_output] dbAlpha 1 output
-HEBB_init_wnoise: 0.1
+HEBB_init_wnoise: 0.01
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
