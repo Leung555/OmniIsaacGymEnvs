@@ -12,7 +12,7 @@ def WeightStand(w, eps=1e-5):
 class RBFHebbianNet:
     def __init__(self, POPSIZE, num_output, num_basis=10, 
                  ARCHITECTURE=[47, 64, 32, 18], 
-                 mode='simple_RBF_hebb',
+                 mode='parallel_Hebb',
                  hebb_init_wnoise=0.1,
                  training_option=2):
         """
@@ -124,8 +124,9 @@ class RBFHebbianNet:
                 # print('pre: ', pre.shape)
                 # print('self.p1: ', self.p1.repeat(self.POPSIZE, 1).shape)
                 pre = torch.concat((pre, self.p1.repeat(self.POPSIZE, 1)), dim=1)
-                # print('pre: ', pre.shape)
                 for i, W in enumerate(self.weights):
+                    # print('pre: ', pre.shape)
+                    # print('W: ', W.shape)
                     out =  torch.tanh(torch.einsum('ij, ijk -> ik', pre.float(), W.float()))
                     if i == 2:
                         out = post + out
@@ -161,7 +162,7 @@ class RBFHebbianNet:
         return weights
 
     def get_n_params_a_model(self):
-        return np.sum(self.architecture)*5
+        return len(self.get_a_model_params())
 
     def get_hebb_weights(self):
         return [w for w in self.weights][0]

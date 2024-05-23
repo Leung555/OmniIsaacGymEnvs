@@ -44,6 +44,7 @@ from rl_games.common import env_configurations, vecenv
 from rl_games.torch_runner import Runner
 
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
+from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
 from omniisaacgymenvs.ES.ES_classes import OpenES
 import timeit
 import pickle
@@ -100,7 +101,10 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # Model
     ARCHITECTURE_NAME = cfg.model
+    ARCHITECTURE_TYPE = cfg.model_type
     RBF_ARCHITECTURE = cfg.RBF_ARCHITECTURE
+    HEBB_ARCHITECTURE = cfg.HEBB_ARCHITECTURE
+    HEBB_init_wnoise = cfg.HEBB_init_wnoise
     USE_TRAIN_RBF = cfg.USE_TRAIN_RBF
     
     # Training parameters
@@ -119,6 +123,16 @@ def parse_hydra_configs(cfg: DictConfig):
     if ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
         dir_path = 'runs_ES/'+TASK+'/rbf/'
+    if ARCHITECTURE_NAME == 'rbf_hebb':
+        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 
+                               HEBB_ARCHITECTURE, ARCHITECTURE_TYPE,
+                               HEBB_init_wnoise)
+        dir_path = 'runs_ES/'+TASK+'/rbf/'
+        file_name = 'Ant_80_199_139.4822.pickle'
+        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+        open_es_data = trained_data[0]
+        train_params = open_es_data.best_param() # best_mu
+        models.set_a_rbf_params(train_params)
 
     n_params_a_model = models.get_n_params_a_model()
 
@@ -216,7 +230,7 @@ def parse_hydra_configs(cfg: DictConfig):
         print()
         import wandb
 
-        run_name = f"{cfg.wandb_name}_{time_str}"
+        run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
 
         wandb.init(
             project=cfg.wandb_project,
@@ -286,7 +300,6 @@ def parse_hydra_configs(cfg: DictConfig):
         for epoch in range(EPOCHS):
             # sample params from ES and set model params
             solutions = solver.ask()
-            print('solutions: ', solutions.shape)
             models.set_models_params(solutions)
             obs = env.reset()
 

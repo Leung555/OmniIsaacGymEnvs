@@ -135,7 +135,7 @@ class RBFNet:
         return post.float().detach()
         
     def get_n_params_a_model(self):
-        return self.num_basis * self.num_output//2
+        return len(self.get_a_model_params())
 
     def get_models_params(self):
         p = torch.cat([ params.flatten() for params in self.weights] )
