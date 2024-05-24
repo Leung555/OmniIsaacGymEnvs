@@ -38,7 +38,7 @@ class Terrain:
     def __init__(self, cfg, num_robots) -> None:
         self.horizontal_scale = 0.1
         self.vertical_scale = 0.005
-        self.border_size = 20
+        self.border_size = 2 # 20
         self.num_per_env = 2
         self.env_length = cfg["mapLength"]
         self.env_width = cfg["mapWidth"]
@@ -161,7 +161,7 @@ class Terrain:
                 if j < left_over:
                     robots_in_map += 1
 
-                env_origin_x = (i + 0.5) * self.env_length
+                env_origin_x = (i + 0.5) * self.env_length # (i+0.5)
                 env_origin_y = (j + 0.5) * self.env_width
                 x1 = int((self.env_length / 2.0 - 1) / self.horizontal_scale)
                 x2 = int((self.env_length / 2.0 + 1) / self.horizontal_scale)

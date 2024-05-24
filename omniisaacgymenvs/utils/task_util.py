@@ -30,6 +30,7 @@
 def import_tasks():
     from omniisaacgymenvs.tasks.allegro_hand import AllegroHandTask
     from omniisaacgymenvs.tasks.ant import AntLocomotionTask
+    from omniisaacgymenvs.tasks.ant_test import Ant_test_LocomotionTask
     from omniisaacgymenvs.tasks.anymal import AnymalTask
     from omniisaacgymenvs.tasks.anymal_terrain import AnymalTerrainTask
     from omniisaacgymenvs.tasks.ball_balance import BallBalanceTask
@@ -53,7 +54,8 @@ def import_tasks():
     # Mappings from strings to environments
     task_map = {
         "AllegroHand": AllegroHandTask,
-        "Ant": AntLocomotionTask,
+        # "Ant": AntLocomotionTask,
+        "Ant_test": Ant_test_LocomotionTask,
         "Anymal": AnymalTask,
         "AnymalTerrain": AnymalTerrainTask,
         "BallBalance": BallBalanceTask,
@@ -95,6 +97,7 @@ def initialize_task(config, env, init_sim=True):
     task = task_map[cfg["task_name"]](
         name=cfg["task_name"], sim_config=sim_config, env=env
     )
+    print('cfg["task_name"]: ', sim_config.config["task_name"])
 
     backend = "warp" if cfg["warp"] else "torch"
 

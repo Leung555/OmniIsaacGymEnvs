@@ -85,8 +85,9 @@ hydra:
 
 # Training params
 EPOCHS: 500           # <----------------------------------
-SAVE_EVERY: 250        # <----------------------------------
+SAVE_EVERY: 500        # <----------------------------------
 EPISODE_LENGTH: 500   # <----------------------------------
+resume_train: False
 
 # ES algorithm Standard
 ES_params:
@@ -101,9 +102,15 @@ ES_params:
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf_hebb' 
+model: 'rbf' # rbf, rbf_hebb
 model_type: 'parallel_Hebb'
 HEBB_ARCHITECTURE: [60, 40, 8] # [num_kernel, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
+USE_TRAIN_HEBB: False
+USE_TRAIN_PARAM: False
+
+# Test params rbf_hebb network
+train_rbf_path: 'Ant_80_199_139.4822.pickle'
+train_hebb_path: 'Ant_17600_499_236.0135.pickle'

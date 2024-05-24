@@ -3,7 +3,11 @@ import torch
 from math import cos, sin, tanh
 
 class RBFNet:
-    def __init__(self, POPSIZE, num_output, num_basis=10, behavior='loco'):
+    def __init__(self, 
+                 POPSIZE, 
+                 num_output, 
+                 num_basis=10, 
+                 behavior='loco'):
         """
         sizes: [input_size, hid_1, ..., output_size]
         """

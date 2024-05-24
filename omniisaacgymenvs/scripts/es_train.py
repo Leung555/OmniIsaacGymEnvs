@@ -106,20 +106,24 @@ def parse_hydra_configs(cfg: DictConfig):
     HEBB_ARCHITECTURE = cfg.HEBB_ARCHITECTURE
     HEBB_init_wnoise = cfg.HEBB_init_wnoise
     USE_TRAIN_RBF = cfg.USE_TRAIN_RBF
+    USE_TRAIN_HEBB = cfg.USE_TRAIN_HEBB
     
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
     EPOCHS = cfg.EPOCHS
     EPISODE_LENGTH = cfg.EPISODE_LENGTH
     SAVE_EVERY = cfg.SAVE_EVERY
+    USE_TRAIN_PARAM = cfg.USE_TRAIN_PARAM
 
     # General info
     TASK = cfg.task_name
     TEST = cfg.test
     if TEST:
-        USE_TRAIN_RBF = True
+        USE_TRAIN_PARAM = True
+    train_rbf_path = cfg.train_rbf_path
+    train_hebb_path = cfg.train_hebb_path
 
-    # Initialize model
+    # Initialize model &
     if ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
         dir_path = 'runs_ES/'+TASK+'/rbf/'
@@ -127,12 +131,12 @@ def parse_hydra_configs(cfg: DictConfig):
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 
                                HEBB_ARCHITECTURE, ARCHITECTURE_TYPE,
                                HEBB_init_wnoise)
-        dir_path = 'runs_ES/'+TASK+'/rbf/'
-        file_name = 'Ant_80_199_139.4822.pickle'
-        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
+        dir_path = 'runs_ES/'+TASK+'/rbf_hebb/'
+        # Use train rbf params by default
+        trained_data = pickle.load(open('runs_ES/'+TASK+'/rbf/'+train_rbf_path, 'rb'))
         open_es_data = trained_data[0]
-        train_params = open_es_data.best_param() # best_mu
-        models.set_a_rbf_params(train_params)
+        rbf_params = open_es_data.best_param() # best_mu
+        models.set_a_rbf_params(rbf_params)
 
     n_params_a_model = models.get_n_params_a_model()
 
@@ -151,16 +155,20 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # Use train rbf params
     # 1. solver 2. copy.deepcopy(models)  3. pop_mean_curve 4. best_sol_curve,
-    if USE_TRAIN_RBF:
-        print('--- Used train RBF params ---')
-        file_name = 'Ant_80_199_139.4822.pickle'
-        print('file_name: ', file_name)
-        trained_data = pickle.load(open(dir_path+file_name, 'rb'))
-        open_es_data = trained_data[0]
-        train_params = open_es_data.best_param() # best_mu   
-        print('init_params: ', train_params)
-        print('init_params: ', train_params.shape)
+    if USE_TRAIN_PARAM and cfg.model == 'rbf':
+        trained_data = pickle.load(open(dir_path+train_rbf_path, 'rb'))
+        train_params = trained_data[0].best_param()
         solver.set_mu(train_params)
+
+    # Use train hebb params
+    # 1. solver 2. copy.deepcopy(models)  3. pop_mean_curve 4. best_sol_curve,
+    if USE_TRAIN_PARAM and cfg.model == 'rbf_hebb':
+        trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
+        train_params = trained_data[0].best_param()
+        solver.set_mu(train_params)
+
+    print('--- Used train RBF params ---')
+    print('file_name: ', train_hebb_path)
 
     time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -234,7 +242,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
         wandb.init(
             project=cfg.wandb_project,
-            # group=cfg.wandb_group,
+            group=cfg.wandb_group,
             # entity=cfg.wandb_entity,
             config=cfg_dict,
             # sync_tensorboard=False,
@@ -348,7 +356,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     copy.deepcopy(models),
                     pop_mean_curve,
                     best_sol_curve,
-                    ), open(dir_path+TASK+'_' + str(n_params_a_model) +'_' + str(epoch) + '_' + str(pop_mean_curve[epoch])[:8] + '.pickle', 'wb'))
+                    ), open(dir_path+TASK+'_'+cfg.model+'_' + str(n_params_a_model) +'_' + str(epoch) + '_' + str(pop_mean_curve[epoch])[:8] + '.pickle', 'wb'))
 
 
 

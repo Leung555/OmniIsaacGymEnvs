@@ -37,10 +37,13 @@ from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
+from omniisaacgymenvs.tasks.utils.anymal_terrain_generator import *
+from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
 
 
 class LocomotionTask(RLTask):
     def __init__(self, name, env, offset=None) -> None:
+        print('-__init__LocomotionTask-')
 
         LocomotionTask.update_config(self)
 
@@ -48,6 +51,7 @@ class LocomotionTask(RLTask):
         return
 
     def update_config(self):
+        print('-update_config-')
         self._num_envs = self._task_cfg["env"]["numEnvs"]
         self._env_spacing = self._task_cfg["env"]["envSpacing"]
         self._max_episode_length = self._task_cfg["env"]["episodeLength"]
@@ -63,6 +67,7 @@ class LocomotionTask(RLTask):
         self.death_cost = self._task_cfg["env"]["deathCost"]
         self.termination_height = self._task_cfg["env"]["terminationHeight"]
         self.alive_reward_scale = self._task_cfg["env"]["alive_reward_scale"]
+        self.curriculum = self._task_cfg["env"]["terrain"]["curriculum"]
 
     @abstractmethod
     def set_up_scene(self, scene) -> None:
@@ -71,6 +76,34 @@ class LocomotionTask(RLTask):
     @abstractmethod
     def get_robot(self):
         pass
+
+    def _create_trimesh(self, create_mesh=True):
+        print('-_create_trimesh-')
+        self.terrain = Terrain(self._task_cfg["env"]["terrain"], num_robots=self.num_envs)
+        vertices = self.terrain.vertices
+        triangles = self.terrain.triangles
+        # position = torch.tensor([-self.terrain.border_size, -self.terrain.border_size, 0.0])
+        position = torch.tensor([-self.terrain.border_size-5, -self.terrain.border_size-5, 0.0])
+        if create_mesh:
+            print('-add_terrain_to_stage-')
+            add_terrain_to_stage(stage=self._stage, vertices=vertices, triangles=triangles, position=position)
+        self.height_samples = (
+            torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
+        )
+
+    def get_terrain(self, create_mesh=True):
+        print('-get_terrain-')
+        self.env_origins = torch.zeros((self.num_envs, 3), device=self.device, requires_grad=False)
+        if not self.curriculum:
+            self._task_cfg["env"]["terrain"]["maxInitMapLevel"] = self._task_cfg["env"]["terrain"]["numLevels"] - 1
+        self.terrain_levels = torch.randint(
+            0, self._task_cfg["env"]["terrain"]["maxInitMapLevel"] + 1, (self.num_envs,), device=self.device
+        )
+        self.terrain_types = torch.randint(
+            0, self._task_cfg["env"]["terrain"]["numTerrains"], (self.num_envs,), device=self.device
+        )
+        self._create_trimesh(create_mesh=create_mesh)
+        self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
 
     def get_observations(self) -> dict:
         torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
