@@ -83,7 +83,7 @@ class LocomotionTask(RLTask):
         vertices = self.terrain.vertices
         triangles = self.terrain.triangles
         # position = torch.tensor([-self.terrain.border_size, -self.terrain.border_size, 0.0])
-        position = torch.tensor([-self.terrain.border_size-5, -self.terrain.border_size-5, 0.0])
+        position = torch.tensor([-self.terrain.border_size-8, -self.terrain.border_size-8, 0.0])
         if create_mesh:
             print('-add_terrain_to_stage-')
             add_terrain_to_stage(stage=self._stage, vertices=vertices, triangles=triangles, position=position)

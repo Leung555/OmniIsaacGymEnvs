@@ -95,7 +95,7 @@ class Ant_test_LocomotionTask(LocomotionTask):
         return self._ants
 
     def post_reset(self):
-        self.joint_gears = torch.tensor([15, 15, 15, 15, 15, 15, 15, 15], dtype=torch.float32, device=self._device)
+        self.joint_gears = torch.tensor(np.repeat(8, self._num_actions), dtype=torch.float32, device=self._device)
         dof_limits = self._ants.get_dof_limits()
         self.dof_limits_lower = dof_limits[0, :, 0].to(self._device)
         self.dof_limits_upper = dof_limits[0, :, 1].to(self._device)
