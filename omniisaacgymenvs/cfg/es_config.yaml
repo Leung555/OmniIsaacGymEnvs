@@ -59,7 +59,7 @@ recording_fps: 30
 recording_dir: ''
 
 wandb_activate: False
-wandb_group: ''
+wandb_group: 'posC_1_2slope'
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
 wandb_project: 'my-awesome-Ant_ES_RBFHebb'
@@ -84,10 +84,12 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 500           # <----------------------------------
-SAVE_EVERY: 500        # <----------------------------------
+EPOCHS: 300           # <----------------------------------
+SAVE_EVERY: 300        # <----------------------------------
 EPISODE_LENGTH: 500   # <----------------------------------
 resume_train: False
+
+custom_rewards: False
 
 # ES algorithm Standard
 ES_params:
@@ -95,14 +97,14 @@ ES_params:
   rank_fitness: True
   antithetic: True
   learning_rate: 0.1 # 0.05:RBF
-  learning_rate_decay: 0.999 # 0.9999
+  learning_rate_decay: 0.995 # 0.9999
   sigma_init: 0.1 # 0.1
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf' # rbf, rbf_hebb
+model: 'rbf_hebb' # rbf, rbf_hebb
 model_type: 'parallel_Hebb'
 HEBB_ARCHITECTURE: [60, 40, 8] # [num_kernel, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
@@ -112,5 +114,26 @@ USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
 
 # Test params rbf_hebb network
-train_rbf_path: 'Ant_80_199_139.4822.pickle'
-train_hebb_path: 'Ant_17600_499_236.0135.pickle'
+train_rbf_path: 'Ant_test_rbf_80_99_156.2435.pickle' # flat terrain
+train_hebb_path: 'Ant_test_rbf_hebb_17600_299_221.5065.pickle'  # flat terrain
+# train_rbf_path: 'Ant_test_rbf_80_299_117.0807.pickle' # rough terrain
+# train_hebb_path: '.5065.pickle'  # flat terrain
+
+# Custom Terrain
+terrain:
+  staticFriction: 1.0  # [-]
+  dynamicFriction: 1.0  # [-]
+  restitution: 0.        # [-]
+  # rough terrain only:
+  curriculum: true
+  maxInitMapLevel: 0
+  mapLength: 15.
+  mapWidth: 15.
+  numLevels: 1 # x-axis
+  numTerrains: 2 # 20, y-axis
+  # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+  terrainProportions: [0.02, 0.9, 0.02, 0.02, 0.02]
+  # tri mesh only:
+  slopeTreshold: 0.5
+  type: 'slope' #rough, slope
+  slope_angle: 0.0

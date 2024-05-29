@@ -238,7 +238,8 @@ def parse_hydra_configs(cfg: DictConfig):
         print()
         import wandb
 
-        run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
+        # run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
+        run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{cfg.wandb_group}"
 
         wandb.init(
             project=cfg.wandb_project,

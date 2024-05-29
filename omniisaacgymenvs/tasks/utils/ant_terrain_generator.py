@@ -38,14 +38,16 @@ class Terrain:
     def __init__(self, cfg, num_robots) -> None:
         self.horizontal_scale = 0.1
         self.vertical_scale = 0.005
-        self.border_size = 20
+        self.border_size = 2 # 20
         self.num_per_env = 2
         self.env_length = cfg["mapLength"]
         self.env_width = cfg["mapWidth"]
+        self.slope_angle = cfg["slope_angle"]
         self.proportions = [np.sum(cfg["terrainProportions"][: i + 1]) for i in range(len(cfg["terrainProportions"]))]
 
         self.env_rows = cfg["numLevels"]
         self.env_cols = cfg["numTerrains"]
+        self.terrain_type = cfg["type"]
         self.num_maps = self.env_rows * self.env_cols
         self.num_per_env = int(num_robots / self.num_maps)
         self.env_origins = np.zeros((self.env_rows, self.env_cols, 3))
@@ -58,7 +60,9 @@ class Terrain:
         self.tot_rows = int(self.env_rows * self.length_per_env_pixels) + 2 * self.border
 
         self.height_field_raw = np.zeros((self.tot_rows, self.tot_cols), dtype=np.int16)
-        if cfg["curriculum"]:
+        if self.terrain_type == 'slope':
+            self.slope_terrain()
+        elif cfg["curriculum"]:
             self.curiculum(num_robots, num_terrains=self.env_cols, num_levels=self.env_rows)
         else:
             self.randomized_terrain()
@@ -66,6 +70,38 @@ class Terrain:
         self.vertices, self.triangles = convert_heightfield_to_trimesh(
             self.height_field_raw, self.horizontal_scale, self.vertical_scale, cfg["slopeTreshold"]
         )
+
+    def slope_terrain(self):
+        for k in range(self.num_maps):
+            # Env coordinates in the world
+            (i, j) = np.unravel_index(k, (self.env_rows, self.env_cols))
+
+            # Heightfield coordinate system from now on
+            start_x = self.border + i * self.length_per_env_pixels
+            end_x = self.border + (i + 1) * self.length_per_env_pixels
+            start_y = self.border + j * self.width_per_env_pixels
+            end_y = self.border + (j + 1) * self.width_per_env_pixels
+
+            terrain = SubTerrain(
+                "terrain",
+                width=self.width_per_env_pixels,
+                length=self.width_per_env_pixels,
+                vertical_scale=self.vertical_scale,
+                horizontal_scale=self.horizontal_scale,
+            )
+
+            terrain = sloped_terrain(terrain, self.slope_angle+j*0.4)
+            
+            self.height_field_raw[start_x:end_x, start_y:end_y] = terrain.height_field_raw
+
+            # env_origin_x = (i + 0.5) * self.env_length
+            # env_origin_y = (j + 0.5) * self.env_width
+            # x1 = int((self.env_length / 2.0 - 1) / self.horizontal_scale)
+            # x2 = int((self.env_length / 2.0 + 1) / self.horizontal_scale)
+            # y1 = int((self.env_width / 2.0 - 1) / self.horizontal_scale)
+            # y2 = int((self.env_width / 2.0 + 1) / self.horizontal_scale)
+            # env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * self.vertical_scale
+            # self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
 
     def randomized_terrain(self):
         for k in range(self.num_maps):
@@ -161,7 +197,7 @@ class Terrain:
                 if j < left_over:
                     robots_in_map += 1
 
-                env_origin_x = (i + 0.5) * self.env_length
+                env_origin_x = (i + 0.5) * self.env_length # (i+0.5)
                 env_origin_y = (j + 0.5) * self.env_width
                 x1 = int((self.env_length / 2.0 - 1) / self.horizontal_scale)
                 x2 = int((self.env_length / 2.0 + 1) / self.horizontal_scale)

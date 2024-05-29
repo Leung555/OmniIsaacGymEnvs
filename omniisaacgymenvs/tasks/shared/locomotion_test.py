@@ -37,7 +37,7 @@ from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
-from omniisaacgymenvs.tasks.utils.anymal_terrain_generator import *
+from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
 
 
@@ -77,9 +77,21 @@ class LocomotionTask(RLTask):
     def get_robot(self):
         pass
 
+    def get_slope_terrain(self, create_mesh=True):
+        # self.env_origins = torch.zeros((self.num_envs, 3), device=self.device, requires_grad=False)
+        # self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
+        self.terrain = Terrain(self._cfg['terrain'], num_robots=self.num_envs)
+        vertices = self.terrain.vertices
+        triangles = self.terrain.triangles
+        position = torch.tensor([-self.terrain.border_size, -self.terrain.border_size-7.5, 0.0])
+        if create_mesh:
+            print('-add_terrain_to_stage-')
+            add_terrain_to_stage(stage=self._stage, vertices=vertices, triangles=triangles, position=position)
+
     def _create_trimesh(self, create_mesh=True):
         print('-_create_trimesh-')
         self.terrain = Terrain(self._task_cfg["env"]["terrain"], num_robots=self.num_envs)
+        # self.terrain = Terrain(self._cfg['terrain'], num_robots=self.num_envs)
         vertices = self.terrain.vertices
         triangles = self.terrain.triangles
         # position = torch.tensor([-self.terrain.border_size, -self.terrain.border_size, 0.0])
@@ -94,16 +106,19 @@ class LocomotionTask(RLTask):
     def get_terrain(self, create_mesh=True):
         print('-get_terrain-')
         self.env_origins = torch.zeros((self.num_envs, 3), device=self.device, requires_grad=False)
-        if not self.curriculum:
-            self._task_cfg["env"]["terrain"]["maxInitMapLevel"] = self._task_cfg["env"]["terrain"]["numLevels"] - 1
-        self.terrain_levels = torch.randint(
-            0, self._task_cfg["env"]["terrain"]["maxInitMapLevel"] + 1, (self.num_envs,), device=self.device
-        )
-        self.terrain_types = torch.randint(
-            0, self._task_cfg["env"]["terrain"]["numTerrains"], (self.num_envs,), device=self.device
-        )
-        self._create_trimesh(create_mesh=create_mesh)
-        self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
+        if self._cfg['terrain']['type'] == 'slope':
+            self.get_slope_terrain(create_mesh=create_mesh)
+        else:
+            if not self.curriculum:
+                self._task_cfg["env"]["terrain"]["maxInitMapLevel"] = self._task_cfg["env"]["terrain"]["numLevels"] - 1
+            self.terrain_levels = torch.randint(
+                0, self._task_cfg["env"]["terrain"]["maxInitMapLevel"] + 1, (self.num_envs,), device=self.device
+            )
+            self.terrain_types = torch.randint(
+                0, self._task_cfg["env"]["terrain"]["numTerrains"], (self.num_envs,), device=self.device
+            )
+            self._create_trimesh(create_mesh=create_mesh)
+            self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
 
     def get_observations(self) -> dict:
         torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
@@ -160,9 +175,13 @@ class LocomotionTask(RLTask):
         forces = self.actions * self.joint_gears * self.power_scale
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
-
+        
         # applies joint torques
-        self._robots.set_joint_efforts(forces, indices=indices)
+        # self._robots.set_joint_efforts(forces, indices=indices)
+
+        # joint target position command
+        # self.actions *= 180.0/math.pi
+        self._robots.set_joint_position_targets(self.actions, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -174,6 +193,12 @@ class LocomotionTask(RLTask):
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         root_vel = torch.zeros((num_resets, 6), device=self._device)
+        root_pos[:, 2] += 0.5 # move robot up in z-axis
+        # move robot to a new level in y-axis
+        
+        # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 0, 1)*15
+        root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 2)*15
+        # print('root_pos_y: ', torch.randint_like(root_pos[:, 1], 0, 1)*15)
 
         # apply resets
         self._robots.set_joint_positions(dof_pos, indices=env_ids)
@@ -364,9 +389,9 @@ def calculate_metrics(
 
     total_reward = (
         progress_reward
-        + alive_reward
-        + up_reward
-        + heading_reward
+        # + alive_reward
+        # + up_reward
+        # + heading_reward
         - actions_cost_scale * actions_cost
         - energy_cost_scale * electricity_cost
         - dof_at_limit_cost

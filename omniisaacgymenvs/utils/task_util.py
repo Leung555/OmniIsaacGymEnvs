@@ -54,7 +54,7 @@ def import_tasks():
     # Mappings from strings to environments
     task_map = {
         "AllegroHand": AllegroHandTask,
-        # "Ant": AntLocomotionTask,
+        "Ant": AntLocomotionTask,
         "Ant_test": Ant_test_LocomotionTask,
         "Anymal": AnymalTask,
         "AnymalTerrain": AnymalTerrainTask,

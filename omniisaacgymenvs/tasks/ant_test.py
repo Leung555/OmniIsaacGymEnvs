@@ -37,8 +37,9 @@ from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, un
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
-from omniisaacgymenvs.robots.articulations.ant import Ant
+from omniisaacgymenvs.robots.articulations.ant_test import Ant
 from omniisaacgymenvs.tasks.shared.locomotion_test import LocomotionTask
+from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 
 
@@ -57,16 +58,22 @@ class Ant_test_LocomotionTask(LocomotionTask):
         self._num_observations = 60
         self._num_actions = 8
         self._ant_positions = torch.tensor([0, 0, 0.5])
+        self._terrainType = self._cfg['terrain']['type']
         LocomotionTask.update_config(self)
 
     def set_up_scene(self, scene) -> None:
         print('-set_up_scene-')
+
         self._stage = get_current_stage()
-        print('-get_terrain-')
-        self.get_terrain()
         self.get_ant()
-        # RLTask.set_up_scene(self, scene) # Original code without terrain
-        RLTask.set_up_scene(self, scene, collision_filter_global_paths=["/World/terrain"])
+        
+        # Set up terrain
+        if self._terrainType == 'flat':
+            RLTask.set_up_scene(self, scene) # Original code without terrain
+        else:
+            self.get_terrain()
+            RLTask.set_up_scene(self, scene, collision_filter_global_paths=["/World/terrain"])
+        
         self._ants = ArticulationView(
             prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False
         )
@@ -74,8 +81,9 @@ class Ant_test_LocomotionTask(LocomotionTask):
         return
 
     def initialize_views(self, scene):
-        # initialize terrain variables even if we do not need to re-create the terrain mesh
-        self.get_terrain(create_mesh=False)
+        if self._terrainType != 'flat':
+            # initialize terrain variables even if we do not need to re-create the terrain mesh
+            self.get_terrain(create_mesh=False)
 
         RLTask.initialize_views(self, scene)
         if scene.object_exists("ant_view"):
@@ -90,6 +98,14 @@ class Ant_test_LocomotionTask(LocomotionTask):
         self._sim_config.apply_articulation_settings(
             "Ant", get_prim_at_path(ant.prim_path), self._sim_config.parse_actor_config("Ant")
         )
+        joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
+                       'joints/front_left_foot',  'joints/left_back_foot',
+                       'joints/front_right_leg',  'joints/right_back_leg',
+                       'joints/front_right_foot', 'joints/right_back_foot',
+                       ]
+
+        for joint_path in joint_paths:
+            set_drive(f"{ant.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
     def get_robot(self):
         return self._ants

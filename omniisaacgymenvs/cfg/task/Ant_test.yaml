@@ -40,19 +40,20 @@ env:
     maxInitMapLevel: 0
     mapLength: 2.
     mapWidth: 2.
-    numLevels: 10 # x-axis
-    numTerrains: 10 # 20, y-axis
+    numLevels: 1 # x-axis
+    numTerrains: 1 # 20, y-axis
     # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
     terrainProportions: [0.02, 0.9, 0.02, 0.02, 0.02]
     # tri mesh only:
     slopeTreshold: 0.5
+    type: 'rough' #rough, slope
 
 sim:
   dt: 0.01 # 1/120 s, original 0.0083
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
   add_ground_plane: False
-  add_distant_light: False
+  add_distant_light: True
   use_fabric: True
   enable_scene_query_support: False
   disable_contact_processing: False
@@ -84,7 +85,7 @@ sim:
     gpu_max_rigid_contact_count: 524288
     gpu_max_rigid_patch_count: 163840
     gpu_found_lost_pairs_capacity: 4194304
-    gpu_found_lost_aggregate_pairs_capacity: 33554432
+    gpu_found_lost_aggregate_pairs_capacity: 119505920 # 33554432
     gpu_total_aggregate_pairs_capacity: 4194304
     gpu_max_soft_body_contacts: 1048576
     gpu_max_particle_contacts: 1048576
