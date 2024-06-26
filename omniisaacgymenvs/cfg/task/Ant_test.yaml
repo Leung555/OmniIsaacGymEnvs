@@ -7,8 +7,8 @@ physics_engine: ${..physics_engine}
 env: 
 #  numEnvs: ${...num_envs}
   numEnvs: ${resolve_default:4096,${...num_envs}}
-  envSpacing: 0
-  episodeLength: 1000
+  envSpacing: 5
+  episodeLength: 9999
   enableDebugVis: False
 
   clipActions: 1.0
@@ -52,8 +52,8 @@ sim:
   dt: 0.01 # 1/120 s, original 0.0083
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
-  add_ground_plane: False
-  add_distant_light: True
+  add_ground_plane: True
+  add_distant_light: False
   use_fabric: True
   enable_scene_query_support: False
   disable_contact_processing: False
@@ -107,3 +107,13 @@ sim:
     # per-body
     density: -1
     max_depenetration_velocity: 10.0
+domain_randomization:
+    randomize: True
+    randomization_params:
+        simulation:
+          gravity:
+            on_reset:
+              operation: "additive"
+              distribution: "uniform"
+              distribution_parameters: [[0.0, 0.0, -0.1], [-0.1, 0.0, 0.1]]
+

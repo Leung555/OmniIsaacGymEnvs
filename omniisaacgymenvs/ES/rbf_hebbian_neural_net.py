@@ -3,9 +3,13 @@ import torch
 from math import cos, sin, tanh
 
 def WeightStand(w, eps=1e-5):
-    max_val = torch.max(torch.abs(w).flatten(start_dim=1, end_dim=2), dim=1)
-    max_val = max_val[0].unsqueeze(1).unsqueeze(2)    # print('w - mean: ', w - mean)
-    w = w / max_val
+    # method_1: devide by max value
+    # max_val = torch.max(torch.abs(w).flatten(start_dim=1, end_dim=2), dim=1)
+    # max_val = max_val[0].unsqueeze(1).unsqueeze(2)    # print('w - mean: ', w - mean)
+    # w = w / max_val
+
+    # method_2: clip weight higher than 1.0
+    w = torch.clamp(w, min=-1.0, max=1.0)
 
     return w
 
@@ -75,19 +79,21 @@ class RBFHebbianNet:
             print('self.RBFweights: ', self.RBFweights.shape)
             if self.mode == 'parallel_Hebb':
                 sizes = self.architecture
-                sizes[0] += num_basis
-                self.architecture = sizes
+                # adding Concatenate weight layer from RBF basis to sensor feedback to hebbian network 
+                # sizes[0] += num_basis
+                # self.architecture = sizes
+                #############################
                 self.weights = [torch.Tensor(POPSIZE, sizes[i], sizes[i + 1]).uniform_(-hebb_init_wnoise, hebb_init_wnoise).cuda()
                                     for i in range(len(sizes) - 1)]
                 print('self.weights.shape: ', sizes)
                 self.one_array = [torch.ones(POPSIZE, sizes[i], sizes[i + 1]).cuda()
                                     for i in range(len(sizes) - 1)]
                 # print('self.one_array', self.one_array)
-                self.A = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
-                self.B = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
-                self.C = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
-                self.D = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
-                self.lr = [torch.normal(0,.01, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+                self.A = [torch.normal(0,.001, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+                self.B = [torch.normal(0,.001, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+                self.C = [torch.normal(0,.001, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+                self.D = [torch.normal(0,.001, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+                self.lr = [torch.normal(0,.001, (POPSIZE, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
 
 
     def forward(self, pre):
@@ -114,6 +120,7 @@ class RBFHebbianNet:
             # print(outL.shape)
             post = torch.concat([outL, outR], dim=1)
             post = torch.index_select(post, 1, self.indices)
+            # print('post: ', post)
             # print('post.shape: ', post.shape)
             
             self.phase = self.phase + 1
@@ -123,12 +130,19 @@ class RBFHebbianNet:
             if self.mode == 'parallel_Hebb':
                 # print('pre: ', pre.shape)
                 # print('self.p1: ', self.p1.repeat(self.POPSIZE, 1).shape)
-                pre = torch.concat((pre, self.p1.repeat(self.POPSIZE, 1)), dim=1)
+
+                # Concatenate RBF basis and sensor feedback to hebbian network
+                # pre = torch.concat((pre, self.p1.repeat(self.POPSIZE, 1)), dim=1)
+                
                 for i, W in enumerate(self.weights):
+                    # print('i: ', i)
+                    # print('self.weights: ', len(self.weights))
                     # print('pre: ', pre.shape)
                     # print('W: ', W.shape)
                     out =  torch.tanh(torch.einsum('ij, ijk -> ik', pre.float(), W.float()))
-                    if i == 2:
+                    # print('out: ', out)
+                    # feeding last layer output to CPG-RBF motor neurons 
+                    if i == len(self.weights)-1:
                         out = post + out
                     self.weights[i] = self.hebbian_update(i, W, pre, out, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
                     pre = out
@@ -165,7 +179,7 @@ class RBFHebbianNet:
         return len(self.get_a_model_params())
 
     def get_hebb_weights(self):
-        return [w for w in self.weights][0]
+        return [w for w in self.weights]
 
     def get_models_params(self):
         return self.get_hebb_params().cpu().flatten().numpy()

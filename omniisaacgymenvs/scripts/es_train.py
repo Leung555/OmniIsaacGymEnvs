@@ -85,6 +85,33 @@ import numpy as np
 #         )
 # ----------------------------------------------------------------------------------------
 
+def get_masked_sens_loss(ind_v):
+    # Start with an empty tensor
+    arr = torch.tensor([]).reshape(0, 2)  # Assuming you want to concatenate 2D tensors with 2 columns
+    for i in ind_v:
+        if i == 0:
+            tensor = torch.Tensor([[1,0]])
+        elif i == 1:
+            tensor = torch.Tensor([[0,1]])
+        # else:
+        #     tensor = torch.Tensor([[1,1]])
+        arr = torch.cat((arr, tensor))
+    return arr
+
+def get_masked_sens_loss_v2(ind_v):
+    # Start with an empty tensor
+    # mask IMU sensor and joint contact sensor
+    arr = torch.tensor([]).reshape(0, 5)  # Assuming you want to concatenate 2D tensors with 2 columns
+    for i in ind_v:
+        if i == 0:
+            tensor = torch.Tensor([[1,0,0,0,0]])
+        elif i == 1:
+            tensor = torch.Tensor([[0,1,1,1,1]])
+        # else:
+        #     tensor = torch.Tensor([[1,1]])
+        arr = torch.cat((arr, tensor))
+    return arr
+
 @hydra.main(version_base=None, config_name="es_config", config_path="../cfg")
 def parse_hydra_configs(cfg: DictConfig):
 
@@ -111,7 +138,8 @@ def parse_hydra_configs(cfg: DictConfig):
     # Training parameters
     # EPOCHS = configs['Train_params']['EPOCH']
     EPOCHS = cfg.EPOCHS
-    EPISODE_LENGTH = cfg.EPISODE_LENGTH
+    EPISODE_LENGTH_TRAIN = cfg.EPISODE_LENGTH_TRAIN
+    EPISODE_LENGTH_TEST = cfg.EPISODE_LENGTH_TEST
     SAVE_EVERY = cfg.SAVE_EVERY
     USE_TRAIN_PARAM = cfg.USE_TRAIN_PARAM
 
@@ -122,6 +150,7 @@ def parse_hydra_configs(cfg: DictConfig):
         USE_TRAIN_PARAM = True
     train_rbf_path = cfg.train_rbf_path
     train_hebb_path = cfg.train_hebb_path
+    collect_w_matrix = cfg.collect_w_matrix
 
     # Initialize model &
     if ARCHITECTURE_NAME == 'rbf':
@@ -282,19 +311,112 @@ def parse_hydra_configs(cfg: DictConfig):
         # sample params from ES and set model params
         models.set_a_model_params(train_params)
         obs = env.reset()
+        # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
+        # print("obs['obs'].shape: ", obs['obs'].shape)
+        
+        # IMU + force sensors attached to the feet
+        imu = obs['obs'][:, 7:8]
+        joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+        joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+        obs['obs'] = torch.cat((imu,
+                            joint_forces),
+                            dim = 1)
 
         # Epoch rewards
         total_rewards = torch.zeros(cfg.num_envs)
         total_rewards = total_rewards.cuda()
+        rew = torch.zeros(cfg.num_envs).cuda()
+
+        # collect_w_matrix
+        if collect_w_matrix:
+            w1 = []
+            w2 = []
+            params = []
+            action_arr = []
+            rewards_arr = []
+        prev_actions = torch.zeros(cfg.num_envs, env.action_space.shape[0]).cuda()
+
+        # Randomize sensory loss
+        rand = torch.randint(0, 2, (cfg.num_envs,))
+        v = get_masked_sens_loss(rand).cuda()
+        
 
         # rollout 
-        for _ in range(EPISODE_LENGTH):
+        for sim_step in range(EPISODE_LENGTH_TEST):
             actions = models.forward(obs['obs'])
+            actions = 0.3*actions + 0.7*prev_actions
+            prev_actions = actions
             obs, reward, done, info = env.step(
                 actions
             )
-            total_rewards += reward/EPISODE_LENGTH*100
+            # Select observation
 
+            # Duplicate yaw angle
+            # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
+
+            # IMU + force sensors attached to the feet
+            imu = obs['obs'][:, 7:8]
+            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+            joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            obs['obs'] = torch.cat((imu,
+                                joint_forces),
+                                dim = 1)
+            # ###################################
+            # randomize sensory loss of each individual
+            # obs['obs'] = obs['obs'] * v
+            ####################################
+
+            if sim_step >= 0 and sim_step < 500:
+                # print('-{}-', sim_step)
+                # Multiply the first column by 0.5
+                obs['obs'][:, 1:] *= 0.0
+                rew += reward/EPISODE_LENGTH_TEST*100
+                if sim_step == 499:
+                    print(rew)
+                    rew *= 0.0  
+            if sim_step >= 500 and sim_step < 1000:
+                # print('--{}--', sim_step)
+                # Multiply the first column by 0.5
+                obs['obs'][:, 0] *= 0.0
+                rew += reward/EPISODE_LENGTH_TEST*100
+                if sim_step == 999:
+                    print(rew)
+                    rew *= 0.0  
+            if sim_step >= 1000 and sim_step < 1500:
+                # print('---{}---', sim_step)
+                obs['obs'][:, 1] *= 0.0
+                rew += reward/EPISODE_LENGTH_TEST*100
+                if sim_step == 1499:
+                    print(rew)
+                    rew *= 0.0  
+            if sim_step >= 1500 and sim_step < 2000:
+                # obs['obs'][:, 0] *= 0.0
+                rew += reward/EPISODE_LENGTH_TEST*100
+                if sim_step == 1999:
+                    print(rew)
+                    rew *= 0.0
+            # if sim_step >= 2000 and sim_step < 2500:
+            #     obs['obs'][:, :] *= 0.0
+            # if sim_step >= 2500 and sim_step < 3000:
+            #     obs['obs'][:, :] *= 0.0
+            
+            total_rewards += reward/EPISODE_LENGTH_TEST*100
+            if collect_w_matrix:
+                weight = models.get_hebb_weights()
+                param = models.get_hebb_params()
+                w1.append(weight[0].cpu().numpy())
+                w2.append(weight[1].cpu().numpy())
+                params.append(param.cpu().numpy())
+                action_arr.append(actions.cpu().numpy())
+                rewards_arr.append(reward.cpu().numpy())
+        
+        # save weight matrix
+        if collect_w_matrix:
+            np.save('analysis/weights/w1_noFC_imu+FC.npy'   , w1)
+            np.save('analysis/weights/w2_noFC_imu+FC.npy'   , w2)
+            np.save('analysis/weights/param_noFC_imu+FC.npy', params)
+            np.save('analysis/weights/action_noFC_imu+FC.npy', action_arr)
+            np.save('analysis/weights/rewards_noFC_imu+FC.npy', rewards_arr)
 
         # update reward arrays to ES
         total_rewards_cpu = total_rewards.cpu().numpy()
@@ -311,18 +433,59 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = solver.ask()
             models.set_models_params(solutions)
             obs = env.reset()
+            imu = obs['obs'][:, 7:8]
+            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+            joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            obs['obs'] = torch.cat((imu,
+                                joint_forces),
+                                dim = 1)            
+            # print('observation: ', obs['obs'].shape)
 
             # Epoch rewards
             total_rewards = torch.zeros(cfg.num_envs)
             total_rewards = total_rewards.cuda()
 
+            # Randomize sensory loss
+            rand = torch.randint(0, 2, (cfg.num_envs,))
+            v = get_masked_sens_loss_v2(rand).cuda()
+
             # rollout 
-            for _ in range(EPISODE_LENGTH):
+            for sim_step in range(EPISODE_LENGTH_TRAIN):
                 actions = models.forward(obs['obs'])
                 obs, reward, done, info = env.step(
                     actions
                 )
-                total_rewards += reward/EPISODE_LENGTH*100
+                # Select observation
+
+                # Duplicate yaw angle
+                # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
+
+                # IMU + force sensors attached to the feet
+                imu = obs['obs'][:, 7:8]
+                joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+                joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+                obs['obs'] = torch.cat((imu,
+                                    joint_forces),
+                                    dim = 1)
+                # print('imu.shape: ', imu.shape)
+                # print('imu: ', imu)
+                # print('joint_forces.shape: ', joint_forces.shape)
+                # print('joint_forces: ', joint_forces)
+                # print('obs[obs]: ', obs['obs'])                
+                # ###################################
+                # randomize sensory loss of each individual
+                # option: 1
+                if sim_step > 100 and sim_step < 600:
+                    obs['obs'] = obs['obs'] * v
+                # option: 2 long_take
+                # if sim_step > 100 and sim_step < 600:
+                #     obs['obs'][:, 0] *= 0.05
+                # if sim_step > 600 and sim_step < 1100:
+                #     obs['obs'][:, 1] *= 0.05
+
+                ####################################
+                # print('observation: ', obs['obs'][:,0])
+                total_rewards += reward/EPISODE_LENGTH_TRAIN*100
 
 
             # update reward arrays to ES

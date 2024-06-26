@@ -49,13 +49,14 @@ class Ant_test_LocomotionTask(LocomotionTask):
         self.update_config(sim_config)
 
         LocomotionTask.__init__(self, name=name, env=env)
+        
         return
 
     def update_config(self, sim_config):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 60
+        self._num_observations = 60 # 60:original
         self._num_actions = 8
         self._ant_positions = torch.tensor([0, 0, 0.5])
         self._terrainType = self._cfg['terrain']['type']
@@ -78,6 +79,7 @@ class Ant_test_LocomotionTask(LocomotionTask):
             prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False
         )
         scene.add(self._ants)
+
         return
 
     def initialize_views(self, scene):

@@ -39,7 +39,7 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
-
+# from omni.replicator.isaac.physics_view import step_randomization
 
 class LocomotionTask(RLTask):
     def __init__(self, name, env, offset=None) -> None:
@@ -68,6 +68,8 @@ class LocomotionTask(RLTask):
         self.termination_height = self._task_cfg["env"]["terminationHeight"]
         self.alive_reward_scale = self._task_cfg["env"]["alive_reward_scale"]
         self.curriculum = self._task_cfg["env"]["terrain"]["curriculum"]
+        self.simulation_step = 0
+        self.constant = 1.0
 
     @abstractmethod
     def set_up_scene(self, scene) -> None:
@@ -130,7 +132,10 @@ class LocomotionTask(RLTask):
 
         # force sensors attached to the feet
         sensor_force_torques = self._robots.get_measured_joint_forces(joint_indices=self._sensor_indices)
-
+        
+        # if self.simulation_step > 250:
+        #     self.constant = 0.0
+        self.simulation_step += 1
         # print('dof_names: ', self._robots.dof_names)
         (
             self.obs_buf[:],
@@ -159,7 +164,13 @@ class LocomotionTask(RLTask):
             self.contact_force_scale,
             self.actions,
             self.angular_velocity_scale,
+            self.constant,
         )
+
+        # Extract only some info for model inputs
+        # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
+        # print('Selected observation: ', self.obs_buf_trim)
+
         observations = {self._robots.name: {"obs_buf": self.obs_buf}}
         return observations
 
@@ -175,13 +186,20 @@ class LocomotionTask(RLTask):
         forces = self.actions * self.joint_gears * self.power_scale
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
-        
+
+        # apply action lowpass
+        # self.actions = 0.5*self.actions + 0.5*self.prev_actions
+        # self.prev_actions = self.actions
+
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
 
         # joint target position command
         # self.actions *= 180.0/math.pi
         self._robots.set_joint_position_targets(self.actions, indices=indices)
+
+        # if self._dr_randomizer.randomize:
+        #     omni.replicator.isaac.physics_view.step_randomization(reset_env_ids)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -197,7 +215,7 @@ class LocomotionTask(RLTask):
         # move robot to a new level in y-axis
         
         # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 0, 1)*15
-        root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 2)*15
+        # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 2)*15
         # print('root_pos_y: ', torch.randint_like(root_pos[:, 1], 0, 1)*15)
 
         # apply resets
@@ -241,6 +259,7 @@ class LocomotionTask(RLTask):
         self.prev_potentials = self.potentials.clone()
 
         self.actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
+        self.prev_actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
 
         # randomize all envs
         indices = torch.arange(self._robots.count, dtype=torch.int64, device=self._device)
@@ -302,8 +321,9 @@ def get_observations(
     contact_force_scale,
     actions,
     angular_velocity_scale,
+    constant,
 ):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
+    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor, Tensor, float, Tensor, int, float, Tensor, float, float) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]
 
     to_target = targets - torso_position
     to_target[:, 2] = 0.0
@@ -327,9 +347,9 @@ def get_observations(
             torso_position[:, 2].view(-1, 1),
             vel_loc,
             angvel_loc * angular_velocity_scale,
-            normalize_angle(yaw).unsqueeze(-1),
-            normalize_angle(roll).unsqueeze(-1),
-            normalize_angle(angle_to_target).unsqueeze(-1),
+            normalize_angle(yaw).unsqueeze(-1)*constant,
+            normalize_angle(roll).unsqueeze(-1)*constant,
+            normalize_angle(angle_to_target).unsqueeze(-1)*constant,
             up_proj.unsqueeze(-1),
             heading_proj.unsqueeze(-1),
             dof_pos_scaled,
@@ -346,8 +366,8 @@ def get_observations(
 @torch.jit.script
 def is_done(obs_buf, termination_height, reset_buf, progress_buf, max_episode_length):
     # type: (Tensor, float, Tensor, Tensor, float) -> Tensor
-    reset = torch.where(obs_buf[:, 0] < termination_height, torch.ones_like(reset_buf), reset_buf)
-    reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset)
+    # reset = torch.where(obs_buf[:, 0] < termination_height, torch.ones_like(reset_buf), reset_buf)
+    reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset_buf)
     return reset
 
 
@@ -389,9 +409,9 @@ def calculate_metrics(
 
     total_reward = (
         progress_reward
-        # + alive_reward
-        # + up_reward
-        # + heading_reward
+        + alive_reward
+        + up_reward
+        + heading_reward
         - actions_cost_scale * actions_cost
         - energy_cost_scale * electricity_cost
         - dof_at_limit_cost
