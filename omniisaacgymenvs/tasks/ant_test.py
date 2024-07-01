@@ -42,6 +42,7 @@ from omniisaacgymenvs.tasks.shared.locomotion_test import LocomotionTask
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 
+from omni.isaac.core.prims import RigidPrimView
 
 class Ant_test_LocomotionTask(LocomotionTask):
     def __init__(self, name, sim_config, env, offset=None) -> None:
@@ -79,6 +80,14 @@ class Ant_test_LocomotionTask(LocomotionTask):
             prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False
         )
         scene.add(self._ants)
+
+        self.physics_ants = RigidPrimView(
+            prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_rigid_view", reset_xform_properties=False
+        )
+        scene.add(self.physics_ants)
+
+        if self._dr_randomizer.randomize:
+            self._dr_randomizer.apply_on_startup_domain_randomization(self)
 
         return
 

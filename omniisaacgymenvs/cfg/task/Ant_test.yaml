@@ -108,12 +108,11 @@ sim:
     density: -1
     max_depenetration_velocity: 10.0
 domain_randomization:
-    randomize: True
+    randomize: False
     randomization_params:
         simulation:
           gravity:
             on_reset:
-              operation: "additive"
+              operation: "direct"
               distribution: "uniform"
-              distribution_parameters: [[0.0, 0.0, -0.1], [-0.1, 0.0, 0.1]]
-
+              distribution_parameters: [[-5.0, 0.0, -9.81], [-5.0, 0.0, -9.81]]

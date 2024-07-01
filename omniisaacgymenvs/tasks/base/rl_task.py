@@ -76,6 +76,7 @@ class RLTask(RLTaskInterface):
         # set up randomizer for DR
         self._dr_randomizer = Randomizer(self._cfg, self._task_cfg)
         if self._dr_randomizer.randomize:
+            print('-------Test---')
             import omni.replicator.isaac as dr
 
             self.dr = dr

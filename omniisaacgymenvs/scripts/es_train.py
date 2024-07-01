@@ -45,6 +45,7 @@ from rl_games.torch_runner import Runner
 
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
+from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.ES_classes import OpenES
 import timeit
 import pickle
@@ -129,6 +130,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # Model
     ARCHITECTURE_NAME = cfg.model
     ARCHITECTURE_TYPE = cfg.model_type
+    FF_ARCHITECTURE = cfg.FF_ARCHITECTURE
     RBF_ARCHITECTURE = cfg.RBF_ARCHITECTURE
     HEBB_ARCHITECTURE = cfg.HEBB_ARCHITECTURE
     HEBB_init_wnoise = cfg.HEBB_init_wnoise
@@ -148,15 +150,19 @@ def parse_hydra_configs(cfg: DictConfig):
     TEST = cfg.test
     if TEST:
         USE_TRAIN_PARAM = True
+    train_ff_path = cfg.train_ff_path
     train_rbf_path = cfg.train_rbf_path
     train_hebb_path = cfg.train_hebb_path
     collect_w_matrix = cfg.collect_w_matrix
 
     # Initialize model &
-    if ARCHITECTURE_NAME == 'rbf':
+    if ARCHITECTURE_NAME == 'ff':
+        models = FeedForwardNet(POPSIZE, FF_ARCHITECTURE)
+        dir_path = 'runs_ES/'+TASK+'/ff/'
+    elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
         dir_path = 'runs_ES/'+TASK+'/rbf/'
-    if ARCHITECTURE_NAME == 'rbf_hebb':
+    elif ARCHITECTURE_NAME == 'rbf_hebb':
         models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 
                                HEBB_ARCHITECTURE, ARCHITECTURE_TYPE,
                                HEBB_init_wnoise)
@@ -184,17 +190,19 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # Use train rbf params
     # 1. solver 2. copy.deepcopy(models)  3. pop_mean_curve 4. best_sol_curve,
-    if USE_TRAIN_PARAM and cfg.model == 'rbf':
-        trained_data = pickle.load(open(dir_path+train_rbf_path, 'rb'))
-        train_params = trained_data[0].best_param()
-        solver.set_mu(train_params)
-
-    # Use train hebb params
-    # 1. solver 2. copy.deepcopy(models)  3. pop_mean_curve 4. best_sol_curve,
-    if USE_TRAIN_PARAM and cfg.model == 'rbf_hebb':
-        trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
-        train_params = trained_data[0].best_param()
-        solver.set_mu(train_params)
+    if USE_TRAIN_PARAM:
+        if cfg.model == 'ff':
+            trained_data = pickle.load(open(dir_path+train_ff_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+        elif cfg.model == 'rbf':
+            trained_data = pickle.load(open(dir_path+train_rbf_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+        elif cfg.model == 'rbf_hebb':
+            trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
 
     print('--- Used train RBF params ---')
     print('file_name: ', train_hebb_path)
@@ -285,7 +293,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # print data on terminal
     print('TASK', TASK)
     print('model: ', ARCHITECTURE_NAME)
-    print('model size: ', RBF_ARCHITECTURE)
+    print('model size: ', FF_ARCHITECTURE)
     print('trainable parameters a model: ', models.get_n_params_a_model())
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
@@ -412,11 +420,11 @@ def parse_hydra_configs(cfg: DictConfig):
         
         # save weight matrix
         if collect_w_matrix:
-            np.save('analysis/weights/w1_noFC_imu+FC.npy'   , w1)
-            np.save('analysis/weights/w2_noFC_imu+FC.npy'   , w2)
-            np.save('analysis/weights/param_noFC_imu+FC.npy', params)
-            np.save('analysis/weights/action_noFC_imu+FC.npy', action_arr)
-            np.save('analysis/weights/rewards_noFC_imu+FC.npy', rewards_arr)
+            np.save('analysis/weights/w1_noFC_randF.npy'   , w1)
+            np.save('analysis/weights/w2_noFC_randF.npy'   , w2)
+            np.save('analysis/weights/param_noFC_randF.npy', params)
+            np.save('analysis/weights/action_noFC_randF.npy', action_arr)
+            np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
 
         # update reward arrays to ES
         total_rewards_cpu = total_rewards.cpu().numpy()
@@ -452,6 +460,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # rollout 
             for sim_step in range(EPISODE_LENGTH_TRAIN):
                 actions = models.forward(obs['obs'])
+                print(obs['obs'][0])
+                print(actions[0])
                 obs, reward, done, info = env.step(
                     actions
                 )

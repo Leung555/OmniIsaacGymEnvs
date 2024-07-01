@@ -39,7 +39,8 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
-# from omni.replicator.isaac.physics_view import step_randomization
+
+# import omni.replicator.isaac as dr
 
 class LocomotionTask(RLTask):
     def __init__(self, name, env, offset=None) -> None:
@@ -70,6 +71,8 @@ class LocomotionTask(RLTask):
         self.curriculum = self._task_cfg["env"]["terrain"]["curriculum"]
         self.simulation_step = 0
         self.constant = 1.0
+        self.rand_forces_min = self._cfg['randomization']['forces'][0]
+        self.rand_forces_max = self._cfg['randomization']['forces'][1]
 
     @abstractmethod
     def set_up_scene(self, scene) -> None:
@@ -179,6 +182,7 @@ class LocomotionTask(RLTask):
             return
 
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
+        # print('reset_env_ids: ', reset_env_ids)
         if len(reset_env_ids) > 0:
             self.reset_idx(reset_env_ids)
 
@@ -198,8 +202,12 @@ class LocomotionTask(RLTask):
         # self.actions *= 180.0/math.pi
         self._robots.set_joint_position_targets(self.actions, indices=indices)
 
-        # if self._dr_randomizer.randomize:
-        #     omni.replicator.isaac.physics_view.step_randomization(reset_env_ids)
+        if self._dr_randomizer.randomize:
+            self.dr.physics_view.step_randomization(reset_env_ids)
+
+        # apply an external force to all the rigid bodies to the indicated values.
+        # Since there are 5 envs, the inertias are repeated 5 times
+        self.physics_ants.apply_forces(self.forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -264,6 +272,14 @@ class LocomotionTask(RLTask):
         # randomize all envs
         indices = torch.arange(self._robots.count, dtype=torch.int64, device=self._device)
         self.reset_idx(indices)
+
+        # Randomize Force act on the robot
+        a = torch.Tensor([0.0, 0.0, 0.0])
+        self.forces = torch.tile(a, (self._num_envs, 1)).cuda()
+        self.forces[:,0] = torch.rand((self._num_envs)).uniform_(self.rand_forces_min, self.rand_forces_max)
+
+        if self._dr_randomizer.randomize:
+            self._dr_randomizer.set_up_domain_randomization(self)
 
     def calculate_metrics(self) -> None:
         self.rew_buf[:] = calculate_metrics(

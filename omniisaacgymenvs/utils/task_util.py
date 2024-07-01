@@ -31,6 +31,7 @@ def import_tasks():
     from omniisaacgymenvs.tasks.allegro_hand import AllegroHandTask
     from omniisaacgymenvs.tasks.ant import AntLocomotionTask
     from omniisaacgymenvs.tasks.ant_test import Ant_test_LocomotionTask
+    from omniisaacgymenvs.tasks.dbalpha import Dbalpha_LocomotionTask
     from omniisaacgymenvs.tasks.anymal import AnymalTask
     from omniisaacgymenvs.tasks.anymal_terrain import AnymalTerrainTask
     from omniisaacgymenvs.tasks.ball_balance import BallBalanceTask
@@ -61,6 +62,7 @@ def import_tasks():
         "BallBalance": BallBalanceTask,
         "Cartpole": CartpoleTask,
         "CartpoleCamera": CartpoleCameraTask,
+        "Dbalpha": Dbalpha_LocomotionTask,
         "FactoryTaskNutBoltPick": FactoryTaskNutBoltPick,
         "FactoryTaskNutBoltPlace": FactoryTaskNutBoltPlace,
         "FactoryTaskNutBoltScrew": FactoryTaskNutBoltScrew,
