@@ -77,6 +77,8 @@ class SimConfig:
         carb.settings.get_settings().set("/app/viewport/grid/enabled", False)
         # Disable framerate limiting which might cause rendering slowdowns
         carb.settings.get_settings().set("/app/runLoops/main/rateLimitEnabled", False)
+        # enable scene graph instancing
+        carb.settings.get_settings().set("/persistent/omnihydra/useSceneGraphInstancing", True)
 
         import omni.ui 
         # Dock floating UIs this might not be needed anymore as extensions dock themselves
@@ -100,11 +102,11 @@ class SimConfig:
         # workaround for asset root search hang
         carb.settings.get_settings().set_string(
             "/persistent/isaac/asset_root/default",
-            "http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/2023.1.1",
+            "http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.0",
         )
         carb.settings.get_settings().set_string(
             "/persistent/isaac/asset_root/nvidia",
-            "http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/2023.1.1",
+            "http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.0",
         )
 
         # make sure the correct USD update flags are set

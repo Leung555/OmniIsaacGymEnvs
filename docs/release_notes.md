@@ -1,6 +1,28 @@
 Release Notes
 =============
 
+4.0.0 - May 31, 2024
+--------------------
+
+PLEASE NOTE: This will be the last release of OmniIsaacGymEnvs. Moving forward, OmniIsaacGymEnvs will be merging with IsaacLab (https://github.com/isaac-sim/IsaacLab). All future updates will be available as part of the IsaacLab repository.
+
+For tutorials on migrating to IsaacLab, please visit: https://isaac-sim.github.io/IsaacLab/source/migration/migrating_from_omniisaacgymenvs.html.
+
+Additions
+---------
+- Add `TargetFollowing` example with wheeled robot.
+- Add new inherited View classes from `omni.isaac.core` for performance benefits for `DeformableView`.
+- Add `extras` argument to Hydra for specifying additional kit arguments (e.g. `extras=[--reset-user]`).
+- Enable scene graph instancing flag in `SimConfig`.
+
+Changes
+-------
+- omni.isaac.core.utils.nucleus has been moved to omni.isaac.nucleus.
+- Increase GPU buffer dimensions for FrankaDeformable environment.
+- Use full `omni.isaac.sim.python.kit` app when running with viewer.
+- Remove deprecated `flush()` call in Factory environments.
+
+
 2023.1.1a - March 14, 2024
 --------------------------
 

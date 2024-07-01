@@ -1,11 +1,31 @@
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2022, NVIDIA Corporation
+# All rights reserved.
 #
-# NVIDIA CORPORATION and its licensors retain all intellectual property
-# and proprietary rights in and to this software, related documentation
-# and any modifications thereto.  Any use, reproduction, disclosure or
-# distribution of this software and related documentation without an express
-# license agreement from NVIDIA CORPORATION is strictly prohibited.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.robots.articulations.franka import Franka
@@ -14,15 +34,14 @@ from omniisaacgymenvs.robots.articulations.views.franka_view import FrankaView
 from omni.isaac.core.prims import RigidPrim, RigidPrimView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.stage import get_current_stage, add_reference_to_stage
-from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.torch.transformations import *
 from omni.isaac.core.utils.torch.rotations import *
+from omni.isaac.nucleus import get_assets_root_path
 
 import omni.isaac.core.utils.deformable_mesh_utils as deformableMeshUtils
 from omni.isaac.core.materials.deformable_material import DeformableMaterial
-from omni.isaac.core.prims.soft.deformable_prim import DeformablePrim
-from omni.isaac.core.prims.soft.deformable_prim_view import DeformablePrimView
-from omni.physx.scripts import deformableUtils, physicsUtils
+from omniisaacgymenvs.views.deformable_prim_view import DeformablePrimView
+from omni.physx.scripts import physicsUtils
 
 import numpy as np
 import torch
@@ -74,8 +93,9 @@ class FrankaDeformableTask(RLTask):
         super().set_up_scene(scene=scene, replicate_physics=False)
         self._frankas = FrankaView(prim_paths_expr="/World/envs/.*/franka", name="franka_view")
         self.deformableView = DeformablePrimView(
-            prim_paths_expr="/World/envs/.*/deformableTube/tube/mesh", name="deformabletube_view"
+            prim_paths_expr="/World/envs/.*/tube/mesh", name="deformabletube_view", reset_xform_properties=False
         )
+        self.deformableView._non_root_link = True # avoid XformPrimView post_reset
         
         scene.add(self.deformableView)
         scene.add(self._frankas)
@@ -101,8 +121,9 @@ class FrankaDeformableTask(RLTask):
             prim_paths_expr="/World/envs/.*/franka", name="franka_view"
         )
         self.deformableView = DeformablePrimView(
-            prim_paths_expr="/World/envs/.*/deformableTube/tube/mesh", name="deformabletube_view"
+            prim_paths_expr="/World/envs/.*/tube/mesh", name="deformabletube_view", reset_xform_properties=False
         )
+        self.deformableView._non_root_link = True # avoid XformPrimView post_reset
         scene.add(self._frankas)
         scene.add(self._frankas._hands)
         scene.add(self._frankas._lfingers)
@@ -139,7 +160,7 @@ class FrankaDeformableTask(RLTask):
 
     def get_deformable_tube(self):
         _usd_path = self.assets_root_path + "/Isaac/Props/DeformableTube/tube.usd"
-        mesh_path = self.default_zero_env_path + "/deformableTube/tube"
+        mesh_path = self.default_zero_env_path + "/tube"
         add_reference_to_stage(_usd_path, mesh_path)
 
         skin_mesh = get_prim_at_path(mesh_path)
@@ -212,7 +233,7 @@ class FrankaDeformableTask(RLTask):
         self.franka_dof_targets[:, -1] = self.franka_dof_targets[:, -2]
 
         env_ids_int32 = torch.arange(self._frankas.count, dtype=torch.int32, device=self._device)
-        self._frankas.set_joint_position_targets(self.franka_dof_targets, indices=env_ids_int32)
+        self._frankas.set_joint_position_targets(self.franka_dof_targets)
 
 
     def reset_idx(self, env_ids):
@@ -255,8 +276,8 @@ class FrankaDeformableTask(RLTask):
         self.initial_tube_positions = self.deformableView.get_simulation_mesh_nodal_positions()
         self.initial_tube_velocities = self.deformableView.get_simulation_mesh_nodal_velocities()
 
-        self.tube_front_positions = self.initial_tube_positions[:, 0, :] - self._env_pos
-        self.tube_front_velocities = self.initial_tube_velocities[:, 0, :]
+        self.tube_front_positions = self.initial_tube_positions[:, 200, :] - self._env_pos
+        self.tube_front_velocities = self.initial_tube_velocities[:, 200, :]
         self.tube_back_positions = self.initial_tube_positions[:, -1, :] - self._env_pos
         self.tube_back_velocities = self.initial_tube_velocities[:, -1, :]
 
