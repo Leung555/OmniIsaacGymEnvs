@@ -71,8 +71,8 @@ class LocomotionTask(RLTask):
         self.curriculum = self._task_cfg["env"]["terrain"]["curriculum"]
         self.simulation_step = 0
         self.constant = 1.0
-        self.rand_forces_min = self._cfg['randomization']['forces'][0]
-        self.rand_forces_max = self._cfg['randomization']['forces'][1]
+        self.rand_forces_min = 0
+        self.rand_forces_max = 0
 
     @abstractmethod
     def set_up_scene(self, scene) -> None:
@@ -207,7 +207,7 @@ class LocomotionTask(RLTask):
 
         # apply an external force to all the rigid bodies to the indicated values.
         # Since there are 5 envs, the inertias are repeated 5 times
-        self.physics_dbalphas.apply_forces(self.forces, indices=indices)
+        # self.physics_dbalphas.apply_forces(self.forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)

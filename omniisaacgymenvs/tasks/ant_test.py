@@ -109,14 +109,7 @@ class Ant_test_LocomotionTask(LocomotionTask):
         self._sim_config.apply_articulation_settings(
             "Ant", get_prim_at_path(ant.prim_path), self._sim_config.parse_actor_config("Ant")
         )
-        joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
-                       'joints/front_left_foot',  'joints/left_back_foot',
-                       'joints/front_right_leg',  'joints/right_back_leg',
-                       'joints/front_right_foot', 'joints/right_back_foot',
-                       ]
 
-        for joint_path in joint_paths:
-            set_drive(f"{ant.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
     def get_robot(self):
         return self._ants

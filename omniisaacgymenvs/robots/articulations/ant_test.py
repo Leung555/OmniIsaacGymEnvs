@@ -35,6 +35,7 @@ import torch
 from omni.isaac.core.robots.robot import Robot
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.stage import add_reference_to_stage
+from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 
 
 class Ant(Robot):
@@ -54,9 +55,8 @@ class Ant(Robot):
             assets_root_path = get_assets_root_path()
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
-            # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
-            self._usd_path = "omniverse://localhost/Projects/Ant/Ant_test.usd"
-
+            self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
+            # self._usd_path = "omniverse://localhost/Projects/Ant/Ant_test.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -66,3 +66,12 @@ class Ant(Robot):
             orientation=orientation,
             articulation_controller=None,
         )
+        joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
+                       'joints/front_left_foot',  'joints/left_back_foot',
+                       'joints/front_right_leg',  'joints/right_back_leg',
+                       'joints/front_right_foot', 'joints/right_back_foot',
+                       ]
+        for joint_path in joint_paths:
+            # print('joint_path111: ', f"{self.prim_path[:-6]}/{joint_path}")
+            set_drive(f"{self.prim_path[:-6]}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+

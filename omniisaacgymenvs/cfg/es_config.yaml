@@ -84,8 +84,8 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 100           # <----------------------------------
-SAVE_EVERY: 100        # <----------------------------------
+EPOCHS: 10           # <----------------------------------
+SAVE_EVERY: 10        # <----------------------------------
 EPISODE_LENGTH_TRAIN: 800   # <----------------------------------
 EPISODE_LENGTH_TEST: 500   # <----------------------------------
 resume_train: False
@@ -107,7 +107,7 @@ ES_params:
 # model 
 model: 'ff' # rbf, rbf_hebb, ff
 model_type: 'parallel_Hebb'
-FF_ARCHITECTURE: [5, 20, 10, 18] # [num_input, num_hidd, num_output] dbAlpha 1 output
+FF_ARCHITECTURE: [5, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [5, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
@@ -116,7 +116,7 @@ USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
 
 # Test params rbf_hebb network
-train_ff_path: 'Ant_test_ff_380_99_107.7912.pickle' # flat terrain
+train_ff_path: 'Ant_test_ff_418_9_100.0571.pickle' # flat terrain
 train_rbf_path: 'Ant_test_rbf_80_99_156.2435.pickle' # flat terrain
 train_hebb_path: 'Ant_test_rbf_hebb_1900_99_141.3682.pickle'  # flat terrain, clamp
 # train_hebb_path: 'Ant_test_rbf_hebb_17600_299_55.65674.pickle'  # flat terrain

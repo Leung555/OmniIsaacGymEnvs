@@ -377,7 +377,7 @@ def parse_hydra_configs(cfg: DictConfig):
             if sim_step >= 0 and sim_step < 500:
                 # print('-{}-', sim_step)
                 # Multiply the first column by 0.5
-                obs['obs'][:, 1:] *= 0.0
+                # obs['obs'][:, 1:] *= 0.0
                 rew += reward/EPISODE_LENGTH_TEST*100
                 if sim_step == 499:
                     print(rew)
@@ -460,8 +460,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # rollout 
             for sim_step in range(EPISODE_LENGTH_TRAIN):
                 actions = models.forward(obs['obs'])
-                print(obs['obs'][0])
-                print(actions[0])
+                # print(obs['obs'][0])
+                # print(actions[0])
                 obs, reward, done, info = env.step(
                     actions
                 )

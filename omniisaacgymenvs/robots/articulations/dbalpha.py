@@ -35,6 +35,7 @@ import torch
 from omni.isaac.core.robots.robot import Robot
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.stage import add_reference_to_stage
+from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 
 
 class Dbalpha(Robot):
@@ -55,8 +56,8 @@ class Dbalpha(Robot):
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
-            self._usd_path = "omniverse://localhost/Projects/dbalpha/dbalpha.usd"
-
+            self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha.usd"
+            # self._usd_path = "omniverse://localhost/Projects/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -66,3 +67,16 @@ class Dbalpha(Robot):
             orientation=orientation,
             articulation_controller=None,
         )
+
+        joint_paths = ['Thorax/BC0', 'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
+                        'base_link/BC1', 'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1',
+                        'base_link/BC2', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2',
+                        'Thorax/BC3', 'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3',
+                        'base_link/BC4', 'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4',
+                        'base_link/BC5', 'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5',
+                       ]
+
+        for joint_path in joint_paths:
+            # print('joint_path: ', f"{self.prim_path}/{joint_path}")
+            set_drive(f"{self.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+

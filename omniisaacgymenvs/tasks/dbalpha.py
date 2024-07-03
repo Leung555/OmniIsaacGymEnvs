@@ -60,7 +60,8 @@ class Dbalpha_LocomotionTask(LocomotionTask):
         self._num_observations = 102
         self._num_actions = 18
         self._dbalpha_positions = torch.tensor([0, 0, 0.5])
-        self._terrainType = self._cfg['terrain']['type']
+        # self._terrainType = self._cfg['terrain']['type']
+        self._terrainType = 'flat'
         LocomotionTask.update_config(self)
 
     def set_up_scene(self, scene) -> None:
@@ -77,12 +78,12 @@ class Dbalpha_LocomotionTask(LocomotionTask):
             RLTask.set_up_scene(self, scene, collision_filter_global_paths=["/World/terrain"])
         
         self._dbalphas = ArticulationView(
-            prim_paths_expr="/World/envs/.*/dbalpha/torso", name="dbalpha_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/Dbalpha", name="Dbalpha_view", reset_xform_properties=False
         )
         scene.add(self._dbalphas)
 
         self.physics_dbalphas = RigidPrimView(
-            prim_paths_expr="/World/envs/.*/dbalpha/torso", name="dbalpha_rigid_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/Dbalpha/base_link", name="Dbalpha_rigid_view", reset_xform_properties=False
         )
         scene.add(self.physics_dbalphas)
 
@@ -97,28 +98,18 @@ class Dbalpha_LocomotionTask(LocomotionTask):
             self.get_terrain(create_mesh=False)
 
         RLTask.initialize_views(self, scene)
-        if scene.object_exists("dbalpha_view"):
-            scene.remove_object("dbalpha_view", registry_only=True)
+        if scene.object_exists("Dbalpha_view"):
+            scene.remove_object("Dbalpha_view", registry_only=True)
         self._dbalphas = ArticulationView(
-            prim_paths_expr="/World/envs/.*/dbalpha/torso", name="dbalpha_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/Dbalpha", name="Dbalpha_view", reset_xform_properties=False
         )
         scene.add(self._dbalphas)
 
     def get_dbalpha(self):
-        dbalpha = Dbalpha(prim_path=self.default_zero_env_path + "/dbalpha", name="dbalpha", translation=self._dbalpha_positions)
+        dbalpha = Dbalpha(prim_path=self.default_zero_env_path + "/Dbalpha", name="Dbalpha", translation=self._dbalpha_positions)
         self._sim_config.apply_articulation_settings(
-            "dbalpha", get_prim_at_path(dbalpha.prim_path), self._sim_config.parse_actor_config("dbalpha")
+            "Dbalpha", get_prim_at_path(dbalpha.prim_path), self._sim_config.parse_actor_config("Dbalpha")
         )
-        joint_paths = ['Thorax/BC0', 'LegThoraxLeftLink1/CF0', 'LegThoraxLeftLink2/FT0', 
-                        'base_link/BC1', 'dbAlphaL2link1/CF1', 'dbAlphaL2link2/FT1',
-                        'base_link/BC2', 'LegAbdomenRearLeftLink1/CF2', 'LegAbdomenRearLeftLink2/FT2'
-                        'Thorax/BC3', 'LegThoraxRightLink1/CF3', 'LegThoraxRightLink2/FT3'
-                        'base_link/BC4', 'LegAbdomenMidRightLink1/CF4', 'LegAbdomenMidRightLink2/FT4'
-                        'base_link/BC5', 'LegAbdomenRearRightLink1/CF5', 'LegAbdomenRearRightLink2/FT5'
-                       ]
-
-        # for joint_path in joint_paths:
-        #     set_drive(f"{dbalpha.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
     def get_robot(self):
         return self._dbalphas
