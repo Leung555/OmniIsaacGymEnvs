@@ -36,7 +36,7 @@ class FeedForwardNet:
             for i, W in enumerate(self.weights):
                 # print('post : ', torch.einsum('ij, ijk -> ik', pre, W.float()).shape)
                 # print('bias : ', self.b[i].shape)
-                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float())) + self.b[i]
+                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float())  + self.b[i])
                 pre = post
 
         return post.detach()

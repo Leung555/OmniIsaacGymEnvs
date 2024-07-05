@@ -44,7 +44,7 @@ from rl_games.common import env_configurations, vecenv
 from rl_games.torch_runner import Runner
 
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
-from omniisaacgymenvs.ES.rbf_hebbian_neural_net import RBFHebbianNet
+from omniisaacgymenvs.ES.rbf_hebbian_neural_net_new import RBFHebbianNet
 from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
 from omniisaacgymenvs.ES.ES_classes import OpenES
 import timeit
@@ -157,15 +157,26 @@ def parse_hydra_configs(cfg: DictConfig):
 
     # Initialize model &
     if ARCHITECTURE_NAME == 'ff':
-        models = FeedForwardNet(POPSIZE, FF_ARCHITECTURE)
+        models = FeedForwardNet(POPSIZE, 
+                                FF_ARCHITECTURE)
         dir_path = 'runs_ES/'+TASK+'/ff/'
     elif ARCHITECTURE_NAME == 'rbf':
-        models = RBFNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 'loco')
+        models = RBFNet(popsize=POPSIZE,
+                        num_basis=RBF_ARCHITECTURE[0],
+                        num_output=RBF_ARCHITECTURE[1],
+                        robot=TASK,
+                        motor_encode='semi-indirect',
+                        )
         dir_path = 'runs_ES/'+TASK+'/rbf/'
     elif ARCHITECTURE_NAME == 'rbf_hebb':
-        models = RBFHebbianNet(POPSIZE, RBF_ARCHITECTURE[1], RBF_ARCHITECTURE[0], 
-                               HEBB_ARCHITECTURE, ARCHITECTURE_TYPE,
-                               HEBB_init_wnoise)
+        models = RBFHebbianNet(popsize=POPSIZE, 
+                               num_basis=RBF_ARCHITECTURE[0], 
+                               num_output=RBF_ARCHITECTURE[1], 
+                               ARCHITECTURE=HEBB_ARCHITECTURE, 
+                               mode=ARCHITECTURE_TYPE,
+                               hebb_init_wnoise=HEBB_init_wnoise,
+                               hebb_norm_mode='clip',
+                               robot=TASK)
         dir_path = 'runs_ES/'+TASK+'/rbf_hebb/'
         # Use train rbf params by default
         trained_data = pickle.load(open('runs_ES/'+TASK+'/rbf/'+train_rbf_path, 'rb'))
@@ -293,7 +304,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # print data on terminal
     print('TASK', TASK)
     print('model: ', ARCHITECTURE_NAME)
-    print('model size: ', FF_ARCHITECTURE)
+    print('model size: ', RBF_ARCHITECTURE)
     print('trainable parameters a model: ', models.get_n_params_a_model())
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
@@ -460,8 +471,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # rollout 
             for sim_step in range(EPISODE_LENGTH_TRAIN):
                 actions = models.forward(obs['obs'])
-                # print(obs['obs'][0])
-                # print(actions[0])
+                # print("observation", obs['obs'][0])
+                # print("action", actions[0])
                 obs, reward, done, info = env.step(
                     actions
                 )
