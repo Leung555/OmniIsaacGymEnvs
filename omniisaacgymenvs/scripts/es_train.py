@@ -186,7 +186,6 @@ def parse_hydra_configs(cfg: DictConfig):
 
     n_params_a_model = models.get_n_params_a_model()
 
-    
     # Initialize OpenES Evolutionary Strategy Optimizer
     solver = OpenES(n_params_a_model,
                     popsize=POPSIZE,
@@ -388,7 +387,7 @@ def parse_hydra_configs(cfg: DictConfig):
             if sim_step >= 0 and sim_step < 500:
                 # print('-{}-', sim_step)
                 # Multiply the first column by 0.5
-                # obs['obs'][:, 1:] *= 0.0
+                obs['obs'][:, :] *= 0.0
                 rew += reward/EPISODE_LENGTH_TEST*100
                 if sim_step == 499:
                     print(rew)

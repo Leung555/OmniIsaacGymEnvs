@@ -105,7 +105,7 @@ ES_params:
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf_hebb' # rbf, rbf_hebb, ff
+model: 'rbf' # rbf, rbf_hebb, ff
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [5, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [5, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
@@ -143,4 +143,4 @@ terrain:
   type: 'flat' #rough, slope
   slope_angle: 0.4
 randomization:
-  forces: [0.0, 0.0]
+  forces: [-5.0, 0.0]

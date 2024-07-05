@@ -35,17 +35,18 @@ class HebbianNet:
 
         """
         # initial weight uniform dist range (-0.1, 0.1)
+        self.architecture = sizes
         self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-init_noise, init_noise).cuda()
                             for i in range(len(sizes) - 1)]
-        self.architecture = sizes
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
                             for i in range(len(sizes) - 1)]
         # print('self.one_array', self.one_array)
-        self.A = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.B = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.C = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.D = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
-        self.lr = [torch.normal(0,.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
+
+        self.A = self.initialize_weights(popsize, sizes)
+        self.B = self.initialize_weights(popsize, sizes)
+        self.C = self.initialize_weights(popsize, sizes)
+        self.D = self.initialize_weights(popsize, sizes)
+        self.lr = self.initialize_weights(popsize, sizes)
 
         if norm_mode == 'var':
             self.WeightStand = var_norm
@@ -67,6 +68,8 @@ class HebbianNet:
 
         return post.float().detach()
 
+    def initialize_weights(self, popsize, sizes):
+        return [torch.normal(0, 0.01, (popsize, sizes[i], sizes[i + 1])) for i in range(len(sizes) - 1)]
 
     def hebbian_update(self, hid_num ,weights, pre, post, A, B, C, D, lr):
 
