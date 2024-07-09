@@ -59,7 +59,7 @@ recording_fps: 30
 recording_dir: ''
 
 wandb_activate: False
-wandb_group: 'clamp_mod_fl2f_imu+FC_randF'
+wandb_group: 'max_mod_fl2f_imu+FC_randF'
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
 wandb_project: 'my-awesome-Ant_ES_RBFHebb'
@@ -105,21 +105,23 @@ ES_params:
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf_ff' # rbf, rbf_hebb, ff, rbf_lstm
+model: 'rbf_hebb' # rbf, rbf_hebb, ff, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [15, 40, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
-LSTM_ARCHITECTURE: [15, 60, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
+LSTM_ARCHITECTURE: [15, 30, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
+HEBB_norm: 'max'
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
 
 # Test params rbf_hebb network
-train_ff_path: 'Ant_test_rbf_ff_1628_99_96.81457.pickle' # flat terrain
+train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
 train_rbf_path: 'Ant_test_rbf_80_99_156.2435.pickle' # flat terrain
-train_hebb_path: 'Ant_test_rbf_hebb_2900_99_115.3412.pickle'  # flat terrain, clamp
+train_hebb_path: 'Ant_test_rbf_hebb_2900_99_121.2727.pickle' # maxnorm
+# train_hebb_path: 'Ant_test_rbf_hebb_2900_99_115.3412.pickle'  # flat terrain, clamp
 train_lstm_path: 'Ant_test_rbf_lstm_5880_99_102.1769.pickle'  # flat terrain, clamp
 # train_hebb_path: 'Ant_test_rbf_hebb_17600_299_55.65674.pickle'  # flat terrain
 # train_rbf_path: 'Ant_test_rbf_80_299_117.0807.pickle' # rough terrain
@@ -145,4 +147,4 @@ terrain:
   type: 'flat' #rough, slope
   slope_angle: 0.4
 randomization:
-  forces: [-8.0, 0.0]
+  forces: [-12.0, -8.0]

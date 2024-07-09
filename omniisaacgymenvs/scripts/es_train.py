@@ -136,6 +136,7 @@ def parse_hydra_configs(cfg: DictConfig):
     HEBB_ARCHITECTURE = cfg.HEBB_ARCHITECTURE
     LSTM_ARCHITECTURE = cfg.LSTM_ARCHITECTURE
     HEBB_init_wnoise = cfg.HEBB_init_wnoise
+    HEBB_norm = cfg.HEBB_norm
     USE_TRAIN_RBF = cfg.USE_TRAIN_RBF
     USE_TRAIN_HEBB = cfg.USE_TRAIN_HEBB
     
@@ -155,6 +156,7 @@ def parse_hydra_configs(cfg: DictConfig):
     train_ff_path = cfg.train_ff_path
     train_rbf_path = cfg.train_rbf_path
     train_hebb_path = cfg.train_hebb_path
+    train_lstm_path = cfg.train_lstm_path
     collect_w_matrix = cfg.collect_w_matrix
 
     # Initialize model &
@@ -186,7 +188,7 @@ def parse_hydra_configs(cfg: DictConfig):
                                ARCHITECTURE=HEBB_ARCHITECTURE, 
                                mode=ARCHITECTURE_TYPE,
                                hebb_init_wnoise=HEBB_init_wnoise,
-                               hebb_norm_mode='clip',
+                               hebb_norm_mode=HEBB_norm,
                                robot=TASK)
         dir_path = 'runs_ES/'+TASK+'/rbf_hebb/'
         # Use train rbf params by default
@@ -235,6 +237,14 @@ def parse_hydra_configs(cfg: DictConfig):
             solver.set_mu(train_params)
         elif cfg.model == 'rbf_hebb':
             trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+        elif cfg.model == 'rbf_ff':
+            trained_data = pickle.load(open(dir_path+train_ff_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+        elif cfg.model == 'rbf_lstm':
+            trained_data = pickle.load(open(dir_path+train_lstm_path, 'rb'))
             train_params = trained_data[0].best_param()
             solver.set_mu(train_params)
 
@@ -414,7 +424,7 @@ def parse_hydra_configs(cfg: DictConfig):
             if sim_step >= 0 and sim_step < 500:
                 # print('-{}-', sim_step)
                 # Multiply the first column by 0.5
-                obs['obs'][:, :] *= 0.0
+                # obs['obs'][:, :] *= 0.0
                 rew += reward/EPISODE_LENGTH_TEST*100
                 if sim_step == 499:
                     print(rew)
@@ -468,7 +478,7 @@ def parse_hydra_configs(cfg: DictConfig):
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
-        np.save('analysis/weights/total_rewards.npy', total_rewards_cpu)
+        np.save('analysis/weights/total_rewards_od_rbf_hebb_max.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )

@@ -95,11 +95,11 @@ class LSTMs():
         with torch.no_grad():        
 
             x = torch.cat((inp.unsqueeze(-1), self.hidden_state), dim=1)
-            # print('inp', inp.shape)
-            # print('self.hidden_state', self.hidden_state.shape)
-            # print('x', x.shape)
-            # print('self.Wf', self.Wf.shape)
-            # print('self.Bf', self.Bf.shape)
+            print('inp', inp.shape)
+            print('self.hidden_state', self.hidden_state.shape)
+            print('x', x.shape)
+            print('self.Wf', self.Wf.shape)
+            print('self.Bf', self.Bf.shape)
 
             f = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wf.float(), x.float())+self.Bf.float())
             i = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wi.float(), x.float())+self.Bi.float())
@@ -195,15 +195,15 @@ class LSTMs():
         n_i, n_h, n_o = self.arch
 
         m = 0
-        self.Wf = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        self.Wf = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).reshape(self.popsize, n_i+n_h, n_h).cuda()
         m += (n_i+n_h)*n_h
-        self.Wi = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        self.Wi = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).reshape(self.popsize, n_i+n_h, n_h).cuda()
         m += (n_i+n_h)*n_h
-        self.Wc = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        self.Wc = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).reshape(self.popsize, n_i+n_h, n_h).cuda()
         m += (n_i+n_h)*n_h
-        self.Wo = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        self.Wo = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).reshape(self.popsize, n_i+n_h, n_h).cuda()
         m += (n_i+n_h)*n_h
-        self.Wout = flat_params[m:m+(n_i+n_h)*n_o].repeat(self.popsize, 1, 1).cuda()
+        self.Wout = flat_params[m:m+(n_i+n_h)*n_o].repeat(self.popsize, 1, 1).reshape(self.popsize, n_i+n_h, n_o).cuda()
         m += (n_i+n_h)*n_o
 
         self.Bf = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
@@ -214,3 +214,13 @@ class LSTMs():
         m += n_h
         self.Bo = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
         m += n_h
+
+        print('self.Wf: ', self.Wf.shape)
+        print('self.Wi: ', self.Wi.shape)
+        print('self.Wc: ', self.Wc.shape)
+        print('self.Wo: ', self.Wo.shape)
+        print('self.Wout: ', self.Wout.shape)
+        print('self.Bf: ', self.Bf.shape)
+        print('self.Bi: ', self.Bi.shape)
+        print('self.Bc: ', self.Bc.shape)
+        print('self.Bo: ', self.Bo.shape)
