@@ -85,7 +85,11 @@ class LSTMs():
         init_hidd = 0.1
         self.hidden_state = torch.Tensor(popsize, hid_size, 1).uniform_(-init_hidd, init_hidd).cuda()
         self.cell_state = torch.Tensor(popsize, hid_size, 1).uniform_(-init_hidd, init_hidd).cuda()
+
+        self.n_params = self.get_n_params_a_model()
+        init_params_b = torch.Tensor(popsize, self.n_params).uniform_(-init_hidd, init_hidd)
         print('init_hidd: ', init_hidd)
+        self.set_models_params(init_params_b.numpy())
 
     def forward(self, inp):
         with torch.no_grad():        
@@ -113,52 +117,24 @@ class LSTMs():
 
         return out.squeeze_()
 
-
-    def set_params(self, pop):
-        
-        ##population shape: (popsize, n_total_params)
-
-
-        n_i, n_h, n_o = self.arch
-        popsize = pop.shape[0]
-
-        m = 0
-        self.Wf = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
-        m += (n_i+n_h)*n_h
-        self.Wi = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
-        m += (n_i+n_h)*n_h
-        self.Wc = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
-        m += (n_i+n_h)*n_h
-        self.Wo = pop[:,m:m+(n_i+n_h)*n_h].reshape(popsize, n_i+n_h, n_h).cuda()
-        m += (n_i+n_h)*n_h
-        self.Wout = pop[:,m:m+(n_i+n_h)*n_o].reshape(popsize, n_i+n_h, n_o).cuda()
-        m += (n_i+n_h)*n_o
-
-        # print('self.Wf: ', self.Wf.shape)
-        # print('self.Wi: ', self.Wi.shape)
-        # print('self.Wc: ', self.Wc.shape)
-        # print('self.Wo: ', self.Wo.shape)
-        # print('self.Wout: ', self.Wout.shape)
-
-        self.Bf = pop[:,m:m+n_h].unsqueeze(-1).cuda()
-        m += n_h
-        self.Bi = pop[:,m:m+n_h].unsqueeze(-1).cuda()
-        m += n_h
-        self.Bc = pop[:,m:m+n_h].unsqueeze(-1).cuda()
-        m += n_h
-        self.Bo = pop[:,m:m+n_h].unsqueeze(-1).cuda()
-        m += n_h
-
-        # print('self.Bf: ', self.Bf.shape)
-        # print('self.Bi: ', self.Bi.shape)
-        # print('self.Bc: ', self.Bc.shape)
-        # print('self.Bo: ', self.Bo.shape)
-
-    def get_n_params(self):
+    def get_n_params_a_model(self):
         n_i, n_h, n_o = self.arch
         return (n_i+n_h)*n_h * 4 + (n_i+n_h)*n_o + n_h * 4
 
-    def get_params_a_model(self):
+    def get_models_params(self):
+        p = torch.cat([ self.Wf.flatten()]  
+                     +[ self.Wi.flatten()] 
+                     +[ self.Wc.flatten()]
+                     +[ self.Wo.flatten()]
+                     +[ self.Wout.flatten()]
+                     +[ self.Bf.flatten()]
+                     +[ self.Bi.flatten()]
+                     +[ self.Bc.flatten()]
+                     +[ self.Bo.flatten()]
+                     )
+        return p.flatten().cpu().numpy()
+
+    def get_a_model_params(self):
         p = torch.cat([ self.Wf[0].flatten()]  
                      +[ self.Wi[0].flatten()] 
                      +[ self.Wc[0].flatten()]
@@ -170,3 +146,71 @@ class LSTMs():
                      +[ self.Bo[0].flatten()]
                      )
         return p.flatten().cpu().numpy()
+    
+
+    def set_models_params(self, flat_params):
+        flat_params = torch.from_numpy(flat_params)
+        
+        ##population shape: (popsize, n_total_params)
+
+        n_i, n_h, n_o = self.arch
+
+        m = 0
+        self.Wf = flat_params[:,m:m+(n_i+n_h)*n_h].reshape(self.popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wi = flat_params[:,m:m+(n_i+n_h)*n_h].reshape(self.popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wc = flat_params[:,m:m+(n_i+n_h)*n_h].reshape(self.popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wo = flat_params[:,m:m+(n_i+n_h)*n_h].reshape(self.popsize, n_i+n_h, n_h).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wout = flat_params[:,m:m+(n_i+n_h)*n_o].reshape(self.popsize, n_i+n_h, n_o).cuda()
+        m += (n_i+n_h)*n_o
+
+        # print('self.Wf: ', self.Wf.shape)
+        # print('self.Wi: ', self.Wi.shape)
+        # print('self.Wc: ', self.Wc.shape)
+        # print('self.Wo: ', self.Wo.shape)
+        # print('self.Wout: ', self.Wout.shape)
+
+        self.Bf = flat_params[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bi = flat_params[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bc = flat_params[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+        self.Bo = flat_params[:,m:m+n_h].unsqueeze(-1).cuda()
+        m += n_h
+
+        # print('self.Bf: ', self.Bf.shape)
+        # print('self.Bi: ', self.Bi.shape)
+        # print('self.Bc: ', self.Bc.shape)
+        # print('self.Bo: ', self.Bo.shape)
+
+    def set_a_model_params(self, flat_params):
+        flat_params = torch.from_numpy(flat_params)
+       
+        ##population shape: (popsize, n_total_params)
+
+        n_i, n_h, n_o = self.arch
+
+        m = 0
+        self.Wf = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wi = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wc = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wo = flat_params[m:m+(n_i+n_h)*n_h].repeat(self.popsize, 1, 1).cuda()
+        m += (n_i+n_h)*n_h
+        self.Wout = flat_params[m:m+(n_i+n_h)*n_o].repeat(self.popsize, 1, 1).cuda()
+        m += (n_i+n_h)*n_o
+
+        self.Bf = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
+        m += n_h
+        self.Bi = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
+        m += n_h
+        self.Bc = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
+        m += n_h
+        self.Bo = flat_params[m:m+n_h].repeat(self.popsize, 1).unsqueeze(-1).cuda()
+        m += n_h

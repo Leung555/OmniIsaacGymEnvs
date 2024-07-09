@@ -2,16 +2,6 @@ import numpy as np
 import torch
 
 
-def WeightStand(w, eps=1e-5):
-
-    mean = torch.mean(input=w, dim=[1,2], keepdim=True)
-    var = torch.var(input=w, dim=[1,2], keepdim=True)
-
-    w = (w - mean) / torch.sqrt(var + eps)
-
-    return w
-
-
 class FeedForwardNet:
     def __init__(self, popsize, sizes):
         """

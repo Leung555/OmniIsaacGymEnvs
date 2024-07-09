@@ -45,7 +45,8 @@ from rl_games.torch_runner import Runner
 
 from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net_new import RBFHebbianNet
-from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
+from omniisaacgymenvs.ES.rbf_LSTM_neural_net import RBFLSTMNet
+from omniisaacgymenvs.ES.rbf_FF_neural_net import RBFFFNet
 from omniisaacgymenvs.ES.ES_classes import OpenES
 import timeit
 import pickle
@@ -102,12 +103,12 @@ def get_masked_sens_loss(ind_v):
 def get_masked_sens_loss_v2(ind_v):
     # Start with an empty tensor
     # mask IMU sensor and joint contact sensor
-    arr = torch.tensor([]).reshape(0, 5)  # Assuming you want to concatenate 2D tensors with 2 columns
+    arr = torch.tensor([]).reshape(0, 15)  # Assuming you want to concatenate 2D tensors with 2 columns
     for i in ind_v:
         if i == 0:
-            tensor = torch.Tensor([[1,0,0,0,0]])
+            tensor = torch.Tensor([[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0]])
         elif i == 1:
-            tensor = torch.Tensor([[0,1,1,1,1]])
+            tensor = torch.Tensor([[0,0,0,1,1,1,1,1,1,1,1,1,1,1,1]])
         # else:
         #     tensor = torch.Tensor([[1,1]])
         arr = torch.cat((arr, tensor))
@@ -133,6 +134,7 @@ def parse_hydra_configs(cfg: DictConfig):
     FF_ARCHITECTURE = cfg.FF_ARCHITECTURE
     RBF_ARCHITECTURE = cfg.RBF_ARCHITECTURE
     HEBB_ARCHITECTURE = cfg.HEBB_ARCHITECTURE
+    LSTM_ARCHITECTURE = cfg.LSTM_ARCHITECTURE
     HEBB_init_wnoise = cfg.HEBB_init_wnoise
     USE_TRAIN_RBF = cfg.USE_TRAIN_RBF
     USE_TRAIN_HEBB = cfg.USE_TRAIN_HEBB
@@ -156,10 +158,19 @@ def parse_hydra_configs(cfg: DictConfig):
     collect_w_matrix = cfg.collect_w_matrix
 
     # Initialize model &
-    if ARCHITECTURE_NAME == 'ff':
-        models = FeedForwardNet(POPSIZE, 
-                                FF_ARCHITECTURE)
-        dir_path = 'runs_ES/'+TASK+'/ff/'
+    if ARCHITECTURE_NAME == 'rbf_ff':
+        models = RBFFFNet(popsize=POPSIZE, 
+                            num_basis=RBF_ARCHITECTURE[0], 
+                            num_output=RBF_ARCHITECTURE[1], 
+                            ARCHITECTURE=FF_ARCHITECTURE,
+                            robot=TASK,
+                            )
+        dir_path = 'runs_ES/'+TASK+'/rbf_ff/'
+        # Use train rbf params by default
+        trained_data = pickle.load(open('runs_ES/'+TASK+'/rbf/'+train_rbf_path, 'rb'))
+        open_es_data = trained_data[0]
+        rbf_params = open_es_data.best_param() # best_mu
+        models.set_a_rbf_params(rbf_params)
     elif ARCHITECTURE_NAME == 'rbf':
         models = RBFNet(popsize=POPSIZE,
                         num_basis=RBF_ARCHITECTURE[0],
@@ -178,6 +189,19 @@ def parse_hydra_configs(cfg: DictConfig):
                                hebb_norm_mode='clip',
                                robot=TASK)
         dir_path = 'runs_ES/'+TASK+'/rbf_hebb/'
+        # Use train rbf params by default
+        trained_data = pickle.load(open('runs_ES/'+TASK+'/rbf/'+train_rbf_path, 'rb'))
+        open_es_data = trained_data[0]
+        rbf_params = open_es_data.best_param() # best_mu
+        models.set_a_rbf_params(rbf_params)
+    elif ARCHITECTURE_NAME == 'rbf_lstm':
+        models = RBFLSTMNet(popsize=POPSIZE, 
+                               num_basis=RBF_ARCHITECTURE[0], 
+                               num_output=RBF_ARCHITECTURE[1], 
+                               ARCHITECTURE=LSTM_ARCHITECTURE,
+                                robot=TASK,
+                                )
+        dir_path = 'runs_ES/'+TASK+'/rbf_lstm/'
         # Use train rbf params by default
         trained_data = pickle.load(open('runs_ES/'+TASK+'/rbf/'+train_rbf_path, 'rb'))
         open_es_data = trained_data[0]
@@ -334,9 +358,10 @@ def parse_hydra_configs(cfg: DictConfig):
         # print("obs['obs'].shape: ", obs['obs'].shape)
         
         # IMU + force sensors attached to the feet
-        imu = obs['obs'][:, 7:8]
+        imu = obs['obs'][:, 7:10]
         joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-        joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+        # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+        joint_forces = joint_forces.reshape(cfg.num_envs, 12)
         obs['obs'] = torch.cat((imu,
                             joint_forces),
                             dim = 1)
@@ -374,9 +399,10 @@ def parse_hydra_configs(cfg: DictConfig):
             # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
 
             # IMU + force sensors attached to the feet
-            imu = obs['obs'][:, 7:8]
+            imu = obs['obs'][:, 7:10]
             joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
             obs['obs'] = torch.cat((imu,
                                 joint_forces),
                                 dim = 1)
@@ -454,12 +480,16 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = solver.ask()
             models.set_models_params(solutions)
             obs = env.reset()
-            imu = obs['obs'][:, 7:8]
+            imu = obs['obs'][:, 7:10]
+            # print('imu: ', imu.shape)
             joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            # print('joint_forces: ', joint_forces.shape)
+            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
             obs['obs'] = torch.cat((imu,
                                 joint_forces),
                                 dim = 1)            
+            # print('obs[obs]: ', obs['obs'].shape)
             # print('observation: ', obs['obs'].shape)
 
             # Epoch rewards
@@ -484,9 +514,10 @@ def parse_hydra_configs(cfg: DictConfig):
                 # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
 
                 # IMU + force sensors attached to the feet
-                imu = obs['obs'][:, 7:8]
+                imu = obs['obs'][:, 7:10]
                 joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-                joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+                # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+                joint_forces = joint_forces.reshape(cfg.num_envs, 12)
                 obs['obs'] = torch.cat((imu,
                                     joint_forces),
                                     dim = 1)
