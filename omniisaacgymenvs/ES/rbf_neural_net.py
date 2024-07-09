@@ -13,6 +13,7 @@ class RBFNet:
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
+        self.architecture = [num_basis, num_output]
         self.popsize = popsize
 
         # Initialize CPG

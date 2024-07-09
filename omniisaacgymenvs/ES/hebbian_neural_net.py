@@ -89,14 +89,13 @@ class HebbianNet:
         return len(self.get_a_model_params())
     
     def get_models_params(self):
-        params = [self.A, self.B, self.C, self.D, self.lr]
-        p = torch.cat([param.flatten() for param in params])
+        all_params = [self.A, self.B, self.C, self.D, self.lr]
+        p = torch.cat([param.flatten() for params in all_params for param in params])
         return p.flatten().numpy()
 
     def get_a_model_params(self):
-        params = [self.A, self.B, self.C, self.D, self.lr]
-        print('self.A.shape: ', self.A[0].shape)
-        p = torch.cat([param[0].flatten() for param in params])
+        all_params = [self.A, self.B, self.C, self.D, self.lr]
+        p = torch.cat([param[0].flatten() for params in all_params for param in params])
         return p.flatten().numpy()
 
     def update_params(self, hebb_list, flat_params, start_index):
@@ -117,14 +116,14 @@ class HebbianNet:
 
     def set_models_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
-        # print('flat_params: ', flat_params)
+        # print('flat_params: ', flat_params.shape)
 
         m = 0
         m = self.update_params(self.A, flat_params, m)
         m = self.update_params(self.B, flat_params, m)
         m = self.update_params(self.C, flat_params, m)
         m = self.update_params(self.D, flat_params, m)
-        self.update_params(self.lr, flat_params, m)
+        m = self.update_params(self.lr, flat_params, m)
 
     def set_a_model_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
@@ -135,4 +134,4 @@ class HebbianNet:
         m = self.update_a_model_params(self.B, flat_params, m)
         m = self.update_a_model_params(self.C, flat_params, m)
         m = self.update_a_model_params(self.D, flat_params, m)
-        self.update_a_model_params(self.lr, flat_params, m)
+        m = self.update_a_model_params(self.lr, flat_params, m)

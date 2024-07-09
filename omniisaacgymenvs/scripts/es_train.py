@@ -303,8 +303,9 @@ def parse_hydra_configs(cfg: DictConfig):
     # print data on terminal
     print('TASK', TASK)
     print('model: ', ARCHITECTURE_NAME)
-    print('model size: ', RBF_ARCHITECTURE)
+    print('model size: ', models.architecture)
     print('trainable parameters a model: ', models.get_n_params_a_model())
+    print('trainable parameters a model: ', len(models.get_models_params()))
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
 
@@ -435,11 +436,13 @@ def parse_hydra_configs(cfg: DictConfig):
             np.save('analysis/weights/param_noFC_randF.npy', params)
             np.save('analysis/weights/action_noFC_randF.npy', action_arr)
             np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
+            np.save('analysis/weights/total_rewards.npy', rewards_arr)
 
         # update reward arrays to ES
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
+        np.save('analysis/weights/total_rewards.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )

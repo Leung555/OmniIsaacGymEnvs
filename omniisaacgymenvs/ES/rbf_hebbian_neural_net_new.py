@@ -10,7 +10,7 @@ class RBFHebbianNet:
                  popsize, 
                  num_basis, 
                  num_output, 
-                 ARCHITECTURE=[47, 64, 32, 18], 
+                 ARCHITECTURE, 
                  mode='parallel_Hebb',
                  hebb_init_wnoise=0.01,
                  hebb_norm_mode='clip',
@@ -18,6 +18,8 @@ class RBFHebbianNet:
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
+        self.architecture = ARCHITECTURE
+        
         num_legs, num_joints, motor_mapping = get_num_legjoints(robot)
 
         self.rbf_net = RBFNet(popsize=popsize,
