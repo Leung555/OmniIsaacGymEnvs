@@ -424,7 +424,7 @@ def parse_hydra_configs(cfg: DictConfig):
             if sim_step >= 0 and sim_step < 500:
                 # print('-{}-', sim_step)
                 # Multiply the first column by 0.5
-                # obs['obs'][:, :] *= 0.0
+                obs['obs'][:, 3:15] *= 0.0
                 rew += reward/EPISODE_LENGTH_TEST*100
                 if sim_step == 499:
                     print(rew)
@@ -478,7 +478,7 @@ def parse_hydra_configs(cfg: DictConfig):
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
-        np.save('analysis/weights/total_rewards_od_rbf_hebb_max.npy', total_rewards_cpu)
+        np.save('analysis/weights/total_rewards_Lfc_'+cfg.model+'.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )

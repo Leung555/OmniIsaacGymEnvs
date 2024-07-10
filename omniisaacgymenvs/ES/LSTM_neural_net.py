@@ -95,11 +95,11 @@ class LSTMs():
         with torch.no_grad():        
 
             x = torch.cat((inp.unsqueeze(-1), self.hidden_state), dim=1)
-            print('inp', inp.shape)
-            print('self.hidden_state', self.hidden_state.shape)
-            print('x', x.shape)
-            print('self.Wf', self.Wf.shape)
-            print('self.Bf', self.Bf.shape)
+            # print('inp', inp.shape)
+            # print('self.hidden_state', self.hidden_state.shape)
+            # print('x', x.shape)
+            # print('self.Wf', self.Wf.shape)
+            # print('self.Bf', self.Bf.shape)
 
             f = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wf.float(), x.float())+self.Bf.float())
             i = torch.sigmoid( torch.einsum('lbn,lbc->lnc', self.Wi.float(), x.float())+self.Bi.float())
