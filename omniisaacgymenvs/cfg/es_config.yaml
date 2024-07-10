@@ -109,7 +109,7 @@ model: 'rbf_lstm' # rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [15, 40, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
-LSTM_ARCHITECTURE: [15, 30, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
+LSTM_ARCHITECTURE: [60, 30, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
 HEBB_norm: 'max'
 RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
@@ -119,7 +119,7 @@ USE_TRAIN_PARAM: False
 
 # Test params rbf_hebb network
 train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
-train_rbf_path: 'Ant_test_rbf_80_99_156.2435.pickle' # flat terrain
+train_rbf_path: 'Ant_test_rbf_80_0_-133.959.pickle' # flat terrain
 train_hebb_path: 'Ant_test_rbf_hebb_2938_99_129.1072.pickle' # maxnorm
 # train_hebb_path: 'Ant_test_rbf_hebb_2938_99_123.4924.pickle'  # flat terrain, clamp
 train_lstm_path: 'Ant_test_rbf_lstm_5880_99_102.1769.pickle'  # flat terrain, clamp

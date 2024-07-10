@@ -364,17 +364,6 @@ def parse_hydra_configs(cfg: DictConfig):
         # sample params from ES and set model params
         models.set_a_model_params(train_params)
         obs = env.reset()
-        # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
-        # print("obs['obs'].shape: ", obs['obs'].shape)
-        
-        # IMU + force sensors attached to the feet
-        imu = obs['obs'][:, 7:10]
-        joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-        # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-        joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-        obs['obs'] = torch.cat((imu,
-                            joint_forces),
-                            dim = 1)
 
         # Epoch rewards
         total_rewards = torch.zeros(cfg.num_envs)
@@ -403,57 +392,6 @@ def parse_hydra_configs(cfg: DictConfig):
             obs, reward, done, info = env.step(
                 actions
             )
-            # Select observation
-
-            # Duplicate yaw angle
-            # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
-
-            # IMU + force sensors attached to the feet
-            imu = obs['obs'][:, 7:10]
-            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-            obs['obs'] = torch.cat((imu,
-                                joint_forces),
-                                dim = 1)
-            # ###################################
-            # randomize sensory loss of each individual
-            # obs['obs'] = obs['obs'] * v
-            ####################################
-
-            if sim_step >= 0 and sim_step < 500:
-                # print('-{}-', sim_step)
-                # Multiply the first column by 0.5
-                obs['obs'][:, 3:15] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 499:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 500 and sim_step < 1000:
-                # print('--{}--', sim_step)
-                # Multiply the first column by 0.5
-                obs['obs'][:, 0] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 999:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 1000 and sim_step < 1500:
-                # print('---{}---', sim_step)
-                obs['obs'][:, 1] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 1499:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 1500 and sim_step < 2000:
-                # obs['obs'][:, 0] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 1999:
-                    print(rew)
-                    rew *= 0.0
-            # if sim_step >= 2000 and sim_step < 2500:
-            #     obs['obs'][:, :] *= 0.0
-            # if sim_step >= 2500 and sim_step < 3000:
-            #     obs['obs'][:, :] *= 0.0
             
             total_rewards += reward/EPISODE_LENGTH_TEST*100
             if collect_w_matrix:
@@ -490,25 +428,10 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = solver.ask()
             models.set_models_params(solutions)
             obs = env.reset()
-            imu = obs['obs'][:, 7:10]
-            # print('imu: ', imu.shape)
-            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            # print('joint_forces: ', joint_forces.shape)
-            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-            obs['obs'] = torch.cat((imu,
-                                joint_forces),
-                                dim = 1)            
-            # print('obs[obs]: ', obs['obs'].shape)
-            # print('observation: ', obs['obs'].shape)
 
             # Epoch rewards
             total_rewards = torch.zeros(cfg.num_envs)
             total_rewards = total_rewards.cuda()
-
-            # Randomize sensory loss
-            rand = torch.randint(0, 2, (cfg.num_envs,))
-            v = get_masked_sens_loss_v2(rand).cuda()
 
             # rollout 
             for sim_step in range(EPISODE_LENGTH_TRAIN):
@@ -518,37 +441,7 @@ def parse_hydra_configs(cfg: DictConfig):
                 obs, reward, done, info = env.step(
                     actions
                 )
-                # Select observation
 
-                # Duplicate yaw angle
-                # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
-
-                # IMU + force sensors attached to the feet
-                imu = obs['obs'][:, 7:10]
-                joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-                # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-                joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-                obs['obs'] = torch.cat((imu,
-                                    joint_forces),
-                                    dim = 1)
-                # print('imu.shape: ', imu.shape)
-                # print('imu: ', imu)
-                # print('joint_forces.shape: ', joint_forces.shape)
-                # print('joint_forces: ', joint_forces)
-                # print('obs[obs]: ', obs['obs'])                
-                # ###################################
-                # randomize sensory loss of each individual
-                # option: 1
-                if sim_step > 100 and sim_step < 600:
-                    obs['obs'] = obs['obs'] * v
-                # option: 2 long_take
-                # if sim_step > 100 and sim_step < 600:
-                #     obs['obs'][:, 0] *= 0.05
-                # if sim_step > 600 and sim_step < 1100:
-                #     obs['obs'][:, 1] *= 0.05
-
-                ####################################
-                # print('observation: ', obs['obs'][:,0])
                 total_rewards += reward/EPISODE_LENGTH_TRAIN*100
 
 
