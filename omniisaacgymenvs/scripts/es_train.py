@@ -239,6 +239,7 @@ def parse_hydra_configs(cfg: DictConfig):
             trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
             train_params = trained_data[0].best_param()
             solver.set_mu(train_params)
+            print('train_params number: ', len(train_params))
         elif cfg.model == 'rbf_ff':
             trained_data = pickle.load(open(dir_path+train_ff_path, 'rb'))
             train_params = trained_data[0].best_param()
@@ -247,6 +248,7 @@ def parse_hydra_configs(cfg: DictConfig):
             trained_data = pickle.load(open(dir_path+train_lstm_path, 'rb'))
             train_params = trained_data[0].best_param()
             solver.set_mu(train_params)
+            print('train_params number: ', len(train_params))
 
     print('--- Used train RBF params ---')
     print('file_name: ', train_hebb_path)
@@ -424,7 +426,7 @@ def parse_hydra_configs(cfg: DictConfig):
             if sim_step >= 0 and sim_step < 500:
                 # print('-{}-', sim_step)
                 # Multiply the first column by 0.5
-                obs['obs'][:, 3:15] *= 0.0
+                obs['obs'][:, 0:3] *= 0.0
                 rew += reward/EPISODE_LENGTH_TEST*100
                 if sim_step == 499:
                     print(rew)
@@ -458,7 +460,7 @@ def parse_hydra_configs(cfg: DictConfig):
             total_rewards += reward/EPISODE_LENGTH_TEST*100
             if collect_w_matrix:
                 weight = models.get_hebb_weights()
-                param = models.get_hebb_params()
+                param = models.get_models_params()
                 w1.append(weight[0].cpu().numpy())
                 w2.append(weight[1].cpu().numpy())
                 params.append(param.cpu().numpy())
@@ -478,7 +480,7 @@ def parse_hydra_configs(cfg: DictConfig):
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
-        np.save('analysis/weights/total_rewards_Lfc_'+cfg.model+'.npy', total_rewards_cpu)
+        np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )

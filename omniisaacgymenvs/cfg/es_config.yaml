@@ -105,7 +105,7 @@ ES_params:
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf_lstm' # rbf, rbf_ff, rbf_hebb, rbf_lstm
+model: 'rbf_hebb' # rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [15, 40, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
@@ -121,8 +121,9 @@ USE_TRAIN_PARAM: False
 train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
 train_rbf_path: 'Ant_test_rbf_80_99_156.2435.pickle' # flat terrain
 train_hebb_path: 'Ant_test_rbf_hebb_2938_99_129.1072.pickle' # maxnorm
+# train_hebb_path: 'Ant_test_rbf_hebb_7868_99_128.0409.pickle'  # max large
 # train_hebb_path: 'Ant_test_rbf_hebb_2938_99_123.4924.pickle'  # flat terrain, clamp
-train_lstm_path: 'Ant_test_rbf_lstm_5880_99_102.1769.pickle'  # flat terrain, clamp
+train_lstm_path: 'Ant_test_rbf_lstm_5880_99_131.3515.pickle'  # flat terrain, clamp
 # train_hebb_path: 'Ant_test_rbf_hebb_17600_299_55.65674.pickle'  # flat terrain
 # train_rbf_path: 'Ant_test_rbf_80_299_117.0807.pickle' # rough terrain
 # train_hebb_path: '.5065.pickle'  # flat terrain
@@ -147,4 +148,4 @@ terrain:
   type: 'flat' #rough, slope
   slope_angle: 0.4
 randomization:
-  forces: [-12.0, -8.0]
+  forces: [-12.0, -8.0] #<-------- 
