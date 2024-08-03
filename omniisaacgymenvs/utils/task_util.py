@@ -31,6 +31,7 @@ def import_tasks():
     from omniisaacgymenvs.tasks.allegro_hand import AllegroHandTask
     from omniisaacgymenvs.tasks.ant import AntLocomotionTask
     from omniisaacgymenvs.tasks.ant_test import Ant_test_LocomotionTask
+    from omniisaacgymenvs.tasks.ant_simple_rew import Ant_sim_rew_LocomotionTask
     from omniisaacgymenvs.tasks.dbalpha import Dbalpha_LocomotionTask
     from omniisaacgymenvs.tasks.anymal import AnymalTask
     from omniisaacgymenvs.tasks.anymal_terrain import AnymalTerrainTask
@@ -58,6 +59,7 @@ def import_tasks():
         "AllegroHand": AllegroHandTask,
         "Ant": AntLocomotionTask,
         "Ant_test": Ant_test_LocomotionTask,
+        "Ant_sim_rew": Ant_sim_rew_LocomotionTask,
         "Anymal": AnymalTask,
         "AnymalTerrain": AnymalTerrainTask,
         "BallBalance": BallBalanceTask,
