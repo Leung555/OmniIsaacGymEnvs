@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Cartpole
+  - task: Ant_sim_rew
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 
@@ -105,7 +105,7 @@ ES_params:
   sigma_limit: 0.0001
 
 # model 
-model: 'rbf_hebb' # rbf, rbf_ff, rbf_hebb, rbf_lstm
+model: 'rbf' # rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [15, 40, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
