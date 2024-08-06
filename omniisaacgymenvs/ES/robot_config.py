@@ -10,6 +10,13 @@ def get_num_legjoints(robot):
             motor_mapping = torch.tensor([3, 6, 12, 15, 0, 9,
                                         4, 7, 13, 16, 1, 10, 
                                         5, 8, 14, 17, 2, 11])
+        if robot == 'Slalom':
+            num_legs = 9
+            num_joints = 3
+            motor_mapping = torch.tensor([3, 6, 12, 15, 0, 9,
+                                        4, 7, 13, 16, 1, 10, 
+                                        5, 8, 14, 17, 2, 11,
+                                        18,19,20,21,22,23,24,25,26])
         elif robot in Ant_env:
             num_legs = 4
             num_joints = 2
