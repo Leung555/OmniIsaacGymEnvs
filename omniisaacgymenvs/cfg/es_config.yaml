@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Ant_sim_rew
+  - task: Ant_test
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 

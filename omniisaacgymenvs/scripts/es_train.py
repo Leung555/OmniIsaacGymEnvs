@@ -492,17 +492,17 @@ def parse_hydra_configs(cfg: DictConfig):
             solutions = solver.ask()
             models.set_models_params(solutions)
             obs = env.reset()
-            imu = obs['obs'][:, 7:10]
-            # print('imu: ', imu.shape)
-            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            # print('joint_forces: ', joint_forces.shape)
-            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-            obs['obs'] = torch.cat((imu,
-                                joint_forces),
-                                dim = 1)            
-            # print('obs[obs]: ', obs['obs'].shape)
-            # print('observation: ', obs['obs'].shape)
+            # imu = obs['obs'][:, 7:10]
+            # # print('imu: ', imu.shape)
+            # joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+            # # print('joint_forces: ', joint_forces.shape)
+            # # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            # joint_forces = joint_forces.reshape(cfg.num_envs, 12)
+            # obs['obs'] = torch.cat((imu,
+            #                     joint_forces),
+            #                     dim = 1)            
+            print('obs[obs]: ', obs['obs'].shape)
+            print('observation: ', obs['obs'].shape)
 
             # Epoch rewards
             total_rewards = torch.zeros(cfg.num_envs)
@@ -526,13 +526,13 @@ def parse_hydra_configs(cfg: DictConfig):
                 # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
 
                 # IMU + force sensors attached to the feet
-                imu = obs['obs'][:, 7:10]
-                joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-                # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-                joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-                obs['obs'] = torch.cat((imu,
-                                    joint_forces),
-                                    dim = 1)
+                # imu = obs['obs'][:, 7:10]
+                # joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+                # # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+                # joint_forces = joint_forces.reshape(cfg.num_envs, 12)
+                # obs['obs'] = torch.cat((imu,
+                #                     joint_forces),
+                #                     dim = 1)
                 # print('imu.shape: ', imu.shape)
                 # print('imu: ', imu)
                 # print('joint_forces.shape: ', joint_forces.shape)
@@ -541,8 +541,8 @@ def parse_hydra_configs(cfg: DictConfig):
                 # ###################################
                 # randomize sensory loss of each individual
                 # option: 1
-                if sim_step > 100 and sim_step < 600:
-                    obs['obs'] = obs['obs'] * v
+                # if sim_step > 100 and sim_step < 600:
+                #     obs['obs'] = obs['obs'] * v
                 # option: 2 long_take
                 # if sim_step > 100 and sim_step < 600:
                 #     obs['obs'][:, 0] *= 0.05

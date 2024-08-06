@@ -37,14 +37,14 @@ from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, un
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
-from omniisaacgymenvs.robots.articulations.ant_test import Ant
+from omniisaacgymenvs.robots.articulations.slalom import Slalom
 from omniisaacgymenvs.tasks.shared.locomotion_simple_rew import LocomotionTask
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 
 from omni.isaac.core.prims import RigidPrimView
 
-class Ant_sim_rew_LocomotionTask(LocomotionTask):
+class SlalomLocomotionTask(LocomotionTask):
     def __init__(self, name, sim_config, env, offset=None) -> None:
 
         self.update_config(sim_config)
@@ -57,8 +57,8 @@ class Ant_sim_rew_LocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 60 # 60:original
-        self._num_actions = 8
+        self._num_observations = 117
+        self._num_actions = 27
         self._ant_positions = torch.tensor([0, 0, 0.5])
         self._terrainType = self._cfg['terrain']['type']
         LocomotionTask.update_config(self)
@@ -77,12 +77,12 @@ class Ant_sim_rew_LocomotionTask(LocomotionTask):
             RLTask.set_up_scene(self, scene, collision_filter_global_paths=["/World/terrain"])
         
         self._ants = ArticulationView(
-            prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/geckobotiv/robot_base", name="geckobotiv_view", reset_xform_properties=False
         )
         scene.add(self._ants)
 
         self.physics_ants = RigidPrimView(
-            prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_rigid_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/geckobotiv/robot_base", name="geckobotiv_rigid_view", reset_xform_properties=False
         )
         scene.add(self.physics_ants)
 
@@ -97,17 +97,17 @@ class Ant_sim_rew_LocomotionTask(LocomotionTask):
             self.get_terrain(create_mesh=False)
 
         RLTask.initialize_views(self, scene)
-        if scene.object_exists("ant_view"):
-            scene.remove_object("ant_view", registry_only=True)
+        if scene.object_exists("geckobotiv_view"):
+            scene.remove_object("geckobotiv_view", registry_only=True)
         self._ants = ArticulationView(
-            prim_paths_expr="/World/envs/.*/Ant/torso", name="ant_view", reset_xform_properties=False
+            prim_paths_expr="/World/envs/.*/geckobotiv/robot_base", name="geckobotiv_view", reset_xform_properties=False
         )
         scene.add(self._ants)
 
     def get_ant(self):
-        ant = Ant(prim_path=self.default_zero_env_path + "/Ant", name="Ant", translation=self._ant_positions)
+        ant = Slalom(prim_path=self.default_zero_env_path + "/geckobotiv", name="geckobotiv", translation=self._ant_positions)
         self._sim_config.apply_articulation_settings(
-            "Ant", get_prim_at_path(ant.prim_path), self._sim_config.parse_actor_config("Ant")
+            "geckobotiv", get_prim_at_path(ant.prim_path), self._sim_config.parse_actor_config("geckobotiv")
         )
 
 
@@ -121,7 +121,7 @@ class Ant_sim_rew_LocomotionTask(LocomotionTask):
         self.dof_limits_upper = dof_limits[0, :, 1].to(self._device)
         self.motor_effort_ratio = torch.ones_like(self.joint_gears, device=self._device)
 
-        force_links = ["front_left_foot", "front_right_foot", "left_back_foot", "right_back_foot"]
+        force_links = ["pad_lf", "pad_rf", "pad_lh", "pad_rh"]
         self._sensor_indices = torch.tensor(
             [self._ants._body_indices[j] for j in force_links], device=self._device, dtype=torch.long
         )

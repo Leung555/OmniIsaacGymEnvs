@@ -48,6 +48,7 @@ def import_tasks():
     from omniisaacgymenvs.tasks.ingenuity import IngenuityTask
     from omniisaacgymenvs.tasks.quadcopter import QuadcopterTask
     from omniisaacgymenvs.tasks.shadow_hand import ShadowHandTask
+    from omniisaacgymenvs.tasks.slalom import SlalomLocomotionTask
     from omniisaacgymenvs.tasks.target_following import TargetFollowingTask
 
     from omniisaacgymenvs.tasks.warp.ant import AntLocomotionTask as AntLocomotionTaskWarp
@@ -78,6 +79,7 @@ def import_tasks():
         "ShadowHand": ShadowHandTask,
         "ShadowHandOpenAI_FF": ShadowHandTask,
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
+        "Slalom": SlalomLocomotionTask,
         "TargetFollowing": TargetFollowingTask
     }
 
