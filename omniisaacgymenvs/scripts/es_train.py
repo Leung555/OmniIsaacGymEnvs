@@ -337,11 +337,11 @@ def parse_hydra_configs(cfg: DictConfig):
     torch.cuda.set_device(local_rank)
 
     # print data on terminal
-    print('TASK', TASK)
-    print('model: ', ARCHITECTURE_NAME)
-    print('model size: ', models.architecture)
-    print('trainable parameters a model: ', models.get_n_params_a_model())
-    print('trainable parameters a model: ', len(models.get_models_params()))
+    # print('TASK', TASK)
+    # print('model: ', ARCHITECTURE_NAME)
+    # print('model size: ', models.architecture)
+    # print('trainable parameters a model: ', models.get_n_params_a_model())
+    # print('trainable parameters a model: ', len(models.get_models_params()))
     print("Observation space is", env.observation_space)
     print("Action space is", env.action_space)
 
@@ -364,7 +364,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # Testing Loop ----------------------------------
     if TEST:
         # sample params from ES and set model params
-        models.set_a_model_params(train_params)
+        # models.set_a_model_params(train_params)
         obs = env.reset()
 
         # Epoch rewards
@@ -437,9 +437,12 @@ def parse_hydra_configs(cfg: DictConfig):
 
             # rollout 
             for sim_step in range(EPISODE_LENGTH_TRAIN):
+                # Random actions array for testing
+                # actions = torch.zeros(cfg.num_envs, env.action_space.shape[0])
                 actions = models.forward(obs['obs'])
-                # print("observation", obs['obs'][0])
-                # print("action", actions[0])
+
+                # print("observation", obs['obs'].shape)
+                # print("action", actions.shape)
                 obs, reward, done, info = env.step(
                     actions
                 )
@@ -450,7 +453,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # update reward arrays to ES
             total_rewards_cpu = total_rewards.cpu().numpy()
             fitlist = list(total_rewards_cpu)
-            solver.tell(fitlist)
+            # solver.tell(fitlist)
 
             fit_arr = np.array(fitlist)
 

@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Ant_test
+  - task: Dbalpha
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 
@@ -112,7 +112,7 @@ HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1
 LSTM_ARCHITECTURE: [60, 30, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
 HEBB_norm: 'max'
-RBF_ARCHITECTURE: [20, 8] # [num_kernel, num_output] dbAlpha 1 output
+RBF_ARCHITECTURE: [2, 24] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
