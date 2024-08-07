@@ -187,7 +187,7 @@ class LocomotionTask(RLTask):
             self.reset_idx(reset_env_ids)
 
         self.actions = actions.clone().to(self._device)
-        forces = self.actions * self.joint_gears * self.power_scale
+        # forces = self.actions * self.joint_gears * self.power_scale
 
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
 

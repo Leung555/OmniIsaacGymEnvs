@@ -56,7 +56,7 @@ class Slalom(Robot):
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
-            self._usd_path = "omniverse://localhost/Projects/slalom/slalom.usd"
+            self._usd_path = "omniverse://localhost/Projects/slalom/slalom2.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(

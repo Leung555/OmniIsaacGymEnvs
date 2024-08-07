@@ -59,7 +59,7 @@ class Dbalpha_LocomotionTask(LocomotionTask):
         self._task_cfg = sim_config.task_config
         self._num_observations = 102
         self._num_actions = 18
-        self._dbalpha_positions = torch.tensor([0, 0, 0.5])
+        self._dbalpha_positions = torch.tensor([0, 0, 0.0])
         # self._terrainType = self._cfg['terrain']['type']
         self._terrainType = 'flat'
         LocomotionTask.update_config(self)
@@ -135,4 +135,4 @@ class Dbalpha_LocomotionTask(LocomotionTask):
 @torch.jit.script
 def get_dof_at_limit_cost(obs_buf, num_dof):
     # type: (Tensor, int) -> Tensor
-    return torch.sum(obs_buf[:, 18 : 18 + num_dof] > 0.99, dim=-1)
+    return torch.sum(obs_buf[:, 12 : 12 + num_dof] > 0.99, dim=-1)
