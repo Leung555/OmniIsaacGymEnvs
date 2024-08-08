@@ -93,14 +93,17 @@ class RBFNet:
     
     def set_models_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params.shape)
 
         popsize, basis, num_out = self.weights.shape
         self.weights = flat_params.reshape(popsize, basis, num_out).cuda()
 
     def set_a_model_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params.shape)
 
         popsize, basis, num_out = self.weights.shape
+        # print('flat_params.repeat(popsize, 1, 1): ', flat_params.repeat(popsize, 1, 1).shape)
         self.weights = flat_params.repeat(popsize, 1, 1).reshape(popsize, basis, num_out).cuda()
             
     

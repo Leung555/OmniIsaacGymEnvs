@@ -38,7 +38,8 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.robots.articulations.dbalpha import Dbalpha
-from omniisaacgymenvs.tasks.shared.dbalpha_locomotion import LocomotionTask
+# from omniisaacgymenvs.tasks.shared.dbalpha_locomotion import LocomotionTask
+from omniisaacgymenvs.tasks.shared.locomotion_simple_rew import LocomotionTask
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 

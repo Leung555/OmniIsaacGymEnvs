@@ -200,14 +200,14 @@ class LocomotionTask(RLTask):
 
         # joint target position command
         # self.actions *= 180.0/math.pi
-        self._robots.set_joint_position_targets(self.actions, indices=indices)
+        self._robots.set_joint_efforts(self.actions, indices=indices)
 
         if self._dr_randomizer.randomize:
             self.dr.physics_view.step_randomization(reset_env_ids)
 
         # apply an external force to all the rigid bodies to the indicated values.
         # Since there are 5 envs, the inertias are repeated 5 times
-        self.physics_ants.apply_forces(self.forces, indices=indices)
+        # self.physics_ants.apply_forces(self.forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)

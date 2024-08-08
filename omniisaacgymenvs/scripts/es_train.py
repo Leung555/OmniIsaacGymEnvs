@@ -364,44 +364,44 @@ def parse_hydra_configs(cfg: DictConfig):
     # Testing Loop ----------------------------------
     if TEST:
         # sample params from ES and set model params
-        # models.set_a_model_params(train_params)
+        models.set_a_model_params(train_params)
         obs = env.reset()
         # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
         # print("obs['obs'].shape: ", obs['obs'].shape)
         
         # IMU + force sensors attached to the feet
-        imu = obs['obs'][:, 7:10]
-        joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-        # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-        joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-        obs['obs'] = torch.cat((imu,
-                            joint_forces),
-                            dim = 1)
+        # imu = obs['obs'][:, 7:10]
+        # joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+        # # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+        # joint_forces = joint_forces.reshape(cfg.num_envs, 12)
+        # obs['obs'] = torch.cat((imu,
+        #                     joint_forces),
+        #                     dim = 1)
 
         # Epoch rewards
         total_rewards = torch.zeros(cfg.num_envs)
         total_rewards = total_rewards.cuda()
         rew = torch.zeros(cfg.num_envs).cuda()
 
-        # collect_w_matrix
-        if collect_w_matrix:
-            w1 = []
-            w2 = []
-            params = []
-            action_arr = []
-            rewards_arr = []
-        prev_actions = torch.zeros(cfg.num_envs, env.action_space.shape[0]).cuda()
+        # # collect_w_matrix
+        # if collect_w_matrix:
+        #     w1 = []
+        #     w2 = []
+        #     params = []
+        #     action_arr = []
+        #     rewards_arr = []
+        # prev_actions = torch.zeros(cfg.num_envs, env.action_space.shape[0]).cuda()
 
-        # Randomize sensory loss
-        rand = torch.randint(0, 2, (cfg.num_envs,))
-        v = get_masked_sens_loss(rand).cuda()
+        # # Randomize sensory loss
+        # rand = torch.randint(0, 2, (cfg.num_envs,))
+        # v = get_masked_sens_loss(rand).cuda()
         
 
         # rollout 
         for sim_step in range(EPISODE_LENGTH_TEST):
             actions = models.forward(obs['obs'])
-            actions = 0.3*actions + 0.7*prev_actions
-            prev_actions = actions
+            # actions = 0.3*actions + 0.7*prev_actions
+            # prev_actions = actions
             obs, reward, done, info = env.step(
                 actions
             )
@@ -411,76 +411,76 @@ def parse_hydra_configs(cfg: DictConfig):
             # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
 
             # IMU + force sensors attached to the feet
-            imu = obs['obs'][:, 7:10]
-            joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
-            # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
-            joint_forces = joint_forces.reshape(cfg.num_envs, 12)
-            obs['obs'] = torch.cat((imu,
-                                joint_forces),
-                                dim = 1)
+            # imu = obs['obs'][:, 7:10]
+            # joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
+            # # joint_forces = torch.norm(joint_forces[:, :, 0:3], p=2, dim=2)
+            # joint_forces = joint_forces.reshape(cfg.num_envs, 12)
+            # obs['obs'] = torch.cat((imu,
+            #                     joint_forces),
+            #                     dim = 1)
             # ###################################
             # randomize sensory loss of each individual
             # obs['obs'] = obs['obs'] * v
             ####################################
 
-            if sim_step >= 0 and sim_step < 500:
-                # print('-{}-', sim_step)
-                # Multiply the first column by 0.5
-                obs['obs'][:, 0:3] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 499:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 500 and sim_step < 1000:
-                # print('--{}--', sim_step)
-                # Multiply the first column by 0.5
-                obs['obs'][:, 0] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 999:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 1000 and sim_step < 1500:
-                # print('---{}---', sim_step)
-                obs['obs'][:, 1] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 1499:
-                    print(rew)
-                    rew *= 0.0  
-            if sim_step >= 1500 and sim_step < 2000:
-                # obs['obs'][:, 0] *= 0.0
-                rew += reward/EPISODE_LENGTH_TEST*100
-                if sim_step == 1999:
-                    print(rew)
-                    rew *= 0.0
-            # if sim_step >= 2000 and sim_step < 2500:
-            #     obs['obs'][:, :] *= 0.0
-            # if sim_step >= 2500 and sim_step < 3000:
-            #     obs['obs'][:, :] *= 0.0
+            # if sim_step >= 0 and sim_step < 500:
+            #     # print('-{}-', sim_step)
+            #     # Multiply the first column by 0.5
+            #     obs['obs'][:, 0:3] *= 0.0
+            #     rew += reward/EPISODE_LENGTH_TEST*100
+            #     if sim_step == 499:
+            #         print(rew)
+            #         rew *= 0.0  
+            # if sim_step >= 500 and sim_step < 1000:
+            #     # print('--{}--', sim_step)
+            #     # Multiply the first column by 0.5
+            #     obs['obs'][:, 0] *= 0.0
+            #     rew += reward/EPISODE_LENGTH_TEST*100
+            #     if sim_step == 999:
+            #         print(rew)
+            #         rew *= 0.0  
+            # if sim_step >= 1000 and sim_step < 1500:
+            #     # print('---{}---', sim_step)
+            #     obs['obs'][:, 1] *= 0.0
+            #     rew += reward/EPISODE_LENGTH_TEST*100
+            #     if sim_step == 1499:
+            #         print(rew)
+            #         rew *= 0.0  
+            # if sim_step >= 1500 and sim_step < 2000:
+            #     # obs['obs'][:, 0] *= 0.0
+            #     rew += reward/EPISODE_LENGTH_TEST*100
+            #     if sim_step == 1999:
+            #         print(rew)
+            #         rew *= 0.0
+            # # if sim_step >= 2000 and sim_step < 2500:
+            # #     obs['obs'][:, :] *= 0.0
+            # # if sim_step >= 2500 and sim_step < 3000:
+            # #     obs['obs'][:, :] *= 0.0
             
             total_rewards += reward/EPISODE_LENGTH_TEST*100
-            if collect_w_matrix:
-                weight = models.get_hebb_weights()
-                param = models.get_models_params()
-                w1.append(weight[0].cpu().numpy())
-                w2.append(weight[1].cpu().numpy())
-                params.append(param.cpu().numpy())
-                action_arr.append(actions.cpu().numpy())
-                rewards_arr.append(reward.cpu().numpy())
+        #     if collect_w_matrix:
+        #         weight = models.get_hebb_weights()
+        #         param = models.get_models_params()
+        #         w1.append(weight[0].cpu().numpy())
+        #         w2.append(weight[1].cpu().numpy())
+        #         params.append(param.cpu().numpy())
+        #         action_arr.append(actions.cpu().numpy())
+        #         rewards_arr.append(reward.cpu().numpy())
         
-        # save weight matrix
-        if collect_w_matrix:
-            np.save('analysis/weights/w1_noFC_randF.npy'   , w1)
-            np.save('analysis/weights/w2_noFC_randF.npy'   , w2)
-            np.save('analysis/weights/param_noFC_randF.npy', params)
-            np.save('analysis/weights/action_noFC_randF.npy', action_arr)
-            np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
-            np.save('analysis/weights/total_rewards.npy', rewards_arr)
+        # # save weight matrix
+        # if collect_w_matrix:
+        #     np.save('analysis/weights/w1_noFC_randF.npy'   , w1)
+        #     np.save('analysis/weights/w2_noFC_randF.npy'   , w2)
+        #     np.save('analysis/weights/param_noFC_randF.npy', params)
+        #     np.save('analysis/weights/action_noFC_randF.npy', action_arr)
+        #     np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
+        #     np.save('analysis/weights/total_rewards.npy', rewards_arr)
 
         # update reward arrays to ES
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
-        np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
+        # np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )
@@ -501,8 +501,8 @@ def parse_hydra_configs(cfg: DictConfig):
             # obs['obs'] = torch.cat((imu,
             #                     joint_forces),
             #                     dim = 1)            
-            print('obs[obs]: ', obs['obs'].shape)
-            print('observation: ', obs['obs'].shape)
+            # print('obs[obs]: ', obs['obs'].shape)
+            # print('observation: ', obs['obs'].shape)
 
             # Epoch rewards
             total_rewards = torch.zeros(cfg.num_envs)
@@ -560,7 +560,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # update reward arrays to ES
             total_rewards_cpu = total_rewards.cpu().numpy()
             fitlist = list(total_rewards_cpu)
-            # solver.tell(fitlist)
+            solver.tell(fitlist)
 
             fit_arr = np.array(fitlist)
 
