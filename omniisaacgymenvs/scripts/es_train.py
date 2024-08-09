@@ -364,7 +364,10 @@ def parse_hydra_configs(cfg: DictConfig):
     # Testing Loop ----------------------------------
     if TEST:
         # sample params from ES and set model params
-        # models.set_a_model_params(train_params)
+        solutions = solver.ask()
+        # models.set_models_params(solutions)        
+        
+        models.set_a_model_params(train_params)
         obs = env.reset()
 
         # Epoch rewards
@@ -372,53 +375,53 @@ def parse_hydra_configs(cfg: DictConfig):
         total_rewards = total_rewards.cuda()
         rew = torch.zeros(cfg.num_envs).cuda()
 
-        # collect_w_matrix
-        if collect_w_matrix:
-            w1 = []
-            w2 = []
-            params = []
-            action_arr = []
-            rewards_arr = []
-        prev_actions = torch.zeros(cfg.num_envs, env.action_space.shape[0]).cuda()
+        # # collect_w_matrix
+        # if collect_w_matrix:
+        #     w1 = []
+        #     w2 = []
+        #     params = []
+        #     action_arr = []
+        #     rewards_arr = []
+        # prev_actions = torch.zeros(cfg.num_envs, env.action_space.shape[0]).cuda()
 
-        # Randomize sensory loss
-        rand = torch.randint(0, 2, (cfg.num_envs,))
-        v = get_masked_sens_loss(rand).cuda()
+        # # Randomize sensory loss
+        # rand = torch.randint(0, 2, (cfg.num_envs,))
+        # v = get_masked_sens_loss(rand).cuda()
         
 
         # rollout 
         for sim_step in range(EPISODE_LENGTH_TEST):
             actions = models.forward(obs['obs'])
-            actions = 0.3*actions + 0.7*prev_actions
-            prev_actions = actions
+            # actions = 0.3*actions + 0.7*prev_actions
+            # prev_actions = actions
             obs, reward, done, info = env.step(
                 actions
             )
             
             total_rewards += reward/EPISODE_LENGTH_TEST*100
-            if collect_w_matrix:
-                weight = models.get_hebb_weights()
-                param = models.get_models_params()
-                w1.append(weight[0].cpu().numpy())
-                w2.append(weight[1].cpu().numpy())
-                params.append(param.cpu().numpy())
-                action_arr.append(actions.cpu().numpy())
-                rewards_arr.append(reward.cpu().numpy())
+        #     if collect_w_matrix:
+        #         weight = models.get_hebb_weights()
+        #         param = models.get_models_params()
+        #         w1.append(weight[0].cpu().numpy())
+        #         w2.append(weight[1].cpu().numpy())
+        #         params.append(param.cpu().numpy())
+        #         action_arr.append(actions.cpu().numpy())
+        #         rewards_arr.append(reward.cpu().numpy())
         
-        # save weight matrix
-        if collect_w_matrix:
-            np.save('analysis/weights/w1_noFC_randF.npy'   , w1)
-            np.save('analysis/weights/w2_noFC_randF.npy'   , w2)
-            np.save('analysis/weights/param_noFC_randF.npy', params)
-            np.save('analysis/weights/action_noFC_randF.npy', action_arr)
-            np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
-            np.save('analysis/weights/total_rewards.npy', rewards_arr)
+        # # save weight matrix
+        # if collect_w_matrix:
+        #     np.save('analysis/weights/w1_noFC_randF.npy'   , w1)
+        #     np.save('analysis/weights/w2_noFC_randF.npy'   , w2)
+        #     np.save('analysis/weights/param_noFC_randF.npy', params)
+        #     np.save('analysis/weights/action_noFC_randF.npy', action_arr)
+        #     np.save('analysis/weights/rewards_noFC_randF.npy', rewards_arr)
+        #     np.save('analysis/weights/total_rewards.npy', rewards_arr)
 
         # update reward arrays to ES
         total_rewards_cpu = total_rewards.cpu().numpy()
         fitlist = list(total_rewards_cpu)
         fit_arr = np.array(fitlist)
-        np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
+        # np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
             "best", fit_arr.max(), )
@@ -453,7 +456,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # update reward arrays to ES
             total_rewards_cpu = total_rewards.cpu().numpy()
             fitlist = list(total_rewards_cpu)
-            # solver.tell(fitlist)
+            solver.tell(fitlist)
 
             fit_arr = np.array(fitlist)
 

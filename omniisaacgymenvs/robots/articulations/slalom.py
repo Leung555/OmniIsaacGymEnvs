@@ -66,12 +66,16 @@ class Slalom(Robot):
             orientation=orientation,
             articulation_controller=None,
         )
-        # joint_paths = ['joints/front_left_leg',   'joints/left_back_leg', 
-        #                'joints/front_left_foot',  'joints/left_back_foot',
-        #                'joints/front_right_leg',  'joints/right_back_leg',
-        #                'joints/front_right_foot', 'joints/right_back_foot',
-        #                ]
-        # for joint_path in joint_paths:
-        #     # print('joint_path111: ', f"{self.prim_path[:-6]}/{joint_path}")
-        #     set_drive(f"{self.prim_path[:-6]}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+        
+        joint_paths =  ['robot_base/joint1_lf', 'robot_base/joint1_rf', 'link_body4/joint1_lh', 'link_body4/joint1_rh', 
+                       'motor2_lf/joint2_lf', 'motor2_rf/joint2_rf', 'motor2_lh/joint2_lh', 'motor2_rh/joint2_rh', 
+                       'motor3_lf/joint3_lf', 'motor3_rf/joint3_rf', 'motor3_lh/joint3_lh', 'motor3_rh/joint3_rh', 
+                       'motor4_lf/joint4_lf', 'motor4_rf/joint4_rf', 'motor4_lh/joint4_lh', 'motor4_rh/joint4_rh', 
+                       'link4_lf/Leg4_ball1', 'link4_rf/Leg1_ball1', 'link4_lh/Leg3_ball1', 'Gecko_link4Leg2/Leg2_ball1', 
+                       'Leg4_ball1_link/Leg4_ball2', 'Leg1_ball1_link/Leg1_ball2', 'Leg3_ball1_link/Leg3_ball2', 'Leg2_ball1_link/Leg2_ball2',
+                       ]
+        
+        for joint_path in joint_paths:
+            # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
+            set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 

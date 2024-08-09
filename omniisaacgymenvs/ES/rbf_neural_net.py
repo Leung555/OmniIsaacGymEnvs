@@ -38,7 +38,7 @@ class RBFNet:
         # initilize motor encoding type (weights, CPGs' phase)
         self.motor_encode = motor_encode # 'direct', 'indirect'
         if self.motor_encode == 'semi-indirect':
-            self.weights = torch.Tensor(popsize, num_basis, num_output//2).uniform_(-0.2, 0.2).cuda()
+            self.weights = torch.Tensor(popsize, num_basis, num_output//2).uniform_(-0.5, 0.5).cuda()
             # Initilize phase of each CPG
             phase_2 = int(self.period//2)
             self.phase = torch.Tensor([0, phase_2])
@@ -93,14 +93,17 @@ class RBFNet:
     
     def set_models_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params.shape)
 
         popsize, basis, num_out = self.weights.shape
         self.weights = flat_params.reshape(popsize, basis, num_out).cuda()
 
     def set_a_model_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
+        # print('flat_params: ', flat_params.shape)
 
         popsize, basis, num_out = self.weights.shape
+        # print('flat_params.repeat(popsize, 1, 1): ', flat_params.repeat(popsize, 1, 1).shape)
         self.weights = flat_params.repeat(popsize, 1, 1).reshape(popsize, basis, num_out).cuda()
             
     

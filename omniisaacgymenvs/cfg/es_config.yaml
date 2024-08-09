@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Dbalpha
+  - task: Slalom
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 
@@ -84,9 +84,9 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 100           # <----------------------------------
-SAVE_EVERY: 100        # <----------------------------------
-EPISODE_LENGTH_TRAIN: 800   # <----------------------------------
+EPOCHS: 50           # <----------------------------------
+SAVE_EVERY: 50        # <----------------------------------
+EPISODE_LENGTH_TRAIN: 500   # <----------------------------------
 EPISODE_LENGTH_TEST: 500   # <----------------------------------
 resume_train: False
 
@@ -97,7 +97,7 @@ ES_params:
   # POPSIZE: 1024 # workstation (500)
   rank_fitness: True
   antithetic: True
-  learning_rate: 0.1 # 0.05:RBF
+  learning_rate: 0.05 # 0.05:RBF
   learning_rate_decay: 0.995 # 0.9999
   sigma_init: 0.1 # 0.1
   sigma_decay: 0.999
@@ -112,22 +112,29 @@ HEBB_ARCHITECTURE: [15, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1
 LSTM_ARCHITECTURE: [60, 30, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
 HEBB_norm: 'max'
-RBF_ARCHITECTURE: [2, 24] # [num_kernel, num_output] dbAlpha 1 output
+RBF_ARCHITECTURE: [20, 24] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
 
-# Test params rbf_hebb network
+# # Test params rbf_hebb network
+# train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
+# train_rbf_path: 'Ant_80_199_139.4822.pickle' # flat terrain
+# train_hebb_path: 'Ant_test_rbf_hebb_2938_99_129.1072.pickle' # maxnorm
+# # train_hebb_path: 'Ant_test_rbf_hebb_7868_99_128.0409.pickle'  # max large
+# # train_hebb_path: 'Ant_test_rbf_hebb_2938_99_123.4924.pickle'  # flat terrain, clamp
+# train_lstm_path: 'Ant_test_rbf_lstm_5880_99_131.3515.pickle'  # flat terrain, clamp
+# # train_hebb_path: 'Ant_test_rbf_hebb_17600_299_55.65674.pickle'  # flat terrain
+# # train_rbf_path: 'Ant_test_rbf_80_299_117.0807.pickle' # rough terrain
+# # train_hebb_path: '.5065.pickle'  # flat terrain
+collect_w_matrix: False
+
+# Dbalpha trained weight
 train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
 train_rbf_path: 'Ant_test_rbf_80_0_-133.959.pickle' # flat terrain
 train_hebb_path: 'Ant_test_rbf_hebb_2938_99_129.1072.pickle' # maxnorm
-# train_hebb_path: 'Ant_test_rbf_hebb_7868_99_128.0409.pickle'  # max large
-# train_hebb_path: 'Ant_test_rbf_hebb_2938_99_123.4924.pickle'  # flat terrain, clamp
 train_lstm_path: 'Ant_test_rbf_lstm_5880_99_131.3515.pickle'  # flat terrain, clamp
-# train_hebb_path: 'Ant_test_rbf_hebb_17600_299_55.65674.pickle'  # flat terrain
-# train_rbf_path: 'Ant_test_rbf_80_299_117.0807.pickle' # rough terrain
-# train_hebb_path: '.5065.pickle'  # flat terrain
-collect_w_matrix: False
+
 
 # Custom Terrain
 terrain:
@@ -148,4 +155,4 @@ terrain:
   type: 'flat' #rough, slope
   slope_angle: 0.4
 randomization:
-  forces: [-12.0, -8.0] #<-------- 
+  forces: [0.0, 0.0] #<-------- 

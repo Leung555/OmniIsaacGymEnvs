@@ -207,7 +207,7 @@ class LocomotionTask(RLTask):
 
         # apply an external force to all the rigid bodies to the indicated values.
         # Since there are 5 envs, the inertias are repeated 5 times
-        self.physics_ants.apply_forces(self.forces, indices=indices)
+        # self.physics_ants.apply_forces(self.forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
