@@ -45,9 +45,9 @@ class RBFNet:
 
         step = self.num_joints
         self.indices_L = [(0, i * step) if i % 2 == 0 else (1, i * step) 
-                          for i in range(self.num_legs)]
+                          for i in range(self.num_legs//2)]
         self.indices_R = [(1, i * step) if i % 2 == 0 else (0, i * step) 
-                          for i in range(self.num_legs)]
+                          for i in range(self.num_legs//2)]
 
 
     def forward(self, pre):
@@ -63,9 +63,10 @@ class RBFNet:
             outL, outR = self.concat_slices([out_p1, out_p2])
             # print('outR: ', outR)
             post = torch.concat([outL, outR], dim=1)
+            # print('post: ', post.shape)
             post = torch.index_select(post, 1, self.indices)
             # print('post: ', post)
-            # print('post: ', post.shape)
+            # print('post index: ', post.shape)
 
             self.phase = self.phase + 1
             self.phase = torch.where(self.phase > self.period, 0, self.phase) 
