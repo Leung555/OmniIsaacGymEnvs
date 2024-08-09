@@ -200,7 +200,7 @@ class LocomotionTask(RLTask):
 
         # joint target position command
         # self.actions *= 180.0/math.pi
-        self._robots.set_joint_efforts(self.actions, indices=indices)
+        self._robots.set_joint_position_targets(self.actions, indices=indices)
 
         if self._dr_randomizer.randomize:
             self.dr.physics_view.step_randomization(reset_env_ids)

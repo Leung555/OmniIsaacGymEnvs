@@ -364,6 +364,9 @@ def parse_hydra_configs(cfg: DictConfig):
     # Testing Loop ----------------------------------
     if TEST:
         # sample params from ES and set model params
+        solutions = solver.ask()
+        # models.set_models_params(solutions)        
+        
         models.set_a_model_params(train_params)
         obs = env.reset()
         # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
