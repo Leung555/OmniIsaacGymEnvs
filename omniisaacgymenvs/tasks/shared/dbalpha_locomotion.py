@@ -71,8 +71,8 @@ class LocomotionTask(RLTask):
         self.curriculum = self._task_cfg["env"]["terrain"]["curriculum"]
         self.simulation_step = 0
         self.constant = 1.0
-        self.rand_forces_min = 0
-        self.rand_forces_max = 0
+        self.rand_forces_min = self._cfg['randomization']['forces'][0]
+        self.rand_forces_max = self._cfg['randomization']['forces'][1]
 
     @abstractmethod
     def set_up_scene(self, scene) -> None:
@@ -207,7 +207,7 @@ class LocomotionTask(RLTask):
 
         # apply an external force to all the rigid bodies to the indicated values.
         # Since there are 5 envs, the inertias are repeated 5 times
-        # self.physics_dbalphas.apply_forces(self.forces, indices=indices)
+        # self.physics_ants.apply_forces(self.forces, indices=indices)
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -219,7 +219,7 @@ class LocomotionTask(RLTask):
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         root_vel = torch.zeros((num_resets, 6), device=self._device)
-        root_pos[:, 2] += 0.5 # move robot up in z-axis
+        # root_pos[:, 2] += 0.5 # move robot up in z-axis
         # move robot to a new level in y-axis
         
         # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 0, 1)*15
@@ -406,35 +406,50 @@ def calculate_metrics(
 ):
     # type: (Tensor, Tensor, float, float, Tensor, Tensor, float, float, float, float, int, Tensor, float, Tensor) -> Tensor
 
-    heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight
-    heading_reward = torch.where(obs_buf[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf[:, 11] / 0.8)
+    # Simple reward scheme IROS2024 ##############
+    # roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
+    
+    rew_lin_vel_x = obs_buf[:, 1] * 2.0
+    # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
+    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -1.0)
+    height_reward = torch.where(abs(obs_buf[:, 0] + 0.08) < 0.04 , 0.0, -1.0)
+    # print('height : ', obs_buf[:, 0])
+    # print('height_reward : ', height_reward)
+    # print('yaw:  ', obs_buf[:, 7])
+    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , -abs(obs_buf[:, 7])/0.45, -1.0)
 
-    # aligning up axis of robot and environment
-    up_reward = torch.zeros_like(heading_reward)
-    up_reward = torch.where(obs_buf[:, 10] > 0.93, up_reward + up_weight, up_reward)
+    total_reward = rew_lin_vel_x + rew_orient + rew_yaw + height_reward #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
+    ###############################################
 
-    # energy penalty for movement
-    actions_cost = torch.sum(actions**2, dim=-1)
-    electricity_cost = torch.sum(
-        torch.abs(actions * obs_buf[:, 12 + num_dof : 12 + num_dof * 2]) * motor_effort_ratio.unsqueeze(0), dim=-1
-    )
+    # heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight
+    # heading_reward = torch.where(obs_buf[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf[:, 11] / 0.8)
 
-    # reward for duration of staying alive
-    alive_reward = torch.ones_like(potentials) * alive_reward_scale
-    progress_reward = potentials - prev_potentials
+    # # aligning up axis of robot and environment
+    # up_reward = torch.zeros_like(heading_reward)
+    # up_reward = torch.where(obs_buf[:, 10] > 0.93, up_reward + up_weight, up_reward)
 
-    total_reward = (
-        progress_reward
-        + alive_reward
-        + up_reward
-        + heading_reward
-        - actions_cost_scale * actions_cost
-        - energy_cost_scale * electricity_cost
-        - dof_at_limit_cost
-    )
+    # # energy penalty for movement
+    # actions_cost = torch.sum(actions**2, dim=-1)
+    # electricity_cost = torch.sum(
+    #     torch.abs(actions * obs_buf[:, 12 + num_dof : 12 + num_dof * 2]) * motor_effort_ratio.unsqueeze(0), dim=-1
+    # )
+
+    # # reward for duration of staying alive
+    # alive_reward = torch.ones_like(potentials) * alive_reward_scale
+    # progress_reward = potentials - prev_potentials
+
+    # total_reward = (
+    #     progress_reward
+    #     # + alive_reward
+    #     + up_reward
+    #     + heading_reward
+    #     # - actions_cost_scale * actions_cost
+    #     # - energy_cost_scale * electricity_cost
+    #     # - dof_at_limit_cost
+    # )
 
     # adjust reward for fallen agents
-    total_reward = torch.where(
-        obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
-    )
+    # total_reward = torch.where(
+    #     obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
+    # )
     return total_reward

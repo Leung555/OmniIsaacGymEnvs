@@ -55,9 +55,9 @@ class Dbalpha(Robot):
             assets_root_path = get_assets_root_path()
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
-            # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
-            self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha.usd"
-            # self._usd_path = "omniverse://localhost/Projects/dbalpha/dbAlpha_isaac_test_split_fixTA_instanciable3_5.usd"
+            # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha.usd"
+            self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op.usd"
+            # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op_minjrange.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -78,5 +78,5 @@ class Dbalpha(Robot):
 
         for joint_path in joint_paths:
             # print('joint_path: ', f"{self.prim_path}/{joint_path}")
-            set_drive(f"{self.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
+            set_drive(f"{self.prim_path}/{joint_path}", "angular", "position", 0, 1, 0.1, 4.1)
 

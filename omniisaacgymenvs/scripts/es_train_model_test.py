@@ -47,9 +47,6 @@ from omniisaacgymenvs.ES.rbf_neural_net import RBFNet
 from omniisaacgymenvs.ES.rbf_hebbian_neural_net_new import RBFHebbianNet
 from omniisaacgymenvs.ES.rbf_LSTM_neural_net import RBFLSTMNet
 from omniisaacgymenvs.ES.rbf_FF_neural_net import RBFFFNet
-from omniisaacgymenvs.ES.feedforward_neural_net_gpu import FeedForwardNet
-from omniisaacgymenvs.ES.hebbian_neural_net import HebbianNet
-from omniisaacgymenvs.ES.LSTM_neural_net import LSTMs
 from omniisaacgymenvs.ES.ES_classes import OpenES
 import timeit
 import pickle
@@ -163,32 +160,7 @@ def parse_hydra_configs(cfg: DictConfig):
     collect_w_matrix = cfg.collect_w_matrix
 
     # Initialize model &
-    if ARCHITECTURE_NAME == 'ff':
-        models = FeedForwardNet(popsize=POPSIZE,
-                                sizes=FF_ARCHITECTURE,
-                                )
-        dir_path = 'runs_ES/'+TASK+'/ff/'
-    elif ARCHITECTURE_NAME == 'hebb':
-        models = HebbianNet(popsize=POPSIZE, 
-                            sizes=HEBB_ARCHITECTURE,
-                            init_noise=HEBB_init_wnoise,
-                            norm_mode=HEBB_norm,
-                            )
-        dir_path = 'runs_ES/'+TASK+'/hebb/'
-    elif ARCHITECTURE_NAME == 'lstm':
-        models = LSTMs(popsize=POPSIZE, 
-                    arch=LSTM_ARCHITECTURE,
-                    )
-        dir_path = 'runs_ES/'+TASK+'/lstm/'
-    elif ARCHITECTURE_NAME == 'rbf':
-        models = RBFNet(popsize=POPSIZE,
-                        num_basis=RBF_ARCHITECTURE[0],
-                        num_output=RBF_ARCHITECTURE[1],
-                        robot=TASK,
-                        motor_encode='semi-indirect',
-                        )
-        dir_path = 'runs_ES/'+TASK+'/rbf/'
-    elif ARCHITECTURE_NAME == 'rbf_ff':
+    if ARCHITECTURE_NAME == 'rbf_ff':
         models = RBFFFNet(popsize=POPSIZE, 
                             num_basis=RBF_ARCHITECTURE[0], 
                             num_output=RBF_ARCHITECTURE[1], 
@@ -201,6 +173,14 @@ def parse_hydra_configs(cfg: DictConfig):
         open_es_data = trained_data[0]
         rbf_params = open_es_data.best_param() # best_mu
         models.set_a_rbf_params(rbf_params)
+    elif ARCHITECTURE_NAME == 'rbf':
+        models = RBFNet(popsize=POPSIZE,
+                        num_basis=RBF_ARCHITECTURE[0],
+                        num_output=RBF_ARCHITECTURE[1],
+                        robot=TASK,
+                        motor_encode='semi-indirect',
+                        )
+        dir_path = 'runs_ES/'+TASK+'/rbf/'
     elif ARCHITECTURE_NAME == 'rbf_hebb':
         models = RBFHebbianNet(popsize=POPSIZE, 
                                num_basis=RBF_ARCHITECTURE[0], 
@@ -243,116 +223,119 @@ def parse_hydra_configs(cfg: DictConfig):
                     sigma_decay=SIGMA_DECAY,
                     learning_rate_limit=LEARNING_RATE_LIMIT,
                     sigma_limit=SIGMA_LIMIT)
-    solver.set_mu(models.get_a_model_params())
+    solver.set_mu(models.get_models_params().reshape(cfg.num_envs, n_params_a_model))
 
     # Use train rbf params
     # 1. solver 2. copy.deepcopy(models)  3. pop_mean_curve 4. best_sol_curve,
     if USE_TRAIN_PARAM:
         if cfg.model == 'ff':
             trained_data = pickle.load(open(dir_path+train_ff_path, 'rb'))
-        if cfg.model == 'hebb':
-            trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
-        if cfg.model == 'lstm':
-            trained_data = pickle.load(open(dir_path+train_lstm_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
         elif cfg.model == 'rbf':
             trained_data = pickle.load(open(dir_path+train_rbf_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
         elif cfg.model == 'rbf_hebb':
             trained_data = pickle.load(open(dir_path+train_hebb_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+            print('train_params number: ', len(train_params))
         elif cfg.model == 'rbf_ff':
             trained_data = pickle.load(open(dir_path+train_ff_path, 'rb'))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
         elif cfg.model == 'rbf_lstm':
             trained_data = pickle.load(open(dir_path+train_lstm_path, 'rb'))
-        train_params = trained_data[0].best_param()
-        solver = trained_data[0]
-        print('train_params number: ', len(train_params))
+            train_params = trained_data[0].best_param()
+            solver.set_mu(train_params)
+            print('train_params number: ', len(train_params))
 
     print('--- Used train RBF params ---')
     print('file_name: ', train_hebb_path)
 
-    # Initialize VecEnvRLGames
-    time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # time_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    headless = cfg.headless
+    # headless = cfg.headless
 
-    # local rank (GPU id) in a current multi-gpu mode
-    local_rank = int(os.getenv("LOCAL_RANK", "0"))
-    # global rank (GPU id) in multi-gpu multi-node mode
-    global_rank = int(os.getenv("RANK", "0"))
-    if cfg.multi_gpu:
-        cfg.device_id = local_rank
-        cfg.rl_device = f'cuda:{local_rank}'
-    enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
+    # # local rank (GPU id) in a current multi-gpu mode
+    # local_rank = int(os.getenv("LOCAL_RANK", "0"))
+    # # global rank (GPU id) in multi-gpu multi-node mode
+    # global_rank = int(os.getenv("RANK", "0"))
+    # if cfg.multi_gpu:
+    #     cfg.device_id = local_rank
+    #     cfg.rl_device = f'cuda:{local_rank}'
+    # enable_viewport = "enable_cameras" in cfg.task.sim and cfg.task.sim.enable_cameras
 
-    # select kit app file
-    experience = get_experience(headless, cfg.enable_livestream, enable_viewport, cfg.enable_recording, cfg.kit_app)
+    # # select kit app file
+    # experience = get_experience(headless, cfg.enable_livestream, enable_viewport, cfg.enable_recording, cfg.kit_app)
 
-    env = VecEnvRLGames(
-        headless=headless,
-        sim_device=cfg.device_id,
-        enable_livestream=cfg.enable_livestream,
-        enable_viewport=enable_viewport or cfg.enable_recording,
-        experience=experience
-    )
+    # env = VecEnvRLGames(
+    #     headless=headless,
+    #     sim_device=cfg.device_id,
+    #     enable_livestream=cfg.enable_livestream,
+    #     enable_viewport=enable_viewport or cfg.enable_recording,
+    #     experience=experience
+    # )
 
-    # parse experiment directory
-    module_path = os.path.abspath(os.path.join(os.path.dirname(omniisaacgymenvs.__file__)))
-    experiment_dir = os.path.join(module_path, "runs", cfg.train.params.config.name)
+    # # parse experiment directory
+    # module_path = os.path.abspath(os.path.join(os.path.dirname(omniisaacgymenvs.__file__)))
+    # experiment_dir = os.path.join(module_path, "runs", cfg.train.params.config.name)
 
-    # use gym RecordVideo wrapper for viewport recording
-    if cfg.enable_recording:
-        if cfg.recording_dir == '':
-            videos_dir = os.path.join(experiment_dir, "videos")
-        else:
-            videos_dir = cfg.recording_dir
-        video_interval = lambda step: step % cfg.recording_interval == 0
-        video_length = cfg.recording_length
-        env.is_vector_env = True
-        if env.metadata is None:
-            env.metadata = {"render_modes": ["rgb_array"], "render_fps": cfg.recording_fps}
-        else:
-            env.metadata["render_modes"] = ["rgb_array"]
-            env.metadata["render_fps"] = cfg.recording_fps
-        env = gym.wrappers.RecordVideo(
-            env, video_folder=videos_dir, step_trigger=video_interval, video_length=video_length
-        )
+    # # use gym RecordVideo wrapper for viewport recording
+    # if cfg.enable_recording:
+    #     if cfg.recording_dir == '':
+    #         videos_dir = os.path.join(experiment_dir, "videos")
+    #     else:
+    #         videos_dir = cfg.recording_dir
+    #     video_interval = lambda step: step % cfg.recording_interval == 0
+    #     video_length = cfg.recording_length
+    #     env.is_vector_env = True
+    #     if env.metadata is None:
+    #         env.metadata = {"render_modes": ["rgb_array"], "render_fps": cfg.recording_fps}
+    #     else:
+    #         env.metadata["render_modes"] = ["rgb_array"]
+    #         env.metadata["render_fps"] = cfg.recording_fps
+    #     env = gym.wrappers.RecordVideo(
+    #         env, video_folder=videos_dir, step_trigger=video_interval, video_length=video_length
+    #     )
 
-    # ensure checkpoints can be specified as relative paths
-    if cfg.checkpoint:
-        cfg.checkpoint = retrieve_checkpoint_path(cfg.checkpoint)
-        if cfg.checkpoint is None:
-            quit()
+    # # ensure checkpoints can be specified as relative paths
+    # if cfg.checkpoint:
+    #     cfg.checkpoint = retrieve_checkpoint_path(cfg.checkpoint)
+    #     if cfg.checkpoint is None:
+    #         quit()
 
-    cfg_dict = omegaconf_to_dict(cfg)
-    print_dict(cfg_dict)
+    # cfg_dict = omegaconf_to_dict(cfg)
+    # print_dict(cfg_dict)
 
-    # sets seed. if seed is -1 will pick a random one
-    from omni.isaac.core.utils.torch.maths import set_seed
-    cfg.seed = cfg.seed + global_rank if cfg.seed != -1 else cfg.seed
-    cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
-    cfg_dict["seed"] = cfg.seed
+    # # sets seed. if seed is -1 will pick a random one
+    # from omni.isaac.core.utils.torch.maths import set_seed
+    # cfg.seed = cfg.seed + global_rank if cfg.seed != -1 else cfg.seed
+    # cfg.seed = set_seed(cfg.seed, torch_deterministic=cfg.torch_deterministic)
+    # cfg_dict["seed"] = cfg.seed
 
-    task = initialize_task(cfg_dict, env)
+    # task = initialize_task(cfg_dict, env)
 
-    # Setup Wandb
-    if cfg.wandb_activate and global_rank == 0:
-        # Make sure to install WandB if you actually use this.
-        print()
-        import wandb
+    # if cfg.wandb_activate and global_rank == 0:
+    #     # Make sure to install WandB if you actually use this.
+    #     print()
+    #     import wandb
 
-        # run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
-        run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{cfg.wandb_group}"
+    #     # run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
+    #     run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{cfg.wandb_group}"
 
-        wandb.init(
-            project=cfg.wandb_project,
-            group=cfg.wandb_group,
-            # entity=cfg.wandb_entity,
-            config=cfg_dict,
-            # sync_tensorboard=False,
-            name=run_name,
-            # resume="allow",
-        )
+    #     wandb.init(
+    #         project=cfg.wandb_project,
+    #         group=cfg.wandb_group,
+    #         # entity=cfg.wandb_entity,
+    #         config=cfg_dict,
+    #         # sync_tensorboard=False,
+    #         name=run_name,
+    #         # resume="allow",
+    #     )
 
-    torch.cuda.set_device(local_rank)
+    # torch.cuda.set_device(local_rank)
 
     # print data on terminal
     # print('TASK', TASK)
@@ -360,8 +343,8 @@ def parse_hydra_configs(cfg: DictConfig):
     # print('model size: ', models.architecture)
     # print('trainable parameters a model: ', models.get_n_params_a_model())
     # print('trainable parameters a model: ', len(models.get_models_params()))
-    print("Observation space is", env.observation_space)
-    print("Action space is", env.action_space)
+    # print("Observation space is", env.observation_space)
+    # print("Action space is", env.action_space)
 
     # ------Old code--------------------------------------
     # rlg_trainer = RLGTrainer(cfg, cfg_dict)
@@ -386,7 +369,7 @@ def parse_hydra_configs(cfg: DictConfig):
         # models.set_models_params(solutions)        
         
         models.set_a_model_params(train_params)
-        obs = env.reset()
+        # obs = env.reset()
         # obs['obs'] = obs['obs'][:, 7:8].repeat(1,2)
         # print("obs['obs'].shape: ", obs['obs'].shape)
         
@@ -423,9 +406,9 @@ def parse_hydra_configs(cfg: DictConfig):
             actions = models.forward(obs['obs'])
             # actions = 0.3*actions + 0.7*prev_actions
             # prev_actions = actions
-            obs, reward, done, info = env.step(
-                actions
-            )
+            # obs, reward, done, info = env.step(
+            #     actions
+            # )
             # Select observation
 
             # Duplicate yaw angle
@@ -478,7 +461,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # # if sim_step >= 2500 and sim_step < 3000:
             # #     obs['obs'][:, :] *= 0.0
             
-            total_rewards += reward/EPISODE_LENGTH_TEST*100
+            # total_rewards += reward/EPISODE_LENGTH_TEST*100
         #     if collect_w_matrix:
         #         weight = models.get_hebb_weights()
         #         param = models.get_models_params()
@@ -512,7 +495,7 @@ def parse_hydra_configs(cfg: DictConfig):
             # sample params from ES and set model params
             solutions = solver.ask()
             models.set_models_params(solutions)
-            obs = env.reset()
+            # obs = env.reset()
             # imu = obs['obs'][:, 7:10]
             # # print('imu: ', imu.shape)
             # joint_forces = obs['obs'][:, 28:52].reshape(-1, 4, 6)[:, :, 0:3]
@@ -537,13 +520,13 @@ def parse_hydra_configs(cfg: DictConfig):
             for sim_step in range(EPISODE_LENGTH_TRAIN):
                 # Random actions array for testing
                 # actions = torch.zeros(cfg.num_envs, env.action_space.shape[0])
-                actions = models.forward(obs['obs'])
+                # actions = models.forward(obs['obs'])
 
                 # print("observation", obs['obs'].shape)
-                # print("action", actions[0, :])
-                obs, reward, done, info = env.step(
-                    actions
-                )
+                # print("action", actions.shape)
+                # obs, reward, done, info = env.step(
+                #     actions
+                # )
                 # Select observation
 
                 # Duplicate yaw angle
@@ -575,6 +558,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
                 ####################################
                 # print('observation: ', obs['obs'][:,0])
+                reward = np.random.rand()
                 total_rewards += reward/EPISODE_LENGTH_TRAIN*100
 
 

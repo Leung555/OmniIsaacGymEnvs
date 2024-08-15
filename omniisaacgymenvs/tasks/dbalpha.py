@@ -38,8 +38,8 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omni.isaac.core.utils.stage import get_current_stage
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.robots.articulations.dbalpha import Dbalpha
-# from omniisaacgymenvs.tasks.shared.dbalpha_locomotion import LocomotionTask
-from omniisaacgymenvs.tasks.shared.locomotion_simple_rew import LocomotionTask
+from omniisaacgymenvs.tasks.shared.dbalpha_locomotion import LocomotionTask
+# from omniisaacgymenvs.tasks.shared.locomotion_simple_rew import LocomotionTask
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 
@@ -90,6 +90,10 @@ class Dbalpha_LocomotionTask(LocomotionTask):
 
         if self._dr_randomizer.randomize:
             self._dr_randomizer.apply_on_startup_domain_randomization(self)
+
+        indices_ = torch.arange(self._dbalphas.count, dtype=torch.int32, device=self._device)
+        max_vel = torch.Tensor(np.full((self._dbalphas.count, self._num_actions), 240.0))
+        self._dbalphas.set_max_joint_velocities(max_vel, indices=indices_)
 
         return
 
