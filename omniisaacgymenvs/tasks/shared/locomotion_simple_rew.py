@@ -172,10 +172,24 @@ class LocomotionTask(RLTask):
 
         # Extract only some info for model inputs
         # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
-        # print('Selected observation: ', self.obs_buf_trim)
+        # print(f'observation : {self.obs_buf[:]}')
+        self.obs_buf_1 = self.obs_buf[:,:12]        # 12
+        self.obs_buf_2 = self.obs_buf[:,12:28]      # 16
+        self.obs_buf_3 = self.obs_buf[:,36:52]      # 16
+        self.obs_buf_4 = self.obs_buf[:,60:84]      # 24
+        self.obs_buf_5 = self.obs_buf[:,84:100]     # 16
 
-        observations = {self._robots.name: {"obs_buf": self.obs_buf}}
+        self.obs_custom = torch.cat((self.obs_buf_1,  self.obs_buf_2), -1)
+        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_3), -1)
+        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_4), -1)
+        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_5), -1)
+        # print('Selected observation: ', self.obs_custom)
+        # print('Len: ', len(self.obs_custom[1,:]))
+        observations = {self._robots.name: {"obs_buf": self.obs_custom}}
+
+        # observations = {self._robots.name: {"obs_buf": self.obs_buf}}
         return observations
+
 
     def pre_physics_step(self, actions) -> None:
         if not self.world.is_playing():
@@ -200,7 +214,14 @@ class LocomotionTask(RLTask):
 
         # joint target position command
         # self.actions *= 180.0/math.pi
-        self._robots.set_joint_position_targets(self.actions, indices=indices)
+        
+        # TODO happ added, 
+        # """
+        passive_joint_nums = 8
+        acts = torch.cat((self.actions, torch.zeros(self._robots.count, passive_joint_nums, device=self._device)), -1) 
+        self._robots.set_joint_position_targets(acts, indices=indices)
+        # """
+        # self._robots.set_joint_position_targets(self.actions, indices=indices)
 
         if self._dr_randomizer.randomize:
             self.dr.physics_view.step_randomization(reset_env_ids)
@@ -360,18 +381,18 @@ def get_observations(
     # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
     obs = torch.cat(
         (
-            torso_position[:, 2].view(-1, 1),
-            vel_loc,
-            angvel_loc * angular_velocity_scale,
-            normalize_angle(yaw).unsqueeze(-1)*constant,
-            normalize_angle(roll).unsqueeze(-1)*constant,
-            normalize_angle(angle_to_target).unsqueeze(-1)*constant,
-            up_proj.unsqueeze(-1),
-            heading_proj.unsqueeze(-1),
-            dof_pos_scaled,
-            dof_vel * dof_vel_scale,
-            sensor_force_torques.reshape(num_envs, -1) * contact_force_scale,
-            actions,
+            torso_position[:, 2].view(-1, 1),           # idx 0
+            vel_loc,                                    # inx 1 2 3
+            angvel_loc * angular_velocity_scale,        # inx 4 5 6
+            normalize_angle(yaw).unsqueeze(-1)*constant,                # inx 7
+            normalize_angle(roll).unsqueeze(-1)*constant,               # inx 8
+            normalize_angle(angle_to_target).unsqueeze(-1)*constant,    # inx 9
+            up_proj.unsqueeze(-1),          # inx 10
+            heading_proj.unsqueeze(-1),     # inx 11
+            dof_pos_scaled,                 # inx 12-35 ***
+            dof_vel * dof_vel_scale,        # inx 36-59 ***
+            sensor_force_torques.reshape(num_envs, -1) * contact_force_scale, # inx 60-83
+            actions,    # inx 84-107 ***
         ),
         dim=-1,
     )
@@ -413,7 +434,7 @@ def calculate_metrics(
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
     rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -1.0)
     # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
-    rew_yaw = torch.where(obs_buf[:, 7] < 0.45 , 0, -1.0)
+    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , 0, -1.0)
 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     ###############################################
