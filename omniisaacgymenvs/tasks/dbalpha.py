@@ -58,7 +58,7 @@ class Dbalpha_LocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 102
+        self._num_observations = 102 # full: 102
         self._num_actions = 18
         self._dbalpha_positions = torch.tensor([0, 0, 0.0])
         # self._terrainType = self._cfg['terrain']['type']

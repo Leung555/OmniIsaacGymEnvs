@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Ant_test
+  - task: Dbalpha
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 
@@ -84,7 +84,7 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 100           # <---------------------------------- 100
+EPOCHS: 200           # <---------------------------------- 100
 SAVE_EVERY: 100        # <---------------------------------- 100
 EPISODE_LENGTH_TRAIN: 500   # <---------------------------------- 500
 EPISODE_LENGTH_TEST: 500   # <---------------------------------- 500
@@ -98,7 +98,7 @@ ES_params:
   rank_fitness: True
   antithetic: True
   learning_rate: 0.1 # 0.05:RBF
-  learning_rate_decay: 0.995 # 0.9999
+  learning_rate_decay: 0.999 # 0.9999
   sigma_init: 0.1 # 0.05 RBF
   sigma_decay: 0.999
   learning_rate_limit: 0.001
@@ -108,10 +108,10 @@ ES_params:
 model: 'hebb' # ff, hebb, lstm, rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [60, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
-HEBB_ARCHITECTURE: [60, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
+HEBB_ARCHITECTURE: [27, 64, 32, 18] # [num_input, num_hidd, num_output] dbAlpha 1 output DBalpha: [27, 64, 32, 18]
 LSTM_ARCHITECTURE: [60, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
-HEBB_norm: 'max'
+HEBB_norm: 'max' # var, max, clip
 RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False

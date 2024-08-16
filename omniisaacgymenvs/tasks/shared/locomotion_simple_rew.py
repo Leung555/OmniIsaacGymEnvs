@@ -35,7 +35,7 @@ import torch
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, get_euler_xyz
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
@@ -135,7 +135,7 @@ class LocomotionTask(RLTask):
 
         # force sensors attached to the feet
         sensor_force_torques = self._robots.get_measured_joint_forces(joint_indices=self._sensor_indices)
-        
+
         # if self.simulation_step > 250:
         #     self.constant = 0.0
         self.simulation_step += 1
@@ -169,12 +169,9 @@ class LocomotionTask(RLTask):
             self.angular_velocity_scale,
             self.constant,
         )
-
-        # Extract only some info for model inputs
-        # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
-        # print('Selected observation: ', self.obs_buf_trim)
-
+        # Original observation return
         observations = {self._robots.name: {"obs_buf": self.obs_buf}}
+
         return observations
 
     def pre_physics_step(self, actions) -> None:
