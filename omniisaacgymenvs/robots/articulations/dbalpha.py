@@ -56,8 +56,9 @@ class Dbalpha(Robot):
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha.usd"
-            self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op.usd"
-            # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op_minjrange.usd"
+            # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op.usd"
+            # self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op_jvel1.usd"
+            self._usd_path = "omniverse://localhost/Projects/dbalpha/Dbalpha_op_minjrange.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(

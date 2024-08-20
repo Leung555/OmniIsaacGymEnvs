@@ -57,7 +57,7 @@ class SlalomLocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 100 #108
+        self._num_observations = 84
         self._num_actions = 16
         self._ant_positions = torch.tensor([0, 0, 0.0])
         self._terrainType = self._cfg['terrain']['type']
@@ -88,10 +88,6 @@ class SlalomLocomotionTask(LocomotionTask):
 
         if self._dr_randomizer.randomize:
             self._dr_randomizer.apply_on_startup_domain_randomization(self)
-
-        indices_ = torch.arange(self._ants.count, dtype=torch.int32, device=self._device)
-        max_vel = torch.Tensor(np.full((self._ants.count, self._num_actions), 360.0))
-        self._ants.set_max_joint_velocities(max_vel, indices=indices_)
 
         return
 

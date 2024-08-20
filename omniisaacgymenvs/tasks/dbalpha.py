@@ -58,7 +58,7 @@ class Dbalpha_LocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 102
+        self._num_observations = 102 # full: 102
         self._num_actions = 18
         self._dbalpha_positions = torch.tensor([0, 0, 0.0])
         # self._terrainType = self._cfg['terrain']['type']
@@ -91,9 +91,9 @@ class Dbalpha_LocomotionTask(LocomotionTask):
         if self._dr_randomizer.randomize:
             self._dr_randomizer.apply_on_startup_domain_randomization(self)
 
-        indices_ = torch.arange(self._dbalphas.count, dtype=torch.int32, device=self._device)
-        max_vel = torch.Tensor(np.full((self._dbalphas.count, self._num_actions), 240.0))
-        self._dbalphas.set_max_joint_velocities(max_vel, indices=indices_)
+        # indices_ = torch.arange(self._dbalphas.count, dtype=torch.int32, device=self._device)
+        # max_vel = torch.Tensor(np.full((self._dbalphas.count, self._num_actions), 240.0))
+        # self._dbalphas.set_max_joint_velocities(max_vel, indices=indices_)
 
         return
 

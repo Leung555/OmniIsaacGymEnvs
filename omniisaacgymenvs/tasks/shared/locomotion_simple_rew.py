@@ -35,7 +35,7 @@ import torch
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, get_euler_xyz
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
@@ -135,7 +135,7 @@ class LocomotionTask(RLTask):
 
         # force sensors attached to the feet
         sensor_force_torques = self._robots.get_measured_joint_forces(joint_indices=self._sensor_indices)
-        
+
         # if self.simulation_step > 250:
         #     self.constant = 0.0
         self.simulation_step += 1
@@ -169,25 +169,9 @@ class LocomotionTask(RLTask):
             self.angular_velocity_scale,
             self.constant,
         )
+        # Original observation return
+        observations = {self._robots.name: {"obs_buf": self.obs_buf}}
 
-        # Extract only some info for model inputs
-        # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
-        # print(f'observation : {self.obs_buf[:]}')
-        self.obs_buf_1 = self.obs_buf[:,:12]        # 12
-        self.obs_buf_2 = self.obs_buf[:,12:28]      # 16
-        self.obs_buf_3 = self.obs_buf[:,36:52]      # 16
-        self.obs_buf_4 = self.obs_buf[:,60:84]      # 24
-        self.obs_buf_5 = self.obs_buf[:,84:100]     # 16
-
-        self.obs_custom = torch.cat((self.obs_buf_1,  self.obs_buf_2), -1)
-        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_3), -1)
-        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_4), -1)
-        self.obs_custom = torch.cat((self.obs_custom, self.obs_buf_5), -1)
-        # print('Selected observation: ', self.obs_custom)
-        # print('Len: ', len(self.obs_custom[1,:]))
-        observations = {self._robots.name: {"obs_buf": self.obs_custom}}
-
-        # observations = {self._robots.name: {"obs_buf": self.obs_buf}}
         return observations
 
 
@@ -206,8 +190,8 @@ class LocomotionTask(RLTask):
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
 
         # apply action lowpass
-        # self.actions = 0.5*self.actions + 0.5*self.prev_actions
-        # self.prev_actions = self.actions
+        self.actions = 0.1*self.actions + 0.9*self.prev_actions
+        self.prev_actions = self.actions
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
@@ -240,7 +224,7 @@ class LocomotionTask(RLTask):
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         root_vel = torch.zeros((num_resets, 6), device=self._device)
-        root_pos[:, 2] += 0.5 # move robot up in z-axis
+        root_pos[:, 2] += 0.0 # move robot up in z-axis
         # move robot to a new level in y-axis
         
         # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 0, 1)*15
@@ -432,9 +416,9 @@ def calculate_metrics(
     
     rew_lin_vel_x = obs_buf[:, 1] * 2.0
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
-    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -1.0)
+    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -0.5)
     # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
-    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , 0, -1.0)
+    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , 0, -0.5)
 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     ###############################################

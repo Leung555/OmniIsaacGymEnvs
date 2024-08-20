@@ -38,8 +38,8 @@ class HebbianNet:
         self.architecture = sizes
         self.weights = [torch.Tensor(popsize, sizes[i], sizes[i + 1]).uniform_(-init_noise, init_noise).cuda()
                             for i in range(len(sizes) - 1)]
-        self.b = [torch.Tensor(popsize, sizes[i+1]).uniform_(-0.1, 0.1).cuda()
-                            for i in range(len(sizes) - 1)]
+        # self.b = [torch.Tensor(popsize, sizes[i+1]).uniform_(-0.01, 0.01).cuda()
+        #                     for i in range(len(sizes) - 1)]
         self.one_array = [torch.ones(popsize, sizes[i], sizes[i + 1]).cuda()
                             for i in range(len(sizes) - 1)]
         # print('self.one_array', self.one_array)
@@ -64,7 +64,8 @@ class HebbianNet:
             pre: (n_in, )
             """
             for i, W in enumerate(self.weights):
-                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()) + self.b[i])
+                post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()))
+                # post =  torch.tanh(torch.einsum('ij, ijk -> ik', pre, W.float()) + self.b[i])
                 self.weights[i] = self.hebbian_update(i, W, pre, post, self.A[i], self.B[i], self.C[i], self.D[i], self.lr[i])
                 pre = post
 
@@ -91,12 +92,12 @@ class HebbianNet:
         return len(self.get_a_model_params())
     
     def get_models_params(self):
-        all_params = [self.A, self.B, self.C, self.D, self.lr, self.b]
+        all_params = [self.A, self.B, self.C, self.D, self.lr]
         p = torch.cat([param.flatten() for params in all_params for param in params])
         return p.flatten().cpu().numpy()
 
     def get_a_model_params(self):
-        all_params = [self.A, self.B, self.C, self.D, self.lr, self.b]
+        all_params = [self.A, self.B, self.C, self.D, self.lr]
         p = torch.cat([param[0].flatten() for params in all_params for param in params])
         return p.flatten().cpu().numpy()
 
@@ -126,10 +127,10 @@ class HebbianNet:
         m = self.update_params(self.C, flat_params, m)
         m = self.update_params(self.D, flat_params, m)
         m = self.update_params(self.lr, flat_params, m)
-        for i, w in enumerate(self.b):
-            pop, a = w.shape
-            self.b[i] = flat_params[:, m:m + a].reshape(pop, a).float().cuda()
-            m += a
+        # for i, w in enumerate(self.b):
+        #     pop, a = w.shape
+        #     self.b[i] = flat_params[:, m:m + a].reshape(pop, a).float().cuda()
+        #     m += a
 
     def set_a_model_params(self, flat_params):
         flat_params = torch.from_numpy(flat_params)
@@ -141,7 +142,7 @@ class HebbianNet:
         m = self.update_a_model_params(self.C, flat_params, m)
         m = self.update_a_model_params(self.D, flat_params, m)
         m = self.update_a_model_params(self.lr, flat_params, m)
-        for i, w in enumerate(self.b):
-            pop, a = w.shape
-            self.b[i] = flat_params[m:m + a].repeat(pop, 1).reshape(pop, a).float().cuda()
-            m += a
+        # for i, w in enumerate(self.b):
+        #     pop, a = w.shape
+        #     self.b[i] = flat_params[m:m + a].repeat(pop, 1).reshape(pop, a).float().cuda()
+        #     m += a

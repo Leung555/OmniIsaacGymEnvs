@@ -35,7 +35,7 @@ import torch
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, get_euler_xyz
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.tasks.utils.ant_terrain_generator import *
 from omniisaacgymenvs.utils.terrain_utils.terrain_utils import *
@@ -124,7 +124,7 @@ class LocomotionTask(RLTask):
             )
             self._create_trimesh(create_mesh=create_mesh)
             self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
-
+    
     def get_observations(self) -> dict:
         torso_position, torso_rotation = self._robots.get_world_poses(clone=False)
         velocities = self._robots.get_velocities(clone=False)
@@ -135,13 +135,19 @@ class LocomotionTask(RLTask):
 
         # force sensors attached to the feet
         sensor_force_torques = self._robots.get_measured_joint_forces(joint_indices=self._sensor_indices)
+        # print('fc shape: ', sensor_force_torques.shape)
+        sensor_fc = torch.norm(sensor_force_torques[:, :, 0:3], dim=-1) > 1.0
+        # print('sensor_fc shape: ', sensor_fc[0])
+
+        # IMU
+        roll, pitch, yaw = get_euler_xyz(torso_rotation)
         
         # if self.simulation_step > 250:
         #     self.constant = 0.0
         self.simulation_step += 1
         # print('dof_names: ', self._robots.dof_names)
         (
-            self.obs_buf[:],
+            self.obs_buf_full[:],
             self.potentials[:],
             self.prev_potentials[:],
             self.up_vec[:],
@@ -170,11 +176,26 @@ class LocomotionTask(RLTask):
             self.constant,
         )
 
-        # Extract only some info for model inputs
-        # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
-        # print('Selected observation: ', self.obs_buf_trim)
+        ### Extract only some observation for model inputs
+        ### Example 2D tensors
+        tensor_pos = self.obs_buf_full[:, 12:30].clone().detach() * 0.5
+        tensor_fc = sensor_fc.clone().detach()
+        imu = torch.cat((normalize_angle(roll).unsqueeze(-1),
+                        normalize_angle(pitch).unsqueeze(-1),
+                        normalize_angle(yaw).unsqueeze(-1),),dim=-1,)
+        tensor_imu = imu.clone().detach()
+        # print('tensor_pos shape: ', tensor_pos.shape)
+        # print('tensor_fc shape: ', tensor_fc.shape)
+        # print('tensor_imu shape: ', tensor_imu.shape)
+        ### Concatenating along axis=1 (columns)
+        self.obs_buf_custom = torch.cat((tensor_pos, tensor_fc, tensor_imu), dim=-1)
+        self.obs_buf = self.obs_buf_custom.clone().detach()
+        # print('Selected observation: ', self.obs_buf_custom.shape)
+        # observations = {self._robots.name: {"obs_buf": self.obs_buf_custom}}
 
+        # Original observation return
         observations = {self._robots.name: {"obs_buf": self.obs_buf}}
+
         return observations
 
     def pre_physics_step(self, actions) -> None:
@@ -192,8 +213,8 @@ class LocomotionTask(RLTask):
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
 
         # apply action lowpass
-        # self.actions = 0.5*self.actions + 0.5*self.prev_actions
-        # self.prev_actions = self.actions
+        self.actions = 0.1 * self.actions + 0.9 * self.prev_actions
+        self.prev_actions = self.actions
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
@@ -265,6 +286,7 @@ class LocomotionTask(RLTask):
             self.num_envs
         )
         self.prev_potentials = self.potentials.clone()
+        self.obs_buf_full = torch.zeros((self._num_envs, self._num_observations), device=self._device, dtype=torch.float)
 
         self.actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
         self.prev_actions = torch.zeros((self.num_envs, self.num_actions), device=self._device)
@@ -283,7 +305,7 @@ class LocomotionTask(RLTask):
 
     def calculate_metrics(self) -> None:
         self.rew_buf[:] = calculate_metrics(
-            self.obs_buf,
+            self.obs_buf_full,
             self.actions,
             self.up_weight,
             self.heading_weight,
@@ -301,7 +323,7 @@ class LocomotionTask(RLTask):
 
     def is_done(self) -> None:
         self.reset_buf[:] = is_done(
-            self.obs_buf, self.termination_height, self.reset_buf, self.progress_buf, self._max_episode_length
+            self.obs_buf_full, self.termination_height, self.reset_buf, self.progress_buf, self._max_episode_length
         )
 
 
@@ -380,7 +402,7 @@ def get_observations(
 
 
 @torch.jit.script
-def is_done(obs_buf, termination_height, reset_buf, progress_buf, max_episode_length):
+def is_done(obs_buf_full, termination_height, reset_buf, progress_buf, max_episode_length):
     # type: (Tensor, float, Tensor, Tensor, float) -> Tensor
     # reset = torch.where(obs_buf[:, 0] < termination_height, torch.ones_like(reset_buf), reset_buf)
     reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), reset_buf)
@@ -389,7 +411,7 @@ def is_done(obs_buf, termination_height, reset_buf, progress_buf, max_episode_le
 
 @torch.jit.script
 def calculate_metrics(
-    obs_buf,
+    obs_buf_full,
     actions,
     up_weight,
     heading_weight,
@@ -409,29 +431,30 @@ def calculate_metrics(
     # Simple reward scheme IROS2024 ##############
     # roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
     
-    rew_lin_vel_x = obs_buf[:, 1] * 2.0
+    rew_lin_vel_x = obs_buf_full[:, 1] * 2.0
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
-    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -1.0)
-    height_reward = torch.where(abs(obs_buf[:, 0] + 0.08) < 0.04 , 0.0, -1.0)
-    # print('height : ', obs_buf[:, 0])
+    rew_orient = torch.where(obs_buf_full[:, 10] > 0.93 , 0, -0.5)
+    height_reward = torch.where(abs(obs_buf_full[:, 0] + 0.08) < 0.04 , 0.0, -0.5)
+    # print('height : ', obs_buf_full[:, 0])
     # print('height_reward : ', height_reward)
-    # print('yaw:  ', obs_buf[:, 7])
-    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , -abs(obs_buf[:, 7])/0.45, -1.0)
+    # print('yaw:  ', obs_buf_full[:, 7])
+    rew_yaw = torch.where(abs(obs_buf_full[:, 7]) < 0.45 , 0.0, -0.5)
+    # rew_yaw = torch.where(abs(obs_buf_full[:, 7]) < 0.45 , -abs(obs_buf_full[:, 7])/0.45, -1.0)
 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw + height_reward #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     ###############################################
 
-    # heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight
-    # heading_reward = torch.where(obs_buf[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf[:, 11] / 0.8)
+    # heading_weight_tensor = torch.ones_like(obs_buf_full[:, 11]) * heading_weight
+    # heading_reward = torch.where(obs_buf_full[:, 11] > 0.8, heading_weight_tensor, heading_weight * obs_buf_full[:, 11] / 0.8)
 
     # # aligning up axis of robot and environment
     # up_reward = torch.zeros_like(heading_reward)
-    # up_reward = torch.where(obs_buf[:, 10] > 0.93, up_reward + up_weight, up_reward)
+    # up_reward = torch.where(obs_buf_full[:, 10] > 0.93, up_reward + up_weight, up_reward)
 
     # # energy penalty for movement
     # actions_cost = torch.sum(actions**2, dim=-1)
     # electricity_cost = torch.sum(
-    #     torch.abs(actions * obs_buf[:, 12 + num_dof : 12 + num_dof * 2]) * motor_effort_ratio.unsqueeze(0), dim=-1
+    #     torch.abs(actions * obs_buf_full[:, 12 + num_dof : 12 + num_dof * 2]) * motor_effort_ratio.unsqueeze(0), dim=-1
     # )
 
     # # reward for duration of staying alive
@@ -450,6 +473,6 @@ def calculate_metrics(
 
     # adjust reward for fallen agents
     # total_reward = torch.where(
-    #     obs_buf[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
+    #     obs_buf_full[:, 0] < termination_height, torch.ones_like(total_reward) * death_cost, total_reward
     # )
     return total_reward

@@ -19,13 +19,6 @@ def get_num_legjoints(robot):
                                           2,  6,  10, 14, 
                                           3,  7,  11, 15]
                                         )
-            # """
-            """
-            motor_mapping = torch.tensor([0, 12, 6, 18, 1, 13, 7, 19,  
-                                          2, 14, 8, 20, 3, 15, 9, 21, 
-                                          4, 16, 10, 22, 5, 17, 11, 23]
-            )
-            """
         elif robot in Ant_env:
             num_legs = 4
             num_joints = 2

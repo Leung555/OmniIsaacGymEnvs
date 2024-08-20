@@ -59,7 +59,7 @@ recording_fps: 30
 recording_dir: ''
 
 wandb_activate: False
-wandb_group: 'simple_loco'
+wandb_group: 'simple_loco_IROSsetup_Jvel60_lowpass'
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
 wandb_project: 'my-awesome-Dbalpha_ES_RBFHebb'
@@ -73,7 +73,7 @@ warp: False
 # set default task and default training config based on task
 defaults:
   - _self_
-  - task: Ant_test
+  - task: Slalom
   - train: ${task}PPO
   - override hydra/job_logging: disabled
 
@@ -84,10 +84,10 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 100           # <---------------------------------- 100
-SAVE_EVERY: 100        # <---------------------------------- 100
-EPISODE_LENGTH_TRAIN: 500   # <---------------------------------- 500
-EPISODE_LENGTH_TEST: 500   # <---------------------------------- 500
+EPOCHS: 300           # <---------------------------------- 100
+SAVE_EVERY: 300        # <---------------------------------- 100
+EPISODE_LENGTH_TRAIN: 300   # <---------------------------------- 500
+EPISODE_LENGTH_TEST: 300   # <---------------------------------- 500
 resume_train: False
 
 custom_rewards: False
@@ -98,7 +98,7 @@ ES_params:
   rank_fitness: True
   antithetic: True
   learning_rate: 0.1 # 0.05:RBF
-  learning_rate_decay: 0.995 # 0.9999
+  learning_rate_decay: 0.999 # 0.9999
   sigma_init: 0.1 # 0.05 RBF
   sigma_decay: 0.999
   learning_rate_limit: 0.001
@@ -108,10 +108,11 @@ ES_params:
 model: 'hebb' # ff, hebb, lstm, rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [60, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
-HEBB_ARCHITECTURE: [60, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
+# HEBB_ARCHITECTURE: [27, 64, 32, 18] # [num_input, num_hidd, num_output] dbAlpha 1 output DBalpha: [27, 64, 32, 18]
+HEBB_ARCHITECTURE: [84, 64, 32, 16] # [num_input, num_hidd, num_output] Slalom Test
 LSTM_ARCHITECTURE: [60, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 HEBB_init_wnoise: 0.01
-HEBB_norm: 'max'
+HEBB_norm: 'max' # var, max, clip
 RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
@@ -132,7 +133,7 @@ collect_w_matrix: False
 # Dbalpha trained weight
 train_ff_path: 'Ant_test_ff_1518_1_-90.7688.pickle' # flat terrain
 train_rbf_path: 'Dbalpha_rbf_180_99_39.64761.pickle' # flat terrain
-train_hebb_path: 'Ant_test_hebb_7438_99_114.3601.pickle' # maxnorm
+train_hebb_path: 'Dbalpha_hebb_simple_loco_IROSsetup_Jvel60_lowpass_21760_299_67.818.pickle' # maxnorm
 train_lstm_path: 'Ant_test_lstm_11640_1_-87.5167.pickle'  # flat terrain, clamp
 
 
