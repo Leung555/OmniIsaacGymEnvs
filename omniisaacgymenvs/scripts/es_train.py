@@ -610,7 +610,7 @@ def parse_hydra_configs(cfg: DictConfig):
                     copy.deepcopy(models),
                     pop_mean_curve,
                     best_sol_curve,
-                    ), open(dir_path+TASK+'_'+cfg.model+'_' + str(n_params_a_model) +'_' + str(epoch) + '_' + str(pop_mean_curve[epoch])[:8] + '.pickle', 'wb'))
+                    ), open(dir_path+TASK+'_'+cfg.model+'_' + cfg.wandb_group + '_' + str(n_params_a_model) +'_' + str(epoch) + '_' + str(pop_mean_curve[epoch])[:6] + '.pickle', 'wb'))
 
 
 

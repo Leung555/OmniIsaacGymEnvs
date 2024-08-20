@@ -59,7 +59,7 @@ recording_fps: 30
 recording_dir: ''
 
 wandb_activate: False
-wandb_group: 'simple_loco'
+wandb_group: 'simple_loco_IROSsetup_Jvel60_lowpass'
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
 wandb_project: 'my-awesome-Dbalpha_ES_RBFHebb'
@@ -86,8 +86,8 @@ hydra:
 # Training params
 EPOCHS: 200           # <---------------------------------- 100
 SAVE_EVERY: 100        # <---------------------------------- 100
-EPISODE_LENGTH_TRAIN: 500   # <---------------------------------- 500
-EPISODE_LENGTH_TEST: 500   # <---------------------------------- 500
+EPISODE_LENGTH_TRAIN: 300   # <---------------------------------- 500
+EPISODE_LENGTH_TEST: 300   # <---------------------------------- 500
 resume_train: False
 
 custom_rewards: False
@@ -115,7 +115,7 @@ HEBB_norm: 'max' # var, max, clip
 RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
-USE_TRAIN_PARAM: False
+USE_TRAIN_PARAM: True
 
 # # Test params rbf_hebb network
 # train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
@@ -132,7 +132,7 @@ collect_w_matrix: False
 # Dbalpha trained weight
 train_ff_path: 'Ant_test_ff_1518_1_-90.7688.pickle' # flat terrain
 train_rbf_path: 'Dbalpha_rbf_180_99_39.64761.pickle' # flat terrain
-train_hebb_path: 'Ant_test_hebb_7438_99_114.3601.pickle' # maxnorm
+train_hebb_path: 'Dbalpha_hebb_simple_loco_IROSsetup_Jvel60_lowpass_21760_299_67.818.pickle' # maxnorm
 train_lstm_path: 'Ant_test_lstm_11640_1_-87.5167.pickle'  # flat terrain, clamp
 
 
