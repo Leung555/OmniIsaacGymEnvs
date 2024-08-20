@@ -189,8 +189,8 @@ class LocomotionTask(RLTask):
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
 
         # apply action lowpass
-        # self.actions = 0.5*self.actions + 0.5*self.prev_actions
-        # self.prev_actions = self.actions
+        self.actions = 0.1*self.actions + 0.9*self.prev_actions
+        self.prev_actions = self.actions
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
@@ -216,7 +216,7 @@ class LocomotionTask(RLTask):
 
         root_pos, root_rot = self.initial_root_pos[env_ids], self.initial_root_rot[env_ids]
         root_vel = torch.zeros((num_resets, 6), device=self._device)
-        root_pos[:, 2] += 0.5 # move robot up in z-axis
+        root_pos[:, 2] += 0.0 # move robot up in z-axis
         # move robot to a new level in y-axis
         
         # root_pos[:, 1] += torch.randint_like(root_pos[:, 1], 0, 1)*15
@@ -408,9 +408,9 @@ def calculate_metrics(
     
     rew_lin_vel_x = obs_buf[:, 1] * 2.0
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
-    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -1.0)
+    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -0.5)
     # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
-    rew_yaw = torch.where(obs_buf[:, 7] < 0.45 , 0, -1.0)
+    rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , 0, -0.5)
 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     ###############################################
