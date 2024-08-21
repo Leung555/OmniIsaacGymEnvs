@@ -170,9 +170,13 @@ class LocomotionTask(RLTask):
             self.constant,
         )
 
+        
         # Extract only some info for model inputs
         # self.obs_buf_trim = self.obs_buf[:, 8].repeat(2,1)
         # print(f'observation : {self.obs_buf[:]}')
+
+        # TODO slicing joints
+        """   
         self.obs_buf_1 = self.obs_buf[:,:12]        # 12
         self.obs_buf_2 = self.obs_buf[:,12:28]      # 16
         self.obs_buf_3 = self.obs_buf[:,36:52]      # 16
@@ -186,8 +190,11 @@ class LocomotionTask(RLTask):
         # print('Selected observation: ', self.obs_custom)
         # print('Len: ', len(self.obs_custom[1,:]))
         observations = {self._robots.name: {"obs_buf": self.obs_custom}}
+        """
 
-        # observations = {self._robots.name: {"obs_buf": self.obs_buf}}
+        # print('Selected observation: ', self.obs_buf)
+        # print('Len: ', len(self.obs_buf[1,:]))
+        observations = {self._robots.name: {"obs_buf": self.obs_buf}}
         return observations
 
 
@@ -215,13 +222,13 @@ class LocomotionTask(RLTask):
         # joint target position command
         # self.actions *= 180.0/math.pi
         
-        # TODO happ added, 
-        # """
+        # TODO slicing joint indices 
+        """
         passive_joint_nums = 8
         acts = torch.cat((self.actions, torch.zeros(self._robots.count, passive_joint_nums, device=self._device)), -1) 
         self._robots.set_joint_position_targets(acts, indices=indices)
-        # """
-        # self._robots.set_joint_position_targets(self.actions, indices=indices)
+        """
+        self._robots.set_joint_position_targets(self.actions, indices=indices)
 
         if self._dr_randomizer.randomize:
             self.dr.physics_view.step_randomization(reset_env_ids)

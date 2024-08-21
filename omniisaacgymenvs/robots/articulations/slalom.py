@@ -56,7 +56,8 @@ class Slalom(Robot):
             if assets_root_path is None:
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
-            self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_v2.usd"
+            # self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_v2.usd"
+            self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_16dof.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -76,12 +77,12 @@ class Slalom(Robot):
                                 'motor3_lf/joint3_lf',  'motor3_lh/joint3_lh',  'motor3_rf/joint3_rf',  'motor3_rh/joint3_rh',
                                 'motor4_lf/joint4_lf',  'motor4_lh/joint4_lh',  'motor4_rf/joint4_rf',  'motor4_rh/joint4_rh',
                             ]
-        
+        """
         passive_joint_paths =  [
                                 'link4_lf/balljoint1_lf', 'link4_lh/balljoint1_lh', 'link4_rf/balljoint1_rf', 'link4_rh/balljoint1_rh', 
                                 'balllink_lf/balljoint2_lf', 'balllink_lh/balljoint2_lh', 'balllink_rf/balljoint2_rf', 'balllink_rh/balljoint2_rh',
                             ]
-
+        """
         """
         active_joint_paths =  [
                                 'robot_base/joint1_lf', 'robot_base/joint1_rf', 'robot_base/joint1_lh', 'robot_base/joint1_rh', 
@@ -101,8 +102,8 @@ class Slalom(Robot):
             # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
             set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0.2, 4.1)
 
-        # """ 
+        """ 
         for joint_path in passive_joint_paths:
             # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
             set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 0, 0, 4.1)
-        # """
+        """

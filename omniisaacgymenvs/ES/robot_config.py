@@ -14,11 +14,10 @@ def get_num_legjoints(robot):
             num_legs = 4
             num_joints = 4 #6
             # """
-            motor_mapping = torch.tensor([0,  4,  8,  12, 
-                                          1,  5,  9,  13,  
-                                          2,  6,  10, 14, 
-                                          3,  7,  11, 15]
-                                        )
+            motor_mapping = torch.tensor([0, 4, 8,  12, 
+                                          1, 5, 9,  13,  
+                                          2, 6, 10, 14, 
+                                          3, 7, 11, 15])
             # """
             """
             motor_mapping = torch.tensor([0, 12, 6, 18, 1, 13, 7, 19,  

@@ -57,8 +57,8 @@ class SlalomLocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 100 #108
-        self._num_actions = 16
+        self._num_observations = 84 #108
+        self._num_actions = 16 #24
         self._ant_positions = torch.tensor([0, 0, 0.0])
         self._terrainType = self._cfg['terrain']['type']
         LocomotionTask.update_config(self)

@@ -84,8 +84,8 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 1000           # <----------------------------------
-SAVE_EVERY: 250        # <----------------------------------
+EPOCHS: 200           # <----------------------------------
+SAVE_EVERY: 100        # <----------------------------------
 EPISODE_LENGTH_TRAIN: 500   # <----------------------------------
 EPISODE_LENGTH_TEST: 500   # <----------------------------------
 resume_train: False
@@ -131,7 +131,7 @@ collect_w_matrix: False
 
 # Dbalpha trained weight
 train_ff_path: 'Ant_test_rbf_ff_1628_99_132.3918.pickle' # flat terrain
-train_rbf_path: 'Slalom_rbf_240_999_14.39386.pickle' # flat terrain
+train_rbf_path: 'Slalom_rbf_160_199_18.26492.pickle' # flat terrain
 train_hebb_path: 'Ant_test_rbf_hebb_2938_99_129.1072.pickle' # maxnorm
 train_lstm_path: 'Ant_test_rbf_lstm_5880_99_131.3515.pickle'  # flat terrain, clamp
 
