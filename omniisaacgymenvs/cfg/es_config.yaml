@@ -133,7 +133,7 @@ collect_w_matrix: False
 # Dbalpha trained weight
 train_ff_path: 'Ant_test_ff_1518_1_-90.7688.pickle' # flat terrain
 train_rbf_path: 'Dbalpha_rbf_180_99_39.64761.pickle' # flat terrain
-train_hebb_path: 'Dbalpha_hebb_simple_loco_IROSsetup_Jvel60_lowpass_21760_299_67.818.pickle' # maxnorm
+train_hebb_path: 'Slalom_hebb_simple_loco_IROSsetup_Jvel60_lowpass_39680_299_7.1868.pickle' # maxnorm
 train_lstm_path: 'Ant_test_lstm_11640_1_-87.5167.pickle'  # flat terrain, clamp
 
 

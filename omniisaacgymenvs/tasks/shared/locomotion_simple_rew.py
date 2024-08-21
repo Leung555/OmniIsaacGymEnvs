@@ -200,12 +200,12 @@ class LocomotionTask(RLTask):
         # self.actions *= 180.0/math.pi
         
         # TODO happ added, 
-        # """
+        """
         passive_joint_nums = 8
         acts = torch.cat((self.actions, torch.zeros(self._robots.count, passive_joint_nums, device=self._device)), -1) 
         self._robots.set_joint_position_targets(acts, indices=indices)
-        # """
-        # self._robots.set_joint_position_targets(self.actions, indices=indices)
+        """
+        self._robots.set_joint_position_targets(self.actions, indices=indices)
 
         if self._dr_randomizer.randomize:
             self.dr.physics_view.step_randomization(reset_env_ids)

@@ -78,8 +78,8 @@ class Slalom(Robot):
             # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
             set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0.1, 4.1)
 
-        # """ 
+        """ 
         for joint_path in passive_joint_paths:
             # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
             set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 0, 0, 4.1)
-        # """
+        """
