@@ -28,21 +28,22 @@
 
 
 import math
-
-import numpy as np
 import torch
+import numpy as np
+
 from omni.isaac.core.articulations import ArticulationView
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.torch.maths import tensor_clamp, torch_rand_float, unscale
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omni.isaac.core.utils.stage import get_current_stage
+from omni.isaac.core.prims import RigidPrimView
+
 from omniisaacgymenvs.tasks.base.rl_task import RLTask
 from omniisaacgymenvs.robots.articulations.slalom import Slalom
 from omniisaacgymenvs.tasks.shared.locomotion_simple_rew import LocomotionTask
 from omniisaacgymenvs.tasks.utils.usd_utils import set_drive
 from pxr import PhysxSchema
 
-from omni.isaac.core.prims import RigidPrimView
 
 class SlalomLocomotionTask(LocomotionTask):
     def __init__(self, name, sim_config, env, offset=None) -> None:
@@ -57,9 +58,9 @@ class SlalomLocomotionTask(LocomotionTask):
         self._sim_config = sim_config
         self._cfg = sim_config.config
         self._task_cfg = sim_config.task_config
-        self._num_observations = 84
+        self._num_observations = 55 #84
         self._num_actions = 16
-        self._ant_positions = torch.tensor([0, 0, 0.0])
+        self._ant_positions = torch.tensor([0.0, 0.0, 0.0])
         self._terrainType = self._cfg['terrain']['type']
         LocomotionTask.update_config(self)
 

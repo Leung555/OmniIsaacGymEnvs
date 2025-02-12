@@ -13,7 +13,7 @@ def get_num_legjoints(robot):
         if robot == 'Slalom':
             num_legs = 4
             num_joints = 4 #6
-            # """
+
             motor_mapping = torch.tensor([0,  4,  8,  12, 
                                           1,  5,  9,  13,  
                                           2,  6,  10, 14, 

@@ -185,7 +185,7 @@ def parse_hydra_configs(cfg: DictConfig):
                         num_basis=RBF_ARCHITECTURE[0],
                         num_output=RBF_ARCHITECTURE[1],
                         robot=TASK,
-                        motor_encode='semi-indirect',
+                        motor_encode='direct', # semi-indirect
                         )
         dir_path = 'runs_ES/'+TASK+'/rbf/'
     elif ARCHITECTURE_NAME == 'rbf_ff':
@@ -336,7 +336,7 @@ def parse_hydra_configs(cfg: DictConfig):
     # Setup Wandb
     if cfg.wandb_activate and global_rank == 0:
         # Make sure to install WandB if you actually use this.
-        print()
+        # print()
         import wandb
 
         # run_name = f"{cfg.wandb_name}_{ARCHITECTURE_NAME}_{time_str}"
@@ -409,7 +409,7 @@ def parse_hydra_configs(cfg: DictConfig):
 
         # rollout 
         for sim_step in range(EPISODE_LENGTH_TEST):
-            actions = models.forward(obs['obs'])
+            actions = models.forward(obs['obs'][:,:51])
             # actions = 0.3*actions + 0.7*prev_actions
             # prev_actions = actions
             obs, reward, done, info = env.step(
@@ -442,7 +442,7 @@ def parse_hydra_configs(cfg: DictConfig):
         # np.save('analysis/weights/total_rewards_Limu_'+cfg.model+'_max.npy', total_rewards_cpu)
 
         print('mean', fit_arr.mean(), 
-            "best", fit_arr.max(), )
+              "best", fit_arr.max(), )
 
     else:
         # Training Loop epoch ###################################
@@ -460,13 +460,11 @@ def parse_hydra_configs(cfg: DictConfig):
             for sim_step in range(EPISODE_LENGTH_TRAIN):
                 # Random actions array for testing
                 # actions = torch.zeros(cfg.num_envs, env.action_space.shape[0])
-                actions = models.forward(obs['obs'])
+                actions = models.forward(obs['obs'][:,:51])
 
                 # print("observation", obs['obs'].shape)
                 # print("action", actions[0, :])
-                obs, reward, done, info = env.step(
-                    actions
-                )
+                obs, reward, done, info = env.step(actions)
 
                 total_rewards += reward/EPISODE_LENGTH_TRAIN*100
 
@@ -479,7 +477,7 @@ def parse_hydra_configs(cfg: DictConfig):
             fit_arr = np.array(fitlist)
 
             print('epoch', epoch, 'mean', fit_arr.mean(), 
-                "best", fit_arr.max(), )
+                  'best', fit_arr.max(), )
 
 
             pop_mean_curve[epoch] = fit_arr.mean()

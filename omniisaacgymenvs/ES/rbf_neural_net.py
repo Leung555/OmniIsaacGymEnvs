@@ -9,7 +9,7 @@ class RBFNet:
                  num_basis,
                  num_output,
                  robot,
-                 motor_encode='semi-indirect'):
+                 motor_encode='direct'):  # semi-indirect
         """
         sizes: [input_size, hid_1, ..., output_size]
         """
@@ -29,12 +29,16 @@ class RBFNet:
         # Pre calculated rbf layers output 
         self.ci, self.cx, self.cy, self.rx, self.ry, self.KENNE = self.pre_rbf_centers(
             self.period, self.num_basis, self.x, self.y, self.variance)
+        # print('self.KENNE', self.KENNE.shape)       # torch.Size([68, 20])
         self.KENNE = self.KENNE.cuda()
+        # print('self.KENNE', self.KENNE.shape)
 
         # Get number of legs, joints, and motor mapping from model --> sim robot
         self.num_legs, self.num_joints, motor_mapping = get_num_legjoints(robot)
         self.indices = motor_mapping.cuda()
 
+        # TODO happ comment, "semi-indirect" encoding 
+        """
         # initilize motor encoding type (weights, CPGs' phase)
         self.motor_encode = motor_encode # 'direct', 'indirect'
         if self.motor_encode == 'semi-indirect':
@@ -48,15 +52,31 @@ class RBFNet:
                           for i in range(self.num_legs//2)]
         self.indices_R = [(1, i * step) if i % 2 == 0 else (0, i * step) 
                           for i in range(self.num_legs//2)]
+        """
 
+        # TODO happ added, "direct" encoding
+        # """
+        # initial motor encoding type 
+        self.motor_encode = motor_encode
+        if self.motor_encode == 'direct':
+            self.weights = torch.Tensor(popsize, num_basis, num_output).uniform_(-0.1,0.1).cuda()
+            self.phase = torch.Tensor([self.phase])
+        # """
 
     def forward(self, pre):
         # print('pre: ', pre)
         
         with torch.no_grad():
+
+            # TODO happ comment, "semi-indirect" encoding
+            """
             # Indirect encoding ##################################
+            print('phase0',self.phase[0])
+            print('phase1',self.phase[1])
             p1 = self.KENNE[int(self.phase[0])]
             p2 = self.KENNE[int(self.phase[1])]
+            print('p1', p1.shape)
+            print('p2', p2.shape)
             out_p1 = torch.tanh(torch.matmul(p1, self.weights))
             out_p2 = torch.tanh(torch.matmul(p2, self.weights))
             # print('out_p1: ', out_p1.shape)
@@ -71,6 +91,15 @@ class RBFNet:
             self.phase = self.phase + 1
             self.phase = torch.where(self.phase > self.period, 0, self.phase) 
             ####################################################
+            """
+
+            # TODO happ added, "direct" encoding
+            p = self.KENNE[int(self.phase)]
+            out_p = torch.tanh(torch.matmul(p, self.weights))
+            post = out_p
+
+            self.phase = self.phase + 1
+            self.phase = torch.where(self.phase > self.period, 0, self.phase) 
 
         return post.float().detach()
     
@@ -110,7 +139,7 @@ class RBFNet:
     
     def pre_compute_cpg(self):
         # Run for one period
-        phi   = 0.03*np.pi # SO(2) Frequency
+        phi   = 0.03*np.pi   # SO(2) Frequency
         alpha = 1.01         # SO(2) Alpha term
         w11   = alpha*cos(phi)
         w12   = alpha*sin(phi)
@@ -143,8 +172,8 @@ class RBFNet:
 
         ci = ci[:-1]
 
-        cx = [0] * (len(ci))
-        cy = [0] * (len(ci))
+        cx  = [0] * (len(ci))
+        cy  = [0] * (len(ci))
         cxy = [0] * (len(ci))
 
         xy = x+y

@@ -136,6 +136,11 @@ class LocomotionTask(RLTask):
         # force sensors attached to the feet
         sensor_force_torques = self._robots.get_measured_joint_forces(joint_indices=self._sensor_indices)
 
+        # TODO print mass of the robot
+        # """
+        # print('Robot Mass:', self._robots.root_physx_view.get_masses()[0].sum())
+        # """
+
         # if self.simulation_step > 250:
         #     self.constant = 0.0
         self.simulation_step += 1
@@ -190,8 +195,11 @@ class LocomotionTask(RLTask):
         indices = torch.arange(self._robots.count, dtype=torch.int32, device=self._device)
 
         # apply action lowpass
+        # """
         self.actions = 0.1*self.actions + 0.9*self.prev_actions
+        # self.actions = 0.6*self.actions + 0.4*self.prev_actions
         self.prev_actions = self.actions
+        # """
 
         # applies joint torques
         # self._robots.set_joint_efforts(forces, indices=indices)
@@ -362,6 +370,8 @@ def get_observations(
 
     dof_pos_scaled = unscale(dof_pos, dof_limits_lower, dof_limits_upper)
 
+    # TODO happ comment, the original obs
+    """
     # obs_buf shapes: 1, 3, 3, 1, 1, 1, 1, 1, num_dofs, num_dofs, num_sensors * 6, num_dofs
     obs = torch.cat(
         (
@@ -377,6 +387,21 @@ def get_observations(
             dof_vel * dof_vel_scale,        # inx 36-59 ***
             sensor_force_torques.reshape(num_envs, -1) * contact_force_scale, # inx 60-83
             actions,    # inx 84-107 ***
+        ),
+        dim=-1,
+    """
+
+    # TODO happ added, to change observation
+    obs = torch.cat(
+        (
+            dof_pos_scaled,                 # inx 0-15 ***
+            dof_vel * dof_vel_scale,        # inx 16-31 ***
+            normalize_angle(roll).unsqueeze(-1)*constant,       # inx 32
+            normalize_angle(pitch).unsqueeze(-1)*constant,      # inx 33
+            normalize_angle(yaw).unsqueeze(-1)*constant,        # inx 34
+            actions,                                        # inx 35-50 ***
+            vel_loc,                                        # inx 51 52 53
+            up_proj.unsqueeze(-1),                          # inx 54
         ),
         dim=-1,
     )
@@ -414,13 +439,52 @@ def calculate_metrics(
     # Simple reward scheme IROS2024 ##############
     # roll, pitch, yaw = get_euler_xyz(self.torso_rotation)
     
+    
+    # TODO happ added
+    """
+    rescale = 16.0
+    len_obsbuf1 = len(obs_buf[:, 51])
+    device = obs_buf[:, 51].device       # use the device of the input tensor to match all tensors to the same device
+    robot_speed_x = obs_buf[:, 51].clone().to(device) * rescale
+    robot_speed_des = torch.full((len_obsbuf1,), 0.05, device=device)       # robot speed that we want 5cm/s
+    _robot_speed_des = robot_speed_des.clone() * rescale
+
+    speed_reward = torch.where(robot_speed_x > _robot_speed_des,
+                               1.0, 
+                               torch.exp(-(((_robot_speed_des * robot_speed_x) - torch.sqrt(_robot_speed_des ** 2)) ** 2)))  
+
+    total_reward = 0.75*speed_reward.clone()
+    """
+
+    # total_reward = obs_buf[:, 1] * 2.0
+    # print('speed_x', obs_buf[:, 1])
+    # for element in obs_buf[:,1]:
+    #     print(element.item())
+
+    # TODO happ comment
+    """
     rew_lin_vel_x = obs_buf[:, 1] * 2.0
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
-    rew_orient = torch.where(obs_buf[:, 10] > 0.93 , 0, -0.5)
+    rew_orient = torch.where(obs_buf[:, 10] > 0.95 , 0, -0.5)
     # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
     rew_yaw = torch.where(abs(obs_buf[:, 7]) < 0.45 , 0, -0.5)
 
+    # # total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
+    """
+
+
+    # TODO happ added
+    # """
+    rew_lin_vel_x = obs_buf[:, 51] * 2.0
+    # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
+    rew_orient = torch.where(obs_buf[:, 54] > 0.95 , 0, -0.5)
+    # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
+    rew_yaw = torch.where(abs(obs_buf[:, 34]) < 0.45 , 0, -0.5)
+
+    # # total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
+    total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
+    # """
     ###############################################
 
     # heading_weight_tensor = torch.ones_like(obs_buf[:, 11]) * heading_weight

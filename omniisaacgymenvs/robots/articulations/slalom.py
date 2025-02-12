@@ -57,7 +57,8 @@ class Slalom(Robot):
                 carb.log_error("Could not find Isaac Sim assets folder")
             # self._usd_path = assets_root_path + "/Isaac/Robots/Ant/ant_instanceable.usd"
             # self._usd_path = "omniverse://localhost/Projects/slalom/slalom2.usd"
-            self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_16dof.usd"
+            # self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_16dof.usd"
+            self._usd_path = "omniverse://localhost/Projects/slalom/slalom_fixedbody_16dof_v2_0.usd"
         add_reference_to_stage(self._usd_path, prim_path)
 
         super().__init__(
@@ -75,8 +76,10 @@ class Slalom(Robot):
                        ]
              
         for joint_path in joint_paths:
+            # NOTE (prim_path, drive_type, target_type, target_value, stiffness, damping, max_force)
             # print('joint_path111: ', f"{self.prim_path[:-11]}/{joint_path}")
-            set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0.1, 4.1)
+            # set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0.1, 4.1)
+            set_drive(f"{self.prim_path[:-11]}/{joint_path}", "angular", "position", 0, 1, 0, 4.1)
 
         """ 
         for joint_path in passive_joint_paths:

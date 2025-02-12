@@ -48,21 +48,21 @@ enable_livestream: False
 mt_timeout: 300
 
 # enables viewport recording
-enable_recording: False
+enable_recording: True
 # interval between video recordings (in steps)
-recording_interval: 2000
+recording_interval: 12000
 # length of the recorded video (in steps)
-recording_length: 100
+recording_length: 500
 # fps for writing recorded video
 recording_fps: 30
 # directory to save recordings in
-recording_dir: ''
+recording_dir: 'analysis/video_recording/'  
 
 wandb_activate: False
-wandb_group: 'simple_loco_IROSsetup_Jvel60_lowpass'
+wandb_group: 'simple_loco'
 wandb_name: ${train.params.config.name}
 wandb_entity: ''
-wandb_project: 'my-awesome-Dbalpha_ES_RBFHebb'
+wandb_project: 'Slalom_PureHebb_Input51'
 
 # path to a kit app file
 kit_app: ''
@@ -84,10 +84,10 @@ hydra:
     dir: .
 
 # Training params
-EPOCHS: 300           # <---------------------------------- 100
-SAVE_EVERY: 300        # <---------------------------------- 100
-EPISODE_LENGTH_TRAIN: 300   # <---------------------------------- 500
-EPISODE_LENGTH_TEST: 300   # <---------------------------------- 500
+EPOCHS: 500                   # <---------------------------------- 100
+SAVE_EVERY: 100               # <---------------------------------- 100
+EPISODE_LENGTH_TRAIN: 500     # <---------------------------------- 500
+EPISODE_LENGTH_TEST: 500      # <---------------------------------- 500
 resume_train: False
 
 custom_rewards: False
@@ -97,23 +97,23 @@ ES_params:
   # POPSIZE: 1024 # workstation (500)
   rank_fitness: True
   antithetic: True
-  learning_rate: 0.1 # 0.05:RBF
-  learning_rate_decay: 0.999 # 0.9999
-  sigma_init: 0.1 # 0.05 RBF
+  learning_rate: 0.01 #0.1 - bing # 0.05:RBF
+  learning_rate_decay: 0.9999 #0.999 - bing # 0.9999
+  sigma_init: 0.005 #0.1 -bing # 0.05 RBF
   sigma_decay: 0.999
   learning_rate_limit: 0.001
   sigma_limit: 0.0001
 
 # model 
-model: 'hebb' # ff, hebb, lstm, rbf, rbf_ff, rbf_hebb, rbf_lstm
+model: hebb # ff, hebb, lstm, rbf, rbf_ff, rbf_hebb, rbf_lstm
 model_type: 'parallel_Hebb'
 FF_ARCHITECTURE: [60, 20, 10, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
 # HEBB_ARCHITECTURE: [27, 64, 32, 18] # [num_input, num_hidd, num_output] dbAlpha 1 output DBalpha: [27, 64, 32, 18]
-HEBB_ARCHITECTURE: [84, 64, 32, 16] # [num_input, num_hidd, num_output] Slalom Test
+HEBB_ARCHITECTURE: [51, 128, 64, 16] #[84, 64, 32, 16] # [num_input, num_hidd, num_output] Slalom Test
 LSTM_ARCHITECTURE: [60, 20, 8] # [num_input, num_hidd, num_output] dbAlpha 1 output
-HEBB_init_wnoise: 0.01
-HEBB_norm: 'max' # var, max, clip
-RBF_ARCHITECTURE: [20, 18] # [num_kernel, num_output] dbAlpha 1 output
+HEBB_init_wnoise: 0.02 #0.01
+HEBB_norm: 'var' # var, max, clip
+RBF_ARCHITECTURE: [20, 16] # [num_kernel, num_output] dbAlpha 1 output
 USE_TRAIN_RBF: False
 USE_TRAIN_HEBB: False
 USE_TRAIN_PARAM: False
@@ -132,8 +132,8 @@ collect_w_matrix: False
 
 # Dbalpha trained weight
 train_ff_path: 'Ant_test_ff_1518_1_-90.7688.pickle' # flat terrain
-train_rbf_path: 'Dbalpha_rbf_180_99_39.64761.pickle' # flat terrain
-train_hebb_path: 'Slalom_hebb_simple_loco_IROSsetup_Jvel60_lowpass_39680_299_7.1868.pickle' # maxnorm
+train_rbf_path: 'Slalom_rbf_simple_loco_320_199_36.704.pickle' # flat terrain
+train_hebb_path: 'Slalom_hebb_simple_loco_78720_499_5.3073.pickle' # maxnorm
 train_lstm_path: 'Ant_test_lstm_11640_1_-87.5167.pickle'  # flat terrain, clamp
 
 
