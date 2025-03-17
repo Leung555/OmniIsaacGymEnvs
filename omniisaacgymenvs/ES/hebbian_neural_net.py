@@ -24,7 +24,7 @@ class HebbianNet:
     def __init__(self, 
                  popsize, 
                  sizes, 
-                 init_noise=0.02,
+                 init_noise=0.04,  # 0.02
                  norm_mode='var'):
         """
         sizes: [input_size, hid_1, ..., output_size]
@@ -72,7 +72,7 @@ class HebbianNet:
         return post.float().detach()
 
     def initialize_weights(self, popsize, sizes):
-        return [torch.normal(0, 0.015, (popsize, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
+        return [torch.normal(0, 0.025, (popsize, sizes[i], sizes[i + 1])).cuda() for i in range(len(sizes) - 1)]
 
     def hebbian_update(self, hid_num ,weights, pre, post, A, B, C, D, lr):
 

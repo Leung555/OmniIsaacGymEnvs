@@ -394,8 +394,8 @@ def get_observations(
     # TODO happ added, to change observation
     obs = torch.cat(
         (
-            dof_pos_scaled,                 # inx 0-15 ***
-            dof_vel * dof_vel_scale,        # inx 16-31 ***
+            dof_pos, #dof_pos_scaled,                 # inx 0-15 ***
+            dof_vel, #* dof_vel_scale,        # inx 16-31 ***
             normalize_angle(roll).unsqueeze(-1)*constant,       # inx 32
             normalize_angle(pitch).unsqueeze(-1)*constant,      # inx 33
             normalize_angle(yaw).unsqueeze(-1)*constant,        # inx 34
@@ -446,7 +446,7 @@ def calculate_metrics(
     len_obsbuf1 = len(obs_buf[:, 51])
     device = obs_buf[:, 51].device       # use the device of the input tensor to match all tensors to the same device
     robot_speed_x = obs_buf[:, 51].clone().to(device) * rescale
-    robot_speed_des = torch.full((len_obsbuf1,), 0.05, device=device)       # robot speed that we want 5cm/s
+    robot_speed_des = torch.full((len_obsbuf1,), 0.10, device=device)       # robot speed that we want (0.05) 5cm/s
     _robot_speed_des = robot_speed_des.clone() * rescale
 
     speed_reward = torch.where(robot_speed_x > _robot_speed_des,
@@ -477,10 +477,15 @@ def calculate_metrics(
     # TODO happ added
     # """
     rew_lin_vel_x = obs_buf[:, 51] * 2.0
+    rew_orient = torch.where(obs_buf[:, 54] > 0.95 , 0, -0.25)
+    rew_yaw = torch.where(abs(obs_buf[:, 34]) < 0.30 , 0, -0.5)
+    
+    """
     # rew_lin_vel_y = torch.square(self.velocity[:, 1]) * -self.rew_lin_vel_y_scale
     rew_orient = torch.where(obs_buf[:, 54] > 0.95 , 0, -0.5)
     # height_reward = torch.where(abs(self.torso_position[:, 2] + 0.1) < 0.02 , 0, -1.0)
     rew_yaw = torch.where(abs(obs_buf[:, 34]) < 0.45 , 0, -0.5)
+    """
 
     # # total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 
     total_reward = rew_lin_vel_x + rew_orient + rew_yaw #+ gait_reward #+ rew_lin_vel_y #+ height_reward 

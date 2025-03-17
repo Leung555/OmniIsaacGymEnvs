@@ -13,8 +13,8 @@ env:
 
   clipActions: 1.0
 
-  powerScale: 0.5
-  controlFrequencyInv: 2 # 60 Hz
+  powerScale: 0.5 #0.5 #bing
+  controlFrequencyInv: 2 #2 #bing # 60 Hz
 
   # reward parameters
   headingWeight: 0.5
@@ -49,7 +49,7 @@ env:
     type: 'rough' #rough, slope
 
 sim:
-  dt: 0.01 # 1/120 s, original 0.0083
+  dt: 0.01  # 1/120 s, original 0.0083
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
   add_ground_plane: True
